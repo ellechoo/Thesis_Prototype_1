@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Voice to Data</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Voice to Data</h1>
+      <p class="sub">Turns your microphone into numbers. Everything runs on this device; no audio leaves it.</p>
+    </header>
+
+    <section class="controls">
+      <button id="startBtn" class="primary">Start mic</button>
+      <button id="calibrateBtn" disabled>Calibrate noise</button>
+      <button id="recordBtn" disabled>Pause recording</button>
+      <button id="clearBtn" disabled>Clear</button>
+    </section>
+
+    <p id="status" class="status">Tap “Start mic” and allow microphone access.</p>
+
+    <section class="settings">
+      <label><input type="checkbox" id="optFilters" checked /> Filter rumble &amp; hiss (80 Hz – 8 kHz)</label>
+      <label><input type="checkbox" id="optBrowserNS" /> Browser noise suppression (cleaner, but alters the voice)</label>
+      <p class="hint">Settings apply the next time you start the mic.</p>
+    </section>
+
+    <section class="readouts">
+      <div class="card"><span class="label">Pitch</span><span id="rPitch" class="value">–</span><span class="unit">Hz</span></div>
+      <div class="card"><span class="label">Note</span><span id="rNote" class="value">–</span><span class="unit">&nbsp;</span></div>
+      <div class="card"><span class="label">Loudness</span><span id="rDb" class="value">–</span><span class="unit">dBFS</span></div>
+      <div class="card"><span class="label">Brightness</span><span id="rCentroid" class="value">–</span><span class="unit">Hz centroid</span></div>
+      <div class="card"><span class="label">Pitch confidence</span><span id="rClarity" class="value">–</span><span class="unit">0–1</span></div>
+      <div class="card"><span class="label">Frames recorded</span><span id="rFrames" class="value">0</span><span class="unit" id="rDuration">0.0 s</span></div>
+    </section>
+
+    <section class="meter-wrap">
+      <div class="meter-label"><span>Level</span><span id="gateLabel">gate: default</span></div>
+      <div class="meter"><div id="meterFill" class="fill"></div><div id="gateMark" class="gate"></div></div>
+    </section>
+
+    <section>
+      <div class="meter-label"><span>Pitch trace (last 8 s)</span><span id="activeDot" class="dot">silent</span></div>
+      <canvas id="trace" height="180"></canvas>
+    </section>
+
+    <section class="controls export">
+      <button id="jsonBtn" disabled>Download JSON</button>
+      <button id="csvBtn" disabled>Download CSV</button>
+    </section>
+
+    <details>
+      <summary>What's in each frame?</summary>
+      <pre id="lastFrame">Start the mic to see a live frame.</pre>
+    </details>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
