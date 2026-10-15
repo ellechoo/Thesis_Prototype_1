@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Your Voice Data</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main>
+    <nav class="tabs">
+      <a href="index.html">Record</a>
+      <a href="breakdown.html" aria-current="page">Your data</a>
+      <a href="archive.html">Archive</a>
+      <span class="tab-soon" title="Coming soon">Portrait <small>soon</small></span>
+    </nav>
+
+    <section id="empty" hidden>
+      <h1>No recording yet</h1>
+      <p class="sub" id="emptyText">Record your voice first, then your data shows up here.</p>
+      <p><a class="button primary" href="index.html">Record your voice</a></p>
+    </section>
+
+    <div id="content" hidden>
+      <header class="hero">
+        <h1 id="title">Your voice</h1>
+        <p class="sub" id="subtitle"></p>
+      </header>
+
+      <p class="status error" id="saveNotice" hidden></p>
+      <section>
+        <audio id="player" controls preload="metadata"></audio>
+        <p class="note" id="audioNote"></p>
+      </section>
+
+      <section>
+        <div class="meter-label"><span>This recording (typical values)</span></div>
+        <div class="readouts">
+          <div class="card"><span class="label">Pitch</span><span id="rPitch" class="value">–</span><span class="unit">Hz</span></div>
+          <div class="card"><span class="label">Note</span><span id="rNote" class="value">–</span><span class="unit">&nbsp;</span></div>
+          <div class="card"><span class="label">Loudness</span><span id="rDb" class="value">–</span><span class="unit">dBFS</span></div>
+          <div class="card"><span class="label">Brightness</span><span id="rCentroid" class="value">–</span><span class="unit">Hz centroid</span></div>
+          <div class="card"><span class="label">Pitch confidence</span><span id="rClarity" class="value">–</span><span class="unit">0–1</span></div>
+          <div class="card"><span class="label">Frames recorded</span><span id="rFrames" class="value">–</span><span class="unit" id="rDuration">s</span></div>
+        </div>
+      </section>
+
+      <section>
+        <div class="meter-label"><span>Pitch over the whole recording (shaded: pauses)</span></div>
+        <canvas id="trace" height="180"></canvas>
+      </section>
+
+      <section>
+        <h2 class="section-title">Accent</h2>
+        <p class="note" id="accentEmpty" hidden></p>
+        <div id="accentResult" hidden>
+          <p class="top-line" id="topLine"></p>
+          <p class="note" id="resultMeta"></p>
+          <div class="bars" id="bars"></div>
+          <div class="controls" style="margin-top: 12px"><button id="moreBtn">Show all 16</button></div>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="section-title">Rhythm</h2>
+        <p class="note" id="rhythmEmpty" hidden>No speech was detected, so there's nothing to measure.</p>
+        <div id="rhythmResult" hidden>
+          <div class="readouts">
+            <div class="card"><span class="label">Speaking rate</span><span id="rRate" class="value">–</span><span class="unit" id="rRateUnit">syllables / s</span></div>
+            <div class="card"><span class="label">Pauses</span><span id="rPauses" class="value">–</span><span class="unit">longer than 0.2 s</span></div>
+            <div class="card"><span class="label">Pause time</span><span id="rPauseTime" class="value">–</span><span class="unit" id="rPauseShare">s</span></div>
+            <div class="card"><span class="label">Longest pause</span><span id="rLongest" class="value">–</span><span class="unit">s</span></div>
+          </div>
+          <div class="rhythm-wrap">
+            <div class="meter-label"><span>Talking and pausing, start to finish</span><span id="rTotal"></span></div>
+            <div class="rhythm-bar" id="rhythmBar"></div>
+            <p class="hint chart-caption">
+              <span class="legend-item"><span class="key talk"></span>talking</span>
+              <span class="legend-item"><span class="key pause"></span>pause</span>
+            </p>
+          </div>
+          <div class="explainer">
+            <p><strong>Speaking rate</strong> is syllables per second over the whole reading, pauses included. Read-aloud English is often around 4 to 5. <span id="rArtic"></span></p>
+            <p><strong>Pauses</strong> are silences longer than 0.2 seconds. Everyone pauses a little at the commas and the period, so the interesting part is extra pauses, or unusually long ones. Shorter gaps are just consonants like the “t” in “truck”.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="chart-head">
+          <h2 class="section-title">Vowel space</h2>
+          <label class="inline">Reference
+            <select id="refSelect">
+              <option value="auto" selected>Auto (by voice pitch)</option>
+              <option value="m">Lower voice</option>
+              <option value="w">Higher voice</option>
+              <option value="off">Off</option>
+            </select>
+          </label>
+        </div>
+        <div class="explainer">
+          <p><strong>What this shows:</strong> how you shape your mouth for vowel sounds, measured from the sound alone. Every dot is a split second of your voice. Dots high up mean your mouth was nearly closed; low means open. Left means your tongue was pushed forward; right means pulled back.</p>
+          <p>Together the dots form a cloud: <strong>your vowel space</strong>. The dashed shape is the average American English speaker, for comparison. It isn't a “correct” target.</p>
+        </div>
+        <canvas id="vowelChart" class="chart"></canvas>
+        <p class="hint chart-caption">
+          <span class="legend-item"><span class="key cloud"></span>your voiced sounds (<span id="vowelCount">0</span>)</span>
+          <span class="legend-item"><span class="key ref"></span>average American English speaker (Peterson &amp; Barney, 1952)</span>
+        </p>
+        <div class="explainer look-for">
+          <p><strong>Things to look for</strong></p>
+          <ul>
+            <li><strong>The shape of your cloud.</strong> Ignore single dots, which include the slides between sounds. Look at how far the cloud stretches toward each corner.</li>
+            <li><strong>Shifts from the dashed shape.</strong> Accents move vowels around. “Oo” sitting further left than the reference is common in California and southern England.</li>
+            <li><strong>“Chocolate” and “small.”</strong> Many people in the US and Canada say these two vowels the same way (the cot–caught merger). If you do, the lower right of your cloud forms one blob instead of two.</li>
+            <li><strong>Higher voices sit lower and further left</strong> overall, because smaller mouths and throats resonate higher. That's why the reference switches with your pitch.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="controls export">
+        <button id="jsonBtn">Download all data (JSON)</button>
+        <button id="csvBtn">Download frames (CSV)</button>
+        <button id="wavBtn">Download your recording (WAV)</button>
+      </section>
+
+      <section class="controls">
+        <a class="button primary" href="index.html">Record again</a>
+        <a class="button" href="archive.html">See the archive</a>
+      </section>
+
+      <details>
+        <summary>More about the vowel chart</summary>
+        <p>Each faint dot is one moment of voiced speech (about 40 per second), placed by its first two formants. <strong>Up and down</strong> is F1, which follows how open your mouth is. <strong>Left and right</strong> is F2, which follows where your tongue is.</p>
+        <p>Reading a passage mixes every vowel together, plus the glides between them, so the cloud is blurry by nature. The reference is a 1950s General American average, not a “correct” target. Higher-pitched voices make formants harder to measure, so expect more scatter.</p>
+      </details>
+
+      <details>
+        <summary>How to read the accent result</summary>
+        <p>The model (CommonAccent) was trained on volunteer recordings from Mozilla Common Voice. It sorts speech into 16 broad groups, such as “United States” or “England”. It can't tell regions within a country apart, and it has no group for many accents, so a mixed or regional accent gets matched to whichever group sounds most similar.</p>
+        <p>The percentages show how much the model leans toward each group. They aren't a measure of how “strong” an accent is. Background noise, a far-away mic or very short recordings make results less reliable.</p>
+        <p>Accents say nothing about ability or intelligence. Treat this as a curiosity, not a judgment about a person.</p>
+      </details>
+
+      <details>
+        <summary>What's in each frame?</summary>
+        <pre id="lastFrame"></pre>
+      </details>
+    </div>
+  </main>
+
+  <script type="module" src="breakdown.js?v=8"></script>
+</body>
+</html>
