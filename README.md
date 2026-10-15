@@ -1,12 +1,16 @@
 # Voice to Data
 
-A small website that listens to a microphone (computer or phone) and turns a voice into numbers you can save and visualize. It's one page (`index.html`): you read a short passage aloud, and it shows
+A small website that listens to a microphone (computer or phone) and turns a voice into numbers you can save and visualize. It has three pages, with a fourth (Portrait) to come:
 
-- **live readouts** while you speak: pitch, musical note, loudness, brightness, pitch confidence and frames recorded, plus a level meter and pitch trace;
-- **an accent check** when you stop: a free open-source model scores the recording against 16 groups of English accents;
-- **a vowel chart**: every voiced moment of the recording plotted by its formants, next to a reference vowel shape.
+| Page | What it does |
+|---|---|
+| **Record** (`index.html`) | The landing page. Enter a name or nickname, tap Start, wait for the 3-2-1 countdown (it measures room noise meanwhile), then read the passage. Words light up as you read; pitch and loudness show live. Tap Done and it analyzes the recording, saves it and opens the breakdown. |
+| **Your data** (`breakdown.html`) | Everything measured from one recording: typical pitch, note, loudness, brightness, pitch confidence, frames; pitch over time with pauses shaded; the 16-group accent result; rhythm; the vowel chart; playback and downloads (JSON, CSV, WAV). Opens `?id=…`, or the latest recording. |
+| **Archive** (`archive.html`) | Every voice recorded on the site, newest first, as cards with a mini pitch line, pitch, pace and closest accent. Each links to its breakdown. |
 
-You can also analyze an existing audio file instead of recording. Downloads: all data (JSON), frames (CSV) and the recording (WAV). All audio stays on the device.
+**Recordings are never kept.** Only the name and the measurements are saved. The person can play their recording back on their results page; then it's deleted, including from that browser, so the next person on a shared computer can't replay it. (The word highlighting uses the browser's speech recognition, which in Chrome sends audio to Google; see *Recording*.)
+
+**Where things are stored.** With the shared archive set up (see *Set up the shared archive*), names and measurements go to a Supabase database, so the archive is the same on every device. Until then, everything is saved only in each visitor's browser (IndexedDB) and the archive shows that device only.
 
 Everything is free: no accounts, no API keys.
 
@@ -19,8 +23,15 @@ Everything is free: no accounts, no API keys.
 | `recorder.js` | Records a clip from the mic and converts it to a 16 kHz WAV file. |
 | `accent-model.js` | Runs the accent model in the browser (onnxruntime-web). |
 | `accent-model.onnx`, `accent-labels.json` | The accent model itself. **Not included**: you create them once with `accent-server/export_model.py` (see below). |
-| `config.js` | Chooses whether the accent check runs in the browser (default) or on a server. |
-| `index.html`, `app.js` | The page and its wiring: recording, live readouts, accent check, vowel chart, downloads. |
+| `config.js` | Settings: where the accent check runs, and the shared archive's Supabase address and key. |
+| `index.html`, `app.js` | Record page: name, countdown, recording, analysis, saving. |
+| `breakdown.html`, `breakdown.js` | Breakdown page for one saved recording. |
+| `archive.html`, `archive.js` | Archive page. |
+| `store.js` | Saves and loads recordings' data: the shared archive (Supabase) when set up, plus a copy in the browser (IndexedDB). |
+| `supabase-setup.sql` | Run once in Supabase to create the archive's table and permissions. |
+| `shared.js` | Helpers the pages share: summary values, pitch trace drawing, the accent check, downloads. |
+| `progress.js` | Lights up the passage word by word while it's read, using the browser's speech recognition. |
+| `rhythm.js` | Finds pauses and works out speaking rate from the frames. |
 | `vowel-chart.js` | Draws the vowel chart and holds the Peterson & Barney reference values. |
 | `style.css` | Styling (light and dark mode). |
 | `accent.html`, `vowels.html` | Redirects to `index.html` for old links. `accent.js` and `vowels.js` are the old separate pages' scripts and are no longer used. |
@@ -52,7 +63,18 @@ python export_model.py
 
 This downloads the CommonAccent model (if it isn't already cached), converts it, checks that the converted version gives the same answers, and writes two files into the website folder: `accent-model.onnx` (about 21 MB) and `accent-labels.json`. Then the accent check works anywhere you publish the site.
 
-Visitors download the model the first time they record or analyze a file (about 21 MB); after that it loads from their browser's cache.
+Visitors download the model the first time they record (about 21 MB); after that it loads from their browser's cache.
+
+## Set up the shared archive (once)
+
+1. Create a free account and project at [supabase.com](https://supabase.com). Any name and region; note the database password somewhere safe.
+2. In the project, open **SQL Editor → New query**, paste the whole of `supabase-setup.sql`, and click **Run**. This creates a `takes` table. Visitors can add entries and read the archive, but can't change or delete anything.
+3. Open **Project Settings → API** (or **Data API**) and copy the **Project URL** and the **anon / publishable** key into `SUPABASE_URL` and `SUPABASE_ANON_KEY` in `config.js`. This key is designed to be public. Never put the `service_role` / secret key in the website.
+4. Publish the site. New recordings now go to the shared archive.
+
+**Removing an entry** (for example if someone asks): in Supabase, tick its row in **Table Editor → takes** and click **Delete**.
+
+**Limits to know.** The free tier has had about 500 MB of database and 1 GB of file storage (check supabase.com/pricing for current limits). Each recording is roughly 100–150 KB of data, so that's a few thousand voices. Free projects pause after a week with no activity; open the dashboard to wake one. Anyone can add entries, so expect to clean up the odd junk name.
 
 ## Put the website online (needed for phones)
 
@@ -64,21 +86,18 @@ Phones require **HTTPS** for microphone access. The easiest free options:
 
 **Leave out the `accent-server` folder** when you upload. It holds your Python environment and a copy of the model, hundreds of MB the website doesn't need. The easiest way is to move `accent-server` somewhere else before dragging the folder, or to make a separate folder with only the website files: the `.html`, `.js`, `.css`, `.onnx` and `.json` files.
 
-On iPhone, audio only starts after a tap, which the Start recording button handles.
+On iPhone, audio only starts after a tap, which the Start button handles.
 
 ---
 
-## Using the page
+## Recording
 
-1. Tap **Start recording** and allow the microphone.
-2. Stay quiet for a second while it measures the room. This sets the noise gate, so background hum isn't counted as voice.
-3. When it says go, read the passage. The readouts, level meter and pitch trace update live, and the vowel chart fills in.
-4. Tap **Stop and analyze**. The readouts switch to typical values (medians) for the whole recording, the pitch trace shows the whole recording, and the accent result appears.
-5. Download what you need.
+1. Enter a name or nickname and tap **Start**, then allow the microphone.
+2. Stay quiet during the 3-2-1 countdown. It measures the room in the first 1.5 seconds and sets the noise gate, so background hum isn't counted as voice.
+3. At **Go!**, read the passage. Pitch, note, loudness, the level meter and a pitch trace update live.
+4. Tap **Done**. The page measures rhythm, runs the accent check, saves the recording and opens its breakdown.
 
-Recording stops by itself after 2 minutes. The accent check needs at least 5 seconds and uses the first 30. Filters and browser noise suppression are under **Settings**; the accent check always gets the unfiltered audio.
-
-**Analyze a file** runs the same measurements on an audio file (mp3, m4a, wav…), up to its first 2 minutes. For files, the noise gate is estimated from the quietest 10% of the clip.
+While you read, the passage lights up word by word. `progress.js` does this with the browser's built-in speech recognition (Web Speech API), matching the words it hears to the passage in order and forgiving misheard or skipped words. **Privacy:** only the highlighting uses it, and every measurement still runs on the device, but in Chrome the recognizer sends that audio to Google (Safari can run it on the device). The page says so under the passage. Browsers without it (such as Firefox) show the passage without highlighting. Recording stops by itself after 2 minutes. The accent check needs at least 5 seconds and uses the first 30. Filters and browser noise suppression are under **Settings**; the accent check always gets the unfiltered audio.
 
 ### What each frame contains
 
@@ -102,7 +121,17 @@ Recording stops by itself after 2 minutes. The accent check needs at least 5 sec
 
 Formants are only measured on voiced frames (where there's a pitch); otherwise they're `null`. Timbre fields are `null` below the noise gate.
 
-The JSON download has four parts: `meta` (time, source, length, sample rate, noise gate, settings), `summary` (typical pitch, loudness and brightness, counts, which vowel reference was shown), `accent` (all 16 scores, or `null` if the recording was too short) and `frames`.
+The breakdown page's JSON download has five parts: `meta` (name, time, source, length, sample rate, noise gate, settings, passage), `summary` (typical pitch, note, loudness, brightness, pitch confidence, counts, which vowel reference was shown), `rhythm`, `accent` (all 16 scores, or `null` if the recording was too short) and `frames`.
+
+## Rhythm
+
+After you stop, the page finds the pauses using the same sound/silence decision as the noise gate:
+- Silence before the first sound and after the last is ignored.
+- Silences shorter than 0.2 s count as speech (consonants like “t” and “k” make tiny gaps), and sounds shorter than 0.06 s inside a pause (clicks) are ignored.
+
+The breakdown shows the number of pauses, total and longest pause, a talking/pausing timeline, and shades the pauses on the pitch trace. **Speaking rate** is the passage's syllable count (42, set with `data-syllables` on the passage in `index.html`; update it if you change the text) divided by the reading time. The JSON also has **articulation rate**, which counts only the time spent talking.
+
+Pause detection depends on the noise gate, so a noisy room can hide short pauses.
 
 ## Vowel chart
 
@@ -114,7 +143,7 @@ The dashed outline is a reference: the classic American English averages for ten
 
 ## Accent check
 
-When you stop, the page converts the clip to 16 kHz, runs the model on the device, and shows the closest matches as percentages. It takes a few seconds; phones are slower than computers.
+When you tap Done, the page converts the clip to 16 kHz, runs the model on the device, and shows the closest matches as percentages. It takes a few seconds; phones are slower than computers.
 
 The model is **CommonAccent** (ECAPA version, MIT license), trained on Mozilla Common Voice. Its groups are: United States, England, Australia, India / South Asia, Canada, Bermuda, Scotland, Africa (various), Ireland, New Zealand, Wales, Malaysia, Philippines, Singapore, Hong Kong and South Atlantic. Limits worth telling your users:
 - It can't tell regions within a country apart.
@@ -122,7 +151,7 @@ The model is **CommonAccent** (ECAPA version, MIT license), trained on Mozilla C
 - Results are less reliable with noise or short clips.
 - The percentages show how much the model leans toward each group, not how “strong” an accent is.
 
-The passage is original and short (about 10 seconds). Any text works, because the accent model ignores the words and listens only to how they sound; edit it in `index.html` (the `passage` block). Longer readings give steadier accent results, and words with many different vowels fill out the vowel chart. This one covers most English vowels, including “hot” and “coffee”, which show the cot–caught merger. You could swap in the Speech Accent Archive's “Please call Stella” paragraph if you want to compare against that archive's recordings.
+The passage is short (about 8 seconds): “Momo is a small poodle and she is the color of milk chocolate. She has fluffy fur, a good nose for snacks, and she barks at every red truck that passes our house.” Any text works, because the accent model ignores the words and listens only to how they sound; edit it in `index.html` (the `passage` block), and update its `data-syllables` count. Longer readings give steadier accent results, and words with many different vowels fill out the vowel chart. The vowel chart's corner labels (in `vowel-chart.js`) and the “things to look for” notes on `breakdown.html` use words from the passage, so update them too. You could swap in the Speech Accent Archive's “Please call Stella” paragraph if you want to compare against that archive's recordings.
 
 **Server mode (optional).** `accent-server/app.py` runs the same model as a web service. To use it instead, set `ACCENT_MODE = "server"` in `config.js` and put the server's address in `ACCENT_SERVER`. The in-browser mode is simpler and free, so you normally won't need this.
 

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Voice Archive</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="wide">
+    <nav class="tabs">
+      <a href="index.html">Record</a>
+      <a href="breakdown.html">Your data</a>
+      <a href="archive.html" aria-current="page">Archive</a>
+      <span class="tab-soon" title="Coming soon">Portrait <small>soon</small></span>
+    </nav>
+
+    <header class="hero">
+      <h1>Archive</h1>
+      <p class="sub" id="count">Every voice recorded so far.</p>
+      <p class="note" id="where"></p>
+    </header>
+
+    <p class="status" id="status"></p>
+    <section class="archive-grid" id="grid"></section>
+
+    <section id="empty" hidden>
+      <p class="sub">No voices yet.</p>
+      <p><a class="button primary" href="index.html">Record the first one</a></p>
+    </section>
+  </main>
+
+  <script type="module" src="archive.js?v=7"></script>
+</body>
+</html>

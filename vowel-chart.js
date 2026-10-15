@@ -100,12 +100,12 @@ export function drawVowelChart(canvas, { cloud = [], trail = [], ref = null } = 
   g.globalAlpha = 0.8;
   g.textBaseline = "top";
   g.textAlign = "left";
-  g.fillText("“ee” as in cheese", pad.l + 8, pad.t + 6);
+  g.fillText("“ee” as in she", pad.l + 8, pad.t + 6);
   g.textAlign = "right";
-  g.fillText("“oo” as in Ruth", W - pad.r - 8, pad.t + 6);
+  g.fillText("“oo” as in poodle", W - pad.r - 8, pad.t + 6);
   g.textAlign = "center";
   g.textBaseline = "bottom";
-  g.fillText("“ah” as in harbor", x(1300), H - pad.b - 8);
+  g.fillText("“ah” as in chocolate", x(1300), H - pad.b - 8);
   g.globalAlpha = 1;
 
   // your cloud
