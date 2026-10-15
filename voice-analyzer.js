@@ -13,6 +13,7 @@
 
 import Meyda from "https://cdn.jsdelivr.net/npm/meyda@5.6.3/+esm";
 import { PitchDetector } from "https://cdn.jsdelivr.net/npm/pitchy@4.1.0/+esm";
+import { estimateFormants } from "./formants.js";
 
 const DEFAULTS = {
   bufferSize: 2048,              // samples per analysis window (~43 ms at 48 kHz). Must be a power of 2.
@@ -27,6 +28,8 @@ const DEFAULTS = {
   gateMultiplier: 3,             // gate = measured room noise × this
   defaultGate: 0.01,             // gate used before calibration (RMS units)
   mfccCount: 13,
+  formants: true,                // measure vowel formants F1-F3 on voiced frames
+  maxFormantHz: 5500,            // formant ceiling: ~5000 for lower voices, ~5500 for higher voices
 };
 
 export class VoiceAnalyzer {
@@ -66,6 +69,7 @@ export class VoiceAnalyzer {
 
     // Audio graph: mic -> [highpass -> lowpass] -> analyser
     let node = this.ctx.createMediaStreamSource(this.stream);
+    this.source = node; // raw, unfiltered mic (e.g. for recording a clip with recorder.js)
     this._nodes = [node];
     if (o.useFilters) {
       const hp = this.ctx.createBiquadFilter();
@@ -166,10 +170,10 @@ export class VoiceAnalyzer {
 
   toCSV() {
     const n = this.opts.mfccCount;
-    const cols = ["t", "rms", "db", "active", "pitch", "clarity", "centroidHz", "flatness", "zcr",
+    const cols = ["t", "rms", "db", "active", "pitch", "clarity", "f1", "f2", "f3", "centroidHz", "flatness", "zcr",
       ...Array.from({ length: n }, (_, i) => `mfcc_${i}`)];
     const rows = this.frames.map((f) =>
-      [f.t, f.rms, f.db, f.active ? 1 : 0, f.pitch ?? "", f.clarity, f.centroidHz ?? "", f.flatness ?? "", f.zcr,
+      [f.t, f.rms, f.db, f.active ? 1 : 0, f.pitch ?? "", f.clarity, f.f1 ?? "", f.f2 ?? "", f.f3 ?? "", f.centroidHz ?? "", f.flatness ?? "", f.zcr,
         ...(f.mfcc ?? Array(n).fill(""))].join(",")
     );
     return [cols.join(","), ...rows].join("\n");
@@ -197,11 +201,22 @@ export function analyzeBuffer(buffer, sampleRate, pitchDetector, opts, gate) {
     active,
     pitch: pitchOk ? round(rawPitch, 1) : null,
     clarity: round(clarity, 3),
+    f1: null,
+    f2: null,
+    f3: null,
     centroidHz: null,
     flatness: null,
     zcr: 0,
     mfcc: null,
   };
+
+  // Vowel formants: only meaningful while the voice is actually vibrating (voiced)
+  if (opts.formants && pitchOk) {
+    const fm = estimateFormants(buffer, sampleRate, { maxFormantHz: opts.maxFormantHz });
+    frame.f1 = fm.f1 ? Math.round(fm.f1) : null;
+    frame.f2 = fm.f2 ? Math.round(fm.f2) : null;
+    frame.f3 = fm.f3 ? Math.round(fm.f3) : null;
+  }
 
   // Timbre features (Meyda may modify its input, so give it a copy)
   const f = Meyda.extract(["spectralCentroid", "spectralFlatness", "zcr", "mfcc"], Float32Array.from(buffer));

@@ -1,0 +1,24 @@
+{
+  "labels": [
+    "england",
+    "us",
+    "canada",
+    "australia",
+    "indian",
+    "scotland",
+    "ireland",
+    "african",
+    "malaysia",
+    "newzealand",
+    "southatlandtic",
+    "bermuda",
+    "philippines",
+    "hongkong",
+    "wales",
+    "singapore"
+  ],
+  "sampleRate": 16000,
+  "scoreType": "cosine",
+  "version": "bab1316b0dce",
+  "source": "Jzuluaga/accent-id-commonaccent_ecapa"
+}
