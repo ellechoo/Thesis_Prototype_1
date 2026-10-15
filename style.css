@@ -8,6 +8,8 @@
   --accent-text: #ffffff;
   --good: #2f9e44;
   --warn: #e8590c;
+  --ref: #a8a29a;
+  --live: #e8590c;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -20,6 +22,8 @@
     --accent-text: #0e0e0d;
     --good: #51cf66;
     --warn: #ff922b;
+    --ref: #6e6a63;
+    --live: #ff922b;
   }
 }
 
@@ -76,3 +80,51 @@ canvas { width: 100%; height: 180px; display: block; background: var(--panel); b
 details { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; }
 summary { cursor: pointer; color: var(--muted); }
 pre { margin: 10px 0 0; font-size: 12px; overflow-x: auto; white-space: pre-wrap; word-break: break-word; }
+
+/* ---- shared nav ---- */
+.tabs { display: flex; gap: 4px; margin-bottom: 18px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.tabs a { padding: 8px 12px; color: var(--muted); text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+.tabs a:hover { color: var(--text); }
+.tabs a[aria-current="page"] { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
+
+/* ---- vowel page ---- */
+.prompt { text-align: center; padding: 22px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
+.prompt-progress { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.prompt-word { font-size: clamp(44px, 12vw, 72px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; margin: 4px 0; }
+.prompt-hint { color: var(--muted); }
+.prompt-listen { margin-top: 10px; font-size: 13px; color: var(--muted); }
+
+.chart-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; font-size: 13px; color: var(--muted); }
+label.inline { display: inline-flex; gap: 6px; align-items: center; }
+select { font: inherit; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); color: var(--text); }
+canvas.chart { height: auto; aspect-ratio: 4 / 3; max-height: 520px; }
+.chart-caption { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; }
+.legend-item { display: inline-flex; align-items: center; gap: 6px; }
+.key { display: inline-block; width: 18px; height: 0; border-top: 2px solid; vertical-align: middle; flex: none; }
+.key.you { border-color: var(--accent); }
+.key.ref { border-color: var(--ref); border-top-style: dashed; }
+.key.live { width: 8px; height: 8px; border: 0; border-radius: 50%; background: var(--live); }
+
+table.results { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; font-variant-numeric: tabular-nums; }
+.results th, .results td { padding: 7px 10px; text-align: left; border-bottom: 1px solid var(--line); }
+.results th { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+.results tr:last-child td { border-bottom: 0; }
+details p { margin: 10px 0 0; }
+
+/* ---- accent page ---- */
+.passage { padding: 16px 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; font-size: 18px; line-height: 1.6; }
+.rec-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.timer { font-variant-numeric: tabular-nums; font-size: 22px; font-weight: 600; min-width: 4ch; }
+.bars { display: grid; gap: 8px; }
+.bar-row { display: grid; grid-template-columns: minmax(90px, 140px) 1fr 4.5ch; gap: 10px; align-items: center; }
+.bar-row .name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar-track { height: 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.bar-fill { height: 100%; background: var(--accent); border-radius: 6px; }
+.bar-row .pct { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+.bar-row.top .name { font-weight: 600; }
+.server-box { display: grid; gap: 6px; padding: 12px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+.server-box input[type=url] { font: inherit; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--text); width: 100%; }
+.note { font-size: 13px; color: var(--muted); }
+@media (max-width: 520px) { canvas.chart { aspect-ratio: 1 / 1.1; } }
+
+[hidden] { display: none !important; }
