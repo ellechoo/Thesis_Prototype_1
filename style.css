@@ -128,3 +128,19 @@ details p { margin: 10px 0 0; }
 @media (max-width: 520px) { canvas.chart { aspect-ratio: 1 / 1.1; } }
 
 [hidden] { display: none !important; }
+
+/* ---- combined page ---- */
+.section-title { margin: 0 0 8px; font-size: 18px; letter-spacing: -0.01em; }
+.chart-head .section-title { margin: 0; color: var(--text); }
+.top-line { margin: 0 0 4px; font-size: 20px; font-weight: 600; }
+#resultMeta { margin: 0 0 12px; }
+.model-status { margin: 4px 0 0; }
+.file-pick { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.settings-box .settings { margin-top: 10px; padding: 0; border: 0; background: none; }
+.key.cloud { width: 8px; height: 8px; border: 0; border-radius: 50%; background: var(--accent); opacity: 0.5; }
+
+.explainer { margin: 0 0 10px; padding: 12px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; font-size: 14px; }
+.explainer p { margin: 0 0 6px; }
+.explainer p:last-child { margin-bottom: 0; }
+.explainer ul { margin: 4px 0 0; padding-left: 18px; display: grid; gap: 4px; }
+.look-for { margin-top: 10px; }

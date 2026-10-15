@@ -2,80 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Vowel Chart</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta http-equiv="refresh" content="0; url=index.html" />
+  <title>Voice to Data</title>
 </head>
-<body>
-  <main>
-    <nav class="tabs">
-      <a href="index.html">Live data</a>
-      <a href="vowels.html" aria-current="page">Vowel chart</a>
-      <a href="accent.html">Accent check</a>
-    </nav>
-
-    <header>
-      <h1>Vowel chart</h1>
-      <p class="sub">Read ten short words and see where your vowels land. Linguists use this chart to compare accents. It runs entirely on this device.</p>
-    </header>
-
-    <section class="controls">
-      <button id="startBtn" class="primary">Start</button>
-      <button id="redoBtn" disabled>Redo last word</button>
-      <button id="skipBtn" disabled>Skip word</button>
-      <button id="restartBtn" disabled>Start over</button>
-    </section>
-
-    <p id="status" class="status">Tap “Start”, allow the microphone, then stay quiet for a moment while it measures the room.</p>
-
-    <section class="prompt" id="prompt" hidden>
-      <div class="prompt-progress" id="promptProgress">Word 1 of 10</div>
-      <div class="prompt-word" id="promptWord">heed</div>
-      <div class="prompt-hint" id="promptHint">&nbsp;</div>
-      <div class="prompt-listen"><span id="listenDot" class="dot">waiting for you</span></div>
-    </section>
-
-    <section>
-      <div class="chart-head">
-        <span class="meter-label-text">Vowel space (F2 across, F1 down)</span>
-        <label class="inline">Reference
-          <select id="refSelect">
-            <option value="auto" selected>Auto (by voice pitch)</option>
-            <option value="m">Lower voice</option>
-            <option value="w">Higher voice</option>
-            <option value="off">Off</option>
-          </select>
-        </label>
-      </div>
-      <canvas id="chart" class="chart"></canvas>
-      <p class="hint chart-caption">
-        <span class="legend-item"><span class="key you"></span>your vowels</span>
-        <span class="legend-item"><span class="key ref"></span>reference: American English averages (Peterson &amp; Barney, 1952)</span>
-        <span class="legend-item"><span class="key live"></span>live</span>
-      </p>
-    </section>
-
-    <section>
-      <table class="results" id="results">
-        <thead><tr><th>Word</th><th>Vowel</th><th>F1 (Hz)</th><th>F2 (Hz)</th><th>Pitch (Hz)</th></tr></thead>
-        <tbody></tbody>
-      </table>
-    </section>
-
-    <section class="controls export">
-      <button id="jsonBtn" disabled>Download JSON</button>
-      <button id="csvBtn" disabled>Download CSV</button>
-    </section>
-
-    <details>
-      <summary>How to read this chart</summary>
-      <p><strong>Up and down</strong> is F1, which follows how open your mouth is. “Heed” sits high (mouth nearly closed); “had” and “hod” sit low (mouth open).</p>
-      <p><strong>Left and right</strong> is F2, which follows where your tongue is. Front vowels like “heed” sit left, back vowels like “who'd” sit right.</p>
-      <p><strong>Accents show up as shifts.</strong> Many Californians say “who'd” further forward (left). Many Americans say “hod” and “hawed” in the same spot (the cot–caught merger). Southern British speakers say “had” lower and further back than most Americans.</p>
-      <p>The reference is a 1950s General American average, not a “correct” target. It's a fixed point to compare against. Higher-pitched voices make formants harder to measure, so expect more scatter.</p>
-    </details>
-  </main>
-
-  <script type="module" src="vowels.js"></script>
-</body>
+<body><p>This tool has moved to <a href="index.html">one page</a>.</p></body>
 </html>

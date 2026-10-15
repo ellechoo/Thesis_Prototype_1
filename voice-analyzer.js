@@ -117,6 +117,11 @@ export class VoiceAnalyzer {
     this.frames = [];
   }
 
+  // Make frame times start from 0 again (e.g. after calibrating, when the real take begins).
+  resetClock() {
+    if (this.ctx) this._t0 = this.ctx.currentTime;
+  }
+
   // Stay quiet while this runs. Measures room noise and sets the noise gate.
   calibrate(ms = 1500) {
     if (!this.running) return Promise.reject(new Error("Start the mic first"));
@@ -169,15 +174,57 @@ export class VoiceAnalyzer {
   }
 
   toCSV() {
-    const n = this.opts.mfccCount;
-    const cols = ["t", "rms", "db", "active", "pitch", "clarity", "f1", "f2", "f3", "centroidHz", "flatness", "zcr",
-      ...Array.from({ length: n }, (_, i) => `mfcc_${i}`)];
-    const rows = this.frames.map((f) =>
-      [f.t, f.rms, f.db, f.active ? 1 : 0, f.pitch ?? "", f.clarity, f.f1 ?? "", f.f2 ?? "", f.f3 ?? "", f.centroidHz ?? "", f.flatness ?? "", f.zcr,
-        ...(f.mfcc ?? Array(n).fill(""))].join(",")
-    );
-    return [cols.join(","), ...rows].join("\n");
+    return framesToCSV(this.frames, this.opts.mfccCount);
   }
+}
+
+// Frames -> CSV text (one row per frame).
+export function framesToCSV(frames, mfccCount = DEFAULTS.mfccCount) {
+  const n = mfccCount;
+  const cols = ["t", "rms", "db", "active", "pitch", "clarity", "f1", "f2", "f3", "centroidHz", "flatness", "zcr",
+    ...Array.from({ length: n }, (_, i) => `mfcc_${i}`)];
+  const rows = frames.map((f) =>
+    [f.t, f.rms, f.db, f.active ? 1 : 0, f.pitch ?? "", f.clarity, f.f1 ?? "", f.f2 ?? "", f.f3 ?? "", f.centroidHz ?? "", f.flatness ?? "", f.zcr,
+      ...(f.mfcc ?? Array(n).fill(""))].join(",")
+  );
+  return [cols.join(","), ...rows].join("\n");
+}
+
+// Analyze a recorded clip (e.g. an uploaded file) into the same frames the live mic produces.
+// The noise gate is estimated from the quietest 10% of the clip.
+// onProgress(fraction) is called now and then; the work yields so the page stays responsive.
+export async function analyzeSamples(samples, sampleRate, options = {}, onProgress) {
+  const o = { ...DEFAULTS, ...options };
+  const size = o.bufferSize;
+  const hop = Math.max(1, Math.round((sampleRate * o.hopMs) / 1000));
+
+  const levels = [];
+  for (let end = size; end <= samples.length; end += hop) {
+    let s = 0;
+    for (let i = end - size; i < end; i++) s += samples[i] * samples[i];
+    levels.push(Math.sqrt(s / size));
+  }
+  levels.sort((a, b) => a - b);
+  const noiseFloor = levels[Math.floor(levels.length * 0.1)] ?? 0;
+  const gate = Math.min(Math.max(noiseFloor * o.gateMultiplier, 0.002), o.defaultGate);
+
+  Meyda.bufferSize = size;
+  Meyda.sampleRate = sampleRate;
+  Meyda.numberOfMFCCCoefficients = o.mfccCount;
+  const detector = PitchDetector.forFloat32Array(size);
+
+  const frames = [];
+  let k = 0;
+  for (let end = size; end <= samples.length; end += hop, k++) {
+    const frame = analyzeBuffer(samples.slice(end - size, end), sampleRate, detector, o, gate);
+    frame.t = round(end / sampleRate, 3);
+    frames.push(frame);
+    if (k % 100 === 99) {
+      onProgress?.(end / samples.length);
+      await new Promise((r) => setTimeout(r, 0));
+    }
+  }
+  return { frames, noiseFloor, gate };
 }
 
 // Pure function: one buffer of samples in, one data frame out.

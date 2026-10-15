@@ -2,78 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Accent Check</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta http-equiv="refresh" content="0; url=index.html" />
+  <title>Voice to Data</title>
 </head>
-<body>
-  <main>
-    <nav class="tabs">
-      <a href="index.html">Live data</a>
-      <a href="vowels.html">Vowel chart</a>
-      <a href="accent.html" aria-current="page">Accent check</a>
-    </nav>
-
-    <header>
-      <h1>Accent check</h1>
-      <p class="sub">Read the passage aloud. A free, open-source model (CommonAccent) compares your speech with 16 groups of English accents and shows the closest matches.</p>
-    </header>
-
-    <section class="server-box" id="serverBox" hidden>
-      <label for="serverUrl"><strong>Accent server</strong></label>
-      <div class="controls">
-        <input type="url" id="serverUrl" spellcheck="false" style="flex:1; min-width: 220px" />
-        <button id="checkBtn">Check connection</button>
-      </div>
-      <span id="serverStatus" class="note">Not checked yet.</span>
-      <span class="note">Your recording is sent to this server only to be analyzed. It isn't saved.</span>
-    </section>
-
-    <p class="note" id="modelNote" hidden>Runs entirely on this device: your recording never leaves it. The first time, it downloads the accent model (about 20 MB).</p>
-
-    <section>
-      <div class="meter-label"><span>Read this aloud at a normal pace (about 20 seconds)</span></div>
-      <div class="passage" id="passage">
-        Last Thursday, my cousin Ruth took a short boat trip to the north harbor. She packed bread,
-        cheese, a few ripe pears and a thermos of hot coffee. The water was calm at first, but by noon
-        a cold wind had pushed thick clouds over the hills. Ruth laughed, pulled her hood up, and
-        steered back toward the dock, where her dog was waiting by the car.
-      </div>
-    </section>
-
-    <section class="rec-row">
-      <button id="recBtn" class="primary">Start recording</button>
-      <span id="timer" class="timer">0:00</span>
-      <label class="note" style="display:inline-flex; gap:6px; align-items:center">
-        or analyze a file <input type="file" id="fileInput" accept="audio/*" />
-      </label>
-    </section>
-
-    <section class="meter-wrap">
-      <div class="meter"><div id="meterFill" class="fill"></div></div>
-    </section>
-
-    <p id="status" class="status">Speak for at least 5 seconds. Recording stops by itself at 30 seconds.</p>
-
-    <section id="resultsSection" hidden>
-      <h2 id="topLine" style="margin: 0 0 4px; font-size: 20px"></h2>
-      <p class="note" id="resultMeta" style="margin: 0 0 12px"></p>
-      <div class="bars" id="bars"></div>
-      <div class="controls" style="margin-top: 12px">
-        <button id="moreBtn">Show all 16</button>
-        <button id="jsonBtn">Download result (JSON)</button>
-        <button id="wavBtn">Download recording (WAV)</button>
-      </div>
-    </section>
-
-    <details>
-      <summary>How to read the result</summary>
-      <p>The model was trained on volunteer recordings from Mozilla Common Voice. It sorts speech into 16 broad groups, such as “United States” or “England”. It can't tell regions within a country apart, and it has no group for many accents, so a mixed or regional accent gets matched to whichever group sounds most similar.</p>
-      <p>The percentages show how much the model leans toward each group. They aren't a measure of how “strong” an accent is. Background noise, a far-away mic or very short recordings make results less reliable. Try reading the passage twice and compare.</p>
-      <p>Accents say nothing about ability or intelligence. Treat this as a curiosity, not a judgment about a person.</p>
-    </details>
-  </main>
-
-  <script type="module" src="accent.js"></script>
-</body>
+<body><p>This tool has moved to <a href="index.html">one page</a>.</p></body>
 </html>
