@@ -4,7 +4,8 @@
 // moment. Tapping pins the selection; tapping empty space clears it.
 // Elements carry data-key="a b c": the first key is what hovering it explains; all keys decide
 // which list items light it up.
-import { getTake, latestLocalTake, archiveIsShared } from "./store.js";
+import { getTake, archiveIsShared } from "./store.js";
+import { currentTakeId } from "./nav.js?v=1";
 import { portraitSVG } from "./portrait.js?v=27";
 import { download, slug, formatDate } from "./shared.js";
 
@@ -13,8 +14,9 @@ const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
 let take = null, legend = [], byKey = {}, svg = null, pinned = null;
 
 async function load() {
-  const id = new URLSearchParams(location.search).get("id");
-  try { take = id ? await getTake(id) : await latestLocalTake(); }
+  const id = currentTakeId(); // from the link, or the recording made / opened earlier in this tab
+  if (!id) return empty(null);
+  try { take = await getTake(id); }
   catch (e) { return empty(`Couldn't load the recording: ${e.message}`); }
   if (!take) return empty(id ? (archiveIsShared ? "That recording isn't in the archive." : "That recording isn't saved in this browser.") : null);
   if (!take.frames) take.frames = [];
@@ -25,7 +27,6 @@ async function load() {
   $("subtitle").textContent = `Recorded ${formatDate(take.createdAt)}`;
   const q = `?id=${encodeURIComponent(take.id)}`;
   $("dataLink").href = `breakdown.html${q}`;
-  if (id) $("navData").href = `breakdown.html${q}`;
 
   render();
   darkQuery.addEventListener?.("change", render);

@@ -1,6 +1,7 @@
 // breakdown.js — shows everything measured from one saved recording.
 // Opens the recording named by ?id=…, or the most recent one.
-import { getTake, latestLocalTake, forgetLocalAudio, archiveIsShared } from "./store.js";
+import { getTake, forgetLocalAudio, archiveIsShared } from "./store.js";
+import { currentTakeId } from "./nav.js?v=1";
 import { framesToCSV } from "./voice-analyzer.js";
 import { drawVowelChart, pickReference, countVowelFrames } from "./vowel-chart.js";
 import { drawPitchTrace, pct, download, slug, formatDate, ACCENT_SECONDS } from "./shared.js";
@@ -10,9 +11,10 @@ const $ = (id) => document.getElementById(id);
 let take = null, showAll = false;
 
 async function load() {
-  const id = new URLSearchParams(location.search).get("id");
+  const id = currentTakeId(); // from the link, or the recording made / opened earlier in this tab
+  if (!id) return showEmpty(null);
   try {
-    take = id ? await getTake(id) : await latestLocalTake();
+    take = await getTake(id);
   } catch (e) {
     return showEmpty(`Couldn't open saved recordings in this browser: ${e.message}`);
   }
