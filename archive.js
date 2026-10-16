@@ -1,6 +1,10 @@
-// archive.js — every saved recording, newest first. Each card links to its breakdown.
-import { listTakes, deleteLocalTake, archiveIsShared } from "./store.js";
-import { drawPitchTrace, formatDate, pct } from "./shared.js";
+// archive.js — every saved recording, newest first, shown by its voice portrait.
+// Each card's portrait links to that person's full portrait; small links go to the portrait and the data.
+// In the shared archive the list arrives without the detailed frames (to stay quick), so each card
+// loads its own data when it scrolls into view, then draws its portrait.
+import { listTakes, getTake, deleteLocalTake, archiveIsShared } from "./store.js";
+import { formatDate, pct } from "./shared.js";
+import { portraitSVG } from "./portrait.js?v=27";
 
 const $ = (id) => document.getElementById(id);
 let takes = [];
@@ -20,26 +24,29 @@ function render() {
   grid.innerHTML = "";
   $("empty").hidden = takes.length > 0;
   $("count").textContent = takes.length ? `${takes.length} voice${takes.length === 1 ? "" : "s"} so far.` : "Every voice recorded so far.";
-  for (const t of takes) {
+  takes.forEach((t, n) => {
+    const q = `?id=${encodeURIComponent(t.id)}`;
     const card = document.createElement("article");
     card.className = "voice-card";
     card.innerHTML = `
-      <a class="voice-link" href="breakdown.html?id=${encodeURIComponent(t.id)}">
-        <canvas class="mini-trace"></canvas>
+      <a class="voice-thumb" href="portrait.html${q}" aria-label=""><span class="thumb-loading">Growing portrait…</span></a>
+      <div class="voice-info">
         <h2 class="voice-name"></h2>
-        <p class="note voice-date"></p>
-        <dl class="voice-stats">
-          <div><dt>Pitch</dt><dd class="s-pitch"></dd></div>
-          <div><dt>Pace</dt><dd class="s-rate"></dd></div>
-          <div><dt>Accent</dt><dd class="s-accent"></dd></div>
-        </dl>
-      </a>
-      <button class="link-button delete" hidden>Delete</button>`;
+        <p class="voice-date"></p>
+        <p class="voice-stats"></p>
+        <div class="card-links">
+          <button class="link-button delete" hidden>Delete</button>
+        </div>
+      </div>`;
+    card.querySelector(".voice-thumb").setAttribute("aria-label", `${t.name}'s voice portrait`);
     card.querySelector(".voice-name").textContent = t.name;
     card.querySelector(".voice-date").textContent = `${formatDate(t.createdAt)} · ${t.seconds.toFixed(1)} s`;
-    card.querySelector(".s-pitch").textContent = t.summary?.pitchHz ? `${t.summary.pitchHz} Hz · ${t.summary.note}` : "–";
-    card.querySelector(".s-rate").textContent = t.rhythm?.speechRate != null ? `${t.rhythm.speechRate.toFixed(1)} syll/s` : "–";
-    card.querySelector(".s-accent").textContent = t.accent ? `${t.accent.top.name} (${pct(t.accent.top.score)})` : "–";
+    const stats = [
+      t.summary?.pitchHz ? `${t.summary.pitchHz} Hz · ${t.summary.note}` : null,
+      t.rhythm?.speechRate != null ? `${t.rhythm.speechRate.toFixed(1)} syll/s` : null,
+      t.accent ? `${t.accent.top.name} ${pct(t.accent.top.score)}` : null,
+    ].filter(Boolean);
+    card.querySelector(".voice-stats").textContent = stats.join(" · ");
     const del = card.querySelector(".delete");
     del.hidden = archiveIsShared; // the shared archive is managed from the Supabase dashboard
     del.addEventListener("click", async () => {
@@ -48,14 +55,35 @@ function render() {
       takes = takes.filter((x) => x.id !== t.id);
       render();
     });
+    card._take = t;
+    card._n = n;
     grid.appendChild(card);
-    const line = (t.preview || []).map(([time, pitch]) => ({ t: time, pitch }));
-    card._trace = () => drawPitchTrace(card.querySelector(".mini-trace"), line, { pauses: t.rhythm?.pauses ?? [], grid: false, lineWidth: 1.5 });
-  }
-  drawAll();
+    watcher.observe(card);
+  });
 }
 
-function drawAll() { document.querySelectorAll(".voice-card").forEach((c) => c._trace?.()); }
-window.addEventListener("resize", drawAll);
+// draw each portrait when its card comes into view (loading its full data first if needed)
+const watcher = new IntersectionObserver((entries) => {
+  for (const e of entries) {
+    if (!e.isIntersecting) continue;
+    watcher.unobserve(e.target);
+    drawCard(e.target);
+  }
+}, { rootMargin: "300px" });
+
+async function drawCard(card) {
+  const thumb = card.querySelector(".voice-thumb");
+  try {
+    let t = card._take;
+    if (!t.frames) t = card._take = { ...t, ...(await getTake(t.id)) };
+    const { svg } = portraitSVG({ ...t, frames: t.frames || [] }, { theme: "dark", idPrefix: `a${card._n}` });
+    thumb.innerHTML = svg;
+    const el = thumb.querySelector("svg");
+    el.removeAttribute("class");      // a thumbnail: no hover/zoom behaviour
+    el.setAttribute("aria-hidden", "true");
+  } catch (err) {
+    thumb.innerHTML = `<span class="thumb-loading">Couldn't draw this portrait.</span>`;
+  }
+}
 
 load();

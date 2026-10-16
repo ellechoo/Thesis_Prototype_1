@@ -3,66 +3,71 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Voice to Data</title>
-  <link rel="stylesheet" href="style.css" />
+  <title>Voiceprint</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300..500&display=swap" />
+  <link rel="stylesheet" href="style.css?v=5" />
 </head>
 <body>
-  <main>
+  <main class="record-page wide">
     <nav class="tabs">
       <a href="index.html" aria-current="page">Record</a>
       <a href="breakdown.html">Your data</a>
-      <a href="archive.html">Archive</a>
-      <span class="tab-soon" title="Coming soon">Portrait <small>soon</small></span>
+      <a href="portrait.html">Portrait</a>
+      <a href="archive.html" class="nav-right">Archive</a>
     </nav>
 
-    <header class="hero">
-      <h1>Voice to Data</h1>
-      <p class="sub">Read one short passage aloud and see your voice turned into data: pitch, loudness, rhythm, vowels, and the closest of 16 English accent groups.</p>
+    <div class="rec-grid">
+    <div class="rec-left">
+    <header class="rec-head">
+      <h1 class="wordmark">Voiceprint</h1>
+      <p class="rec-intro">For best results, find a quiet place. Enter your name and tap Start<span class="kbd-hint"> (or press the space bar)</span>. When the countdown ends, read the passage aloud, then tap Done as soon as you finish.</p>
     </header>
+
+      <section id="session" class="session" hidden>
+        <div class="rec-row">
+          <span class="rec-dot" id="recDot"></span>
+          <span id="timer" class="timer">0:00</span>
+          <span id="activeDot" class="hearing"></span>
+        </div>
+        <div class="meter" aria-hidden="true"><div id="meterFill" class="fill"></div><div id="gateMark" class="gate"></div></div>
+      </section>
+
+    </div>
+
+    <div class="rec-right">
+    <section class="passage-wrap">
+      <div class="passage-box">
+        <p class="passage" id="passage" data-syllables="42">Momo is a small poodle and she is the color of milk chocolate. She has fluffy fur, a good nose for snacks, and she barks at every red truck that passes our house.</p>
+        <div class="countdown" id="countdown" hidden><span id="countNum">3</span></div>
+      </div>
+      <p class="note" id="followNote" hidden></p>
+    </section>
 
     <section class="start-card" id="startCard">
       <label for="nameInput" class="field-label">Your name or a nickname</label>
       <div class="start-row">
-        <input type="text" id="nameInput" maxlength="40" autocomplete="nickname" placeholder="e.g. Momo's biggest fan" />
-        <button id="startBtn" class="primary big">Start</button>
+        <input type="text" id="nameInput" maxlength="40" autocomplete="off" placeholder="e.g. Momo's biggest fan" />
+        <div class="btn-stack">
+          <button id="startBtn" class="primary big"><svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="8.5" y="2.5" width="7" height="12" rx="3.5" fill="currentColor"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5M8.5 21.5h7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Start</button>
+        <button id="cancelBtn" class="big cancel-btn" hidden>Cancel</button>
+          <button id="doneBtn" class="primary big" hidden disabled>Done</button>
+        </div>
       </div>
-      <p class="note" id="archiveNotice"></p>
-      <p class="note" id="nameHint">After you tap Start, there's a 3-second countdown: stay quiet until it says Go.</p>
-    </section>
-
-    <section class="passage-wrap">
-      <div class="meter-label"><span>Read this aloud at a relaxed pace (about 8 seconds)</span></div>
-      <div class="passage-box">
-      <div class="passage" id="passage" data-syllables="42">
-        Momo is a small poodle and she is the color of milk chocolate. She has fluffy fur, a good nose for snacks, and she barks at every red truck that passes our house.
-      </div>
-      <div class="countdown" id="countdown" hidden><span id="countNum">3</span></div>
-      </div>
-      <p class="note follow-note">Words light up as you read them. For this, your browser's own speech recognition listens along; in Chrome that means the audio for it goes to Google. This page doesn't keep that audio.</p>
-      <p class="note" id="followNote" hidden></p>
+      <p class="fine" id="archiveNotice"></p>
     </section>
 
     <p id="status" class="status" aria-live="polite"></p>
 
-    <section id="session" hidden>
-      <div class="rec-row">
-        <span class="rec-dot" id="recDot"></span>
-        <span id="timer" class="timer">0:00</span>
-        <button id="doneBtn" class="primary" disabled>Done</button>
-        <button id="cancelBtn">Cancel</button>
-      </div>
-      <div class="readouts live-readouts">
-        <div class="card"><span class="label">Pitch</span><span id="rPitch" class="value">–</span><span class="unit">Hz</span></div>
-        <div class="card"><span class="label">Note</span><span id="rNote" class="value">–</span><span class="unit">&nbsp;</span></div>
-        <div class="card"><span class="label">Loudness</span><span id="rDb" class="value">–</span><span class="unit">dBFS</span></div>
-      </div>
-      <div class="meter-wrap">
-        <div class="meter-label"><span>Level</span><span id="gateLabel">gate: default</span></div>
-        <div class="meter"><div id="meterFill" class="fill"></div><div id="gateMark" class="gate"></div></div>
-      </div>
-      <div>
-        <div class="meter-label"><span>Pitch (last 8 s)</span><span id="activeDot" class="dot">idle</span></div>
-        <canvas id="trace" class="trace-small"></canvas>
+
+    <section class="review" id="review" hidden>
+      <p class="review-title">How did that sound?</p>
+      <audio id="reviewAudio" controls preload="auto"></audio>
+      <p class="note" id="reviewNote">Listen back if you like. Choosing “Use this recording” adds your name and voice data to the archive. The recording itself is never kept.</p>
+      <div class="controls">
+        <button id="useBtn" class="primary">Use this recording</button>
+        <button id="retryBtn">Try again</button>
       </div>
     </section>
 
@@ -72,7 +77,8 @@
       <p class="note" id="processingStep"></p>
     </section>
 
-    <details class="settings-box">
+
+        <details class="settings-box">
       <summary>Settings</summary>
       <div class="settings">
         <label><input type="checkbox" id="optFilters" checked /> Filter rumble &amp; hiss (80 Hz – 8 kHz)</label>
@@ -80,8 +86,10 @@
         <p class="hint">Settings apply to the next recording. The accent check always uses the unfiltered audio.</p>
       </div>
     </details>
+    </div>
+    </div>
   </main>
 
-  <script type="module" src="app.js?v=8"></script>
+  <script type="module" src="app.js?v=16"></script>
 </body>
 </html>

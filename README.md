@@ -1,11 +1,12 @@
-# Voice to Data
+# Voiceprint
 
-A small website that listens to a microphone (computer or phone) and turns a voice into numbers you can save and visualize. It has three pages, with a fourth (Portrait) to come:
+A small website that listens to a microphone (computer or phone) and turns a voice into numbers you can save and visualize. It has four pages:
 
 | Page | What it does |
 |---|---|
-| **Record** (`index.html`) | The landing page. Enter a name or nickname, tap Start, wait for the 3-2-1 countdown (it measures room noise meanwhile), then read the passage. Words light up as you read; pitch and loudness show live. Tap Done and it analyzes the recording, saves it and opens the breakdown. |
+| **Record** (`index.html`) | The landing page. Enter a name or nickname, tap Start, wait for the 3-2-1 countdown (it measures room noise meanwhile), then read the passage. Words light up as you read; pitch and loudness show live. Tap Done to listen back, then choose **Use this recording** (it's saved and the breakdown opens) or **Try again** (it's thrown away and the countdown restarts). |
 | **Your data** (`breakdown.html`) | Everything measured from one recording: typical pitch, note, loudness, brightness, pitch confidence, frames; pitch over time with pauses shaded; the 16-group accent result; rhythm; the vowel chart; playback and downloads (JSON, CSV, WAV). Opens `?id=…`, or the latest recording. |
+| **Portrait** (`portrait.html`) | A living, explorable portrait (animated SVG) made from one recording: a glowing bloom whose body is shaped by the voice's timbre, with one strand per moment. Each strand's color, reach, sharpness, glow and flicker come from that moment's data; the bloom breathes at the speaking tempo. Every voice grows a different creature, all at the same size. Hover or tap any part, or a measurement in the side list, to see what it shows. Adapts to light and dark mode; respects reduced-motion settings. Download as SVG (animated) or PNG. |
 | **Archive** (`archive.html`) | Every voice recorded on the site, newest first, as cards with a mini pitch line, pitch, pace and closest accent. Each links to its breakdown. |
 
 **Recordings are never kept.** Only the name and the measurements are saved. The person can play their recording back on their results page; then it's deleted, including from that browser, so the next person on a shared computer can't replay it. (The word highlighting uses the browser's speech recognition, which in Chrome sends audio to Google; see *Recording*.)
@@ -27,6 +28,8 @@ Everything is free: no accounts, no API keys.
 | `index.html`, `app.js` | Record page: name, countdown, recording, analysis, saving. |
 | `breakdown.html`, `breakdown.js` | Breakdown page for one saved recording. |
 | `archive.html`, `archive.js` | Archive page. |
+| `portrait.html`, `portrait-page.js` | Portrait page. |
+| `portrait.js` | Builds the portrait SVG. **All the data → visual rules are in its `MAP` section at the top**, with comments; change them there. Each element is tagged with `data-key` so the page can explain it; the plain-language explanations are in `features()` (the `legend` list). |
 | `store.js` | Saves and loads recordings' data: the shared archive (Supabase) when set up, plus a copy in the browser (IndexedDB). |
 | `supabase-setup.sql` | Run once in Supabase to create the archive's table and permissions. |
 | `shared.js` | Helpers the pages share: summary values, pitch trace drawing, the accent check, downloads. |
@@ -95,9 +98,11 @@ On iPhone, audio only starts after a tap, which the Start button handles.
 1. Enter a name or nickname and tap **Start**, then allow the microphone.
 2. Stay quiet during the 3-2-1 countdown. It measures the room in the first 1.5 seconds and sets the noise gate, so background hum isn't counted as voice.
 3. At **Go!**, read the passage. Pitch, note, loudness, the level meter and a pitch trace update live.
-4. Tap **Done**. The page measures rhythm, runs the accent check, saves the recording and opens its breakdown.
+4. Tap **Done**. You can play the recording back and choose:
+   - **Use this recording**: the page finishes measuring rhythm and the accent (this starts in the background while you listen), adds the take to the archive and opens its breakdown.
+   - **Try again**: the recording and its measurements are discarded and the countdown starts over with the same name. Nothing is saved.
 
-While you read, the passage lights up word by word. `progress.js` does this with the browser's built-in speech recognition (Web Speech API), matching the words it hears to the passage in order and forgiving misheard or skipped words. **Privacy:** only the highlighting uses it, and every measurement still runs on the device, but in Chrome the recognizer sends that audio to Google (Safari can run it on the device). The page says so under the passage. Browsers without it (such as Firefox) show the passage without highlighting. Recording stops by itself after 2 minutes. The accent check needs at least 5 seconds and uses the first 30. Filters and browser noise suppression are under **Settings**; the accent check always gets the unfiltered audio.
+While you read, the passage lights up word by word. `progress.js` does this with the browser's built-in speech recognition (Web Speech API), matching the words it hears to the passage in order and forgiving misheard or skipped words. **Privacy:** only the highlighting uses it, and every measurement still runs on the device, but in Chrome the recognizer sends that audio to Google (Safari can run it on the device). The page no longer mentions this on screen. Browsers without it (such as Firefox) show the passage without highlighting. Recording stops by itself after 2 minutes. The accent check needs at least 5 seconds and uses the first 30. Filters and browser noise suppression are under **Settings**; the accent check always gets the unfiltered audio.
 
 ### What each frame contains
 
