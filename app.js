@@ -13,34 +13,34 @@ const COUNTDOWN = 3;             // seconds; the room-noise check runs during it
 const CALIBRATE_MS = 1500;
 const MAX_TAKE_SECONDS = 120;    // recording stops by itself here
 const MIN_TAKE_SECONDS = 1;
-const TRACE_SECONDS = 8;
 
 const $ = (id) => document.getElementById(id);
 const ui = {
   startCard: $("startCard"), name: $("nameInput"), start: $("startBtn"), nameHint: $("nameHint"),
   countdown: $("countdown"), countNum: $("countNum"), followNote: $("followNote"), status: $("status"),
   session: $("session"), recDot: $("recDot"), timer: $("timer"), done: $("doneBtn"), cancel: $("cancelBtn"),
-  pitch: $("rPitch"), note: $("rNote"), db: $("rDb"),
-  meterFill: $("meterFill"), gateMark: $("gateMark"), gateLabel: $("gateLabel"), active: $("activeDot"), trace: $("trace"),
+  meterFill: $("meterFill"), gateMark: $("gateMark"), active: $("activeDot"),
   processing: $("processing"), step: $("processingStep"),
+  review: $("review"), reviewAudio: $("reviewAudio"), reviewNote: $("reviewNote"), use: $("useBtn"), retry: $("retryBtn"),
   optFilters: $("optFilters"), optBrowserNS: $("optBrowserNS"), archiveNotice: $("archiveNotice"),
 };
 
 ui.archiveNotice.textContent = (archiveIsShared
   ? "Your name and the measurements from your recording (pitch, loudness, rhythm, vowels, accent) go into the public archive."
   : "Your name and the measurements from your recording are saved in this browser's archive.") +
-  " The recording itself is never saved: you can play it back on your results page, then it's gone.";
+  " The recording itself is never saved.";
 
 let phase = "idle";   // idle | countdown | recording | processing
 let va = null, rec = null, tick = null, stopFollowing = null, cancelled = false;
-let recent = [];
-let drawQueued = false;
+let session = 0; // bumps on every Start, so a cancelled countdown can never carry on behind a new one
 
 const passage = makePassageTracker($("passage"));
 const PASSAGE_SYLLABLES = Number($("passage").dataset.syllables) || passage.syllables;
 if (!canFollowWords) showFollowNote("Word highlighting isn't available in this browser (try Chrome or Safari). Everything else works.");
 
-try { ui.name.value = localStorage.getItem("voiceName") || ""; } catch {}
+// The name field starts empty for each visitor (shared computers). Clear any name an older version remembered.
+ui.name.value = "";
+try { localStorage.removeItem("voiceName"); } catch {}
 
 function setStatus(msg, isError = false) {
   ui.status.textContent = msg;
@@ -54,8 +54,14 @@ function setPhase(p) {
   ui.name.disabled = ui.start.disabled = busy;
   ui.optFilters.disabled = ui.optBrowserNS.disabled = busy;
   ui.startCard.classList.toggle("dimmed", busy);
+  // while counting down or recording, Start turns into Cancel (same spot, so an accidental tap is easy to undo)
+  const live = p === "countdown" || p === "recording";
+  ui.start.hidden = live;
+  ui.cancel.hidden = !live;
+  ui.done.hidden = !live; // Done sits right under Cancel (enabled once recording starts)
   ui.session.hidden = !(p === "countdown" || p === "recording");
   ui.processing.hidden = p !== "processing";
+  ui.review.hidden = p !== "review";
   ui.done.disabled = p !== "recording";
   ui.recDot.classList.toggle("on", p === "recording");
 }
@@ -67,7 +73,6 @@ function getName() {
     ui.name.focus();
     return null;
   }
-  try { localStorage.setItem("voiceName", name); } catch {}
   return name;
 }
 
@@ -82,21 +87,22 @@ async function startSession() {
   const name = getName();
   if (!name) return;
   cancelled = false;
-  recent = [];
+  const my = ++session;
+  const gone = () => cancelled || my !== session;
   passage.reset();
   ui.timer.textContent = "0:00";
   setPhase("countdown");
   va = new VoiceAnalyzer({ useFilters: ui.optFilters.checked, browserNoiseSuppression: ui.optBrowserNS.checked });
   va.onFrame = onLiveFrame;
   try {
-    setStatus("Asking for the microphone…");
+    setStatus("");
     await va.start();
+    if (gone()) { if (my === session) stopMic(); return; } // cancelled while the mic was being opened
     warmUpAccentModel(); // start downloading the accent model while they read
-    setStatus("Get ready. Stay quiet until it says Go.");
     const quiet = va.calibrate(CALIBRATE_MS); // measure the room during the countdown
-    await countdown();
+    await countdown(gone);
     await quiet;
-    if (cancelled) return;
+    if (gone()) return;
     rec = await startRecording(va.ctx, va.source);
     va.clear();
     va.resetClock();
@@ -104,29 +110,50 @@ async function startSession() {
     stopFollowing = passage.follow(showFollowNote);
     if (!stopFollowing) passage.reset();
     setPhase("recording");
-    setStatus("Read the passage aloud. Tap Done when you finish.");
     tick = setInterval(() => {
       const s = rec.seconds();
       ui.timer.textContent = clock(s);
       if (s >= MAX_TAKE_SECONDS) finishRecording();
     }, 200);
   } catch (err) {
-    if (cancelled) return;
+    if (gone()) return;
     stopMic();
     setPhase("idle");
     setStatus(friendlyError(err), true);
   }
 }
 
-async function countdown() {
+// COUNTDOWN SOUND: a soft short beep on 3, 2, 1 and a higher one on Go. The beeps are brief and quiet
+// so the room-noise check running at the same time ignores them (it uses the 75th percentile), and
+// recording only starts once the Go beep has finished.
+function beep(freq, seconds = 0.08, volume = 0.12) {
+  const ctx = va?.ctx;
+  if (!ctx) return;
+  const t = ctx.currentTime, osc = ctx.createOscillator(), g = ctx.createGain();
+  osc.type = "sine";
+  osc.frequency.value = freq;
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(volume, t + 0.005);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + seconds);
+  osc.connect(g).connect(ctx.destination);
+  osc.start(t);
+  osc.stop(t + seconds + 0.02);
+}
+
+async function countdown(gone) {
   ui.countdown.hidden = false;
   for (let n = COUNTDOWN; n > 0; n--) {
-    if (cancelled) break;
+    if (gone()) return;
     showCount(String(n));
+    beep(660);
     await sleep(1000);
   }
-  if (!cancelled) { showCount("Go!"); setTimeout(() => (ui.countdown.hidden = true), 600); }
-  else ui.countdown.hidden = true;
+  if (!gone()) {
+    showCount("Go!");
+    beep(990, 0.16);
+    setTimeout(() => { if (!gone()) ui.countdown.hidden = true; }, 600);
+    await sleep(200); // let the Go beep finish before recording starts
+  }
 }
 function showCount(text) {
   ui.countNum.textContent = text;
@@ -159,8 +186,49 @@ async function finishRecording() {
     setStatus("That was too short. Tap Start and read the passage.", true);
     return;
   }
-  await finalize({ ...info, samples, samplesRate: sampleRate, source: "microphone", name: getName() || "Anonymous" });
+  review({ ...info, samples, samplesRate: sampleRate, source: "microphone", name: getName() || "Anonymous" });
 }
+
+// ---------- review: use this recording, or try again ----------
+// The analysis starts in the background while the person listens back, so "Use" is quick.
+// Nothing is saved (and nothing reaches the archive) unless they choose "Use this recording".
+let pending = null;
+
+function review(info) {
+  const prepared = prepareTake(info);
+  prepared.catch(() => {});
+  const url = URL.createObjectURL(encodeWav(info.samples, info.samplesRate));
+  ui.reviewAudio.src = url;
+  pending = { prepared, url };
+  setPhase("review");
+  setStatus("");
+  ui.use.focus();
+}
+
+ui.use.addEventListener("click", async () => {
+  if (!pending) return;
+  const { prepared, url } = pending;
+  pending = null;
+  ui.reviewAudio.pause();
+  setPhase("processing");
+  step("Finishing the analysis…");
+  let take;
+  try { take = await prepared; }
+  catch (e) { setPhase("idle"); setStatus(`Couldn't analyze the recording: ${e.message}`, true); return; }
+  finally { URL.revokeObjectURL(url); ui.reviewAudio.removeAttribute("src"); }
+  await saveAndOpen(take);
+});
+
+ui.retry.addEventListener("click", () => {
+  if (!pending) return;
+  ui.reviewAudio.pause();
+  URL.revokeObjectURL(pending.url);
+  ui.reviewAudio.removeAttribute("src");
+  pending = null; // the recording and its analysis are simply dropped
+  setPhase("idle");
+  setStatus("");
+  startSession();
+});
 
 function stopMic() {
   clearInterval(tick);
@@ -169,35 +237,38 @@ function stopMic() {
   rec = null;
   va?.stop();
   ui.meterFill.style.width = "0%";
-  ui.active.textContent = "idle";
+  ui.active.textContent = "";
   ui.active.classList.remove("on");
 }
 
 // ---------- live display ----------
 function onLiveFrame(f) {
-  ui.pitch.textContent = f.pitch ? Math.round(f.pitch) : "–";
-  ui.note.textContent = f.pitch ? noteName(f.pitch) : "–";
-  ui.db.textContent = f.db > -120 ? Math.round(f.db) : "–";
-  ui.active.textContent = f.calibrating ? "measuring room" : f.active ? "sound detected" : "silent";
+  // only the volume is shown while recording: enough to tell the person they're being heard
+  ui.active.textContent = f.calibrating ? "Measuring the room…" : f.active ? "Hearing you" : "Listening…";
   ui.active.classList.toggle("on", f.active && !f.calibrating);
   ui.meterFill.style.width = `${dbToPct(f.db)}%`;
+  ui.meterFill.classList.toggle("on", f.active && !f.calibrating);
   ui.gateMark.style.left = `${dbToPct(20 * Math.log10(va.gate))}%`;
-  ui.gateLabel.textContent = `gate: ${toDb(va.gate)} dBFS${va.noiseFloor == null ? " (default)" : ""}`;
-  if (phase !== "recording") return;
-  recent.push(f);
-  while (recent.length && recent[0].t < f.t - TRACE_SECONDS) recent.shift();
-  if (!drawQueued) {
-    drawQueued = true;
-    requestAnimationFrame(() => { drawQueued = false; drawPitchTrace(ui.trace, recent, { windowSeconds: TRACE_SECONDS, lineWidth: 2.5 }); });
-  }
 }
+
+// SPACE BAR: starts when idle, finishes (same as Done) while recording, cancels during the countdown.
+// Ignored while typing in a field (names can have spaces) or when a button has keyboard focus
+// (space already presses that button).
+document.addEventListener("keydown", (e) => {
+  if (e.code !== "Space" && e.key !== " ") return;
+  const t = e.target;
+  if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (t.closest?.("input, textarea, select, button, audio, summary, a, [contenteditable]")) return;
+  if (phase === "idle") { e.preventDefault(); startSession(); }
+  else if (phase === "recording") { e.preventDefault(); finishRecording(); }
+  else if (phase === "countdown") { e.preventDefault(); cancelSession(); }
+});
 
 // ---------- analyze, save, go to the breakdown ----------
 function step(msg) { ui.step.textContent = msg; }
 
-async function finalize({ frames, samples, samplesRate, sampleRate, noiseFloor, gate, settings, source, name }) {
-  setPhase("processing");
-  setStatus("");
+// Measures everything (rhythm, accent, …) without saving. Returns the finished take.
+async function prepareTake({ frames, samples, samplesRate, sampleRate, noiseFloor, gate, settings, source, name }) {
   const seconds = samples.length / samplesRate;
   const take = {
     id: newId(), name, createdAt: new Date().toISOString(), source, seconds: round2(seconds),
@@ -220,6 +291,11 @@ async function finalize({ frames, samples, samplesRate, sampleRate, noiseFloor, 
   } catch (e) {
     take.accentNote = `The accent check failed: ${e.message}`;
   }
+  return take;
+}
+
+// Saves the take (to the archive when it's set up) and opens its breakdown.
+async function saveAndOpen(take) {
   try {
     step(archiveIsShared ? "Adding to the archive…" : "Saving…");
     const saved = await saveTake(take);

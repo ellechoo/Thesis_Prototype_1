@@ -35,6 +35,7 @@ function render() {
   $("subtitle").textContent = `${formatDate(take.createdAt)} · ${take.seconds.toFixed(1)} s` +
     (take.source === "microphone" ? "" : ` · from ${take.source}`);
 
+  $("portraitLink").href = `portrait.html?id=${encodeURIComponent(take.id)}`;
   showSaveNotice();
   setUpAudio();
 
