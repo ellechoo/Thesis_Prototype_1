@@ -5,7 +5,7 @@
 // Elements carry data-key="a b c": the first key is what hovering it explains; all keys decide
 // which list items light it up.
 import { getTake, archiveIsShared } from "./store.js";
-import { currentTakeId } from "./nav.js?v=1";
+import { currentTakeId } from "./nav.js?v=5";
 import { portraitSVG } from "./portrait.js?v=27";
 import { download, slug, formatDate } from "./shared.js";
 
@@ -22,8 +22,8 @@ async function load() {
   if (!take.frames) take.frames = [];
 
   $("content").hidden = false;
-  document.title = `${take.name}'s voice portrait`;
-  $("title").textContent = `${take.name}'s voice portrait`;
+  document.title = `${take.name}'s Voiceprint`;
+  $("title").textContent = `${take.name}'s Voiceprint`;
   $("subtitle").textContent = `Recorded ${formatDate(take.createdAt)}`;
   const q = `?id=${encodeURIComponent(take.id)}`;
   $("dataLink").href = `breakdown.html${q}`;

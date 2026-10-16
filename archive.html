@@ -7,35 +7,32 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300..500&display=swap" />
-  <link rel="stylesheet" href="style.css?v=5" />
+  <link rel="stylesheet" href="style.css?v=17" />
 </head>
 <body>
   <main class="wide">
     <nav class="tabs">
-      <a href="index.html">Record</a>
-      <a href="breakdown.html">Your data</a>
+      <a href="index.html" class="nav-pill nav-record">Record</a>
+      <a href="breakdown.html">Breakdown</a>
       <a href="portrait.html">Portrait</a>
-      <a href="archive.html" class="nav-right" aria-current="page">Archive</a>
+      <a href="archive.html" class="nav-right nav-pill nav-archive" aria-current="page">Archive</a>
     </nav>
 
     <header class="archive-head">
       <h1 class="page-title">Archive</h1>
-      <div class="archive-meta">
-        <p class="lede" id="count">Every voice recorded so far.</p>
-        <p class="note" id="where"></p>
-      </div>
     </header>
 
     <p class="status" id="status"></p>
     <section class="archive-grid" id="grid"></section>
+    <section class="id-view" id="idView" hidden></section>
 
     <section id="empty" class="empty-state" hidden>
       <h1>No voices yet</h1>
       <p><a class="button primary" href="index.html">Record the first one</a></p>
     </section>
   </main>
-  <script type="module" src="nav.js?v=1"></script>
+  <script type="module" src="nav.js?v=5"></script>
 
-  <script type="module" src="archive.js?v=16"></script>
+  <script type="module" src="archive.js?v=18"></script>
 </body>
 </html>

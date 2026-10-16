@@ -496,3 +496,282 @@ main.wide > .status, .archive-grid { max-width: 1280px; margin-left: auto; margi
 .tabs a[aria-disabled="true"] { color: #4d4a45; cursor: not-allowed; }
 .tabs a[aria-disabled="true"]:hover { color: #4d4a45; }
 .empty-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+/* measurement cards explain themselves on hover */
+.card[data-tip] { cursor: help; }
+.card[data-tip] .label { text-decoration: underline dotted var(--muted); text-underline-offset: 3px; }
+.card[data-tip]:focus { outline: none; }
+.card[data-tip]:focus-visible { outline: 2px solid var(--text); outline-offset: 4px; }
+.look-for ul { margin: 10px 0 0; padding-left: 18px; display: grid; gap: 6px; }
+
+/* NAV AT THE BOTTOM: fixed to the bottom edge of the screen on every page (like an app's tab bar).
+   Same width and tab positions on every page; the current page gets a line along the top of its tab. */
+.tabs, main:not(.wide) > .tabs {
+  position: fixed; z-index: 20; bottom: 0;
+  left: max(20px, calc((100cqw - 1360px) / 2)); width: min(1360px, calc(100cqw - 40px));
+  margin: 0; background: var(--bg);
+  border-bottom: 0; border-top: 1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.tabs a { border-bottom: 0; border-top: 2px solid transparent; margin-bottom: 0; margin-top: -1px; padding: 13px 10px 15px; }
+.tabs a[aria-current="page"] { border-top-color: var(--accent); }
+main { padding-top: 4px; padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
+.stage-wrap { height: calc(100svh - 64px); } /* the portrait fills the screen above the nav */
+/* portrait title: more room above it (the nav is at the bottom now) */
+.portrait-head { top: 40px; }
+.zoom-controls { top: 40px; }
+@media (max-width: 640px) { .portrait-head { top: 28px; } .zoom-controls { top: auto; } }
+
+/* NAV: Record and Archive are the two main destinations, so they're pills.
+   Record is blue (with a small "recording" dot); Archive is outlined white. Each fills in when it's the current page. */
+.tabs { align-items: center; }
+.tabs a.nav-pill { display: inline-flex; align-items: center; gap: 7px; margin: 8px 8px 8px 0; padding: 7px 15px; border: 1px solid; border-radius: 999px; }
+.tabs a.nav-pill.nav-right { margin-left: auto; margin-right: 0; }
+.tabs a.nav-record { color: var(--accent); border-color: var(--accent); }
+.tabs a.nav-record::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.tabs a.nav-record:hover { color: var(--accent-text); background: var(--accent); }
+.tabs a.nav-record[aria-current="page"] { color: var(--accent-text); background: var(--accent); border-color: var(--accent); }
+.tabs a.nav-archive { color: var(--text); border-color: var(--muted); }
+.tabs a.nav-archive:hover { border-color: var(--text); }
+.tabs a.nav-archive[aria-current="page"] { color: var(--bg); background: var(--text); border-color: var(--text); }
+@media (max-width: 520px) {
+  .tabs { gap: 0; }
+  .tabs a { padding: 13px 7px 15px; font-size: 11.5px; letter-spacing: 0.04em; }
+  .tabs a.nav-pill { padding: 6px 10px; margin-right: 4px; }
+  .tabs a.nav-record::before { display: none; } /* no room for the dot on phones */
+}
+
+/* nav breathing room: taller bar, more space above and below the buttons */
+.tabs a { padding-top: 20px; padding-bottom: 22px; }
+.tabs a.nav-pill { margin-top: 13px; margin-bottom: 15px; padding-top: 8px; padding-bottom: 8px; }
+main { padding-bottom: calc(104px + env(safe-area-inset-bottom)); }
+.stage-wrap { height: calc(100svh - 78px); }
+@media (max-width: 520px) {
+  .tabs a { padding-top: 18px; padding-bottom: 20px; }
+  .tabs a.nav-pill { margin-top: 11px; margin-bottom: 13px; padding-top: 7px; padding-bottom: 7px; }
+}
+
+/* NAV AS FOLDER TABS: the nav items are file-folder tabs poking up from the bottom edge of the
+   screen, all grouped in the bottom-left corner (centered on phones, equal widths). The current
+   page's tab is taller and in front. Record is blue and Archive white; they're always there.
+   Your data and Portrait tuck behind Record while there's nothing to show (e.g. on the Record
+   page) and slide out once there is (see nav.js for the animation). */
+.tabs, main:not(.wide) > .tabs { border-top: 0; background: transparent; align-items: flex-end; justify-content: flex-start; gap: 0; overflow: visible; padding-bottom: 0; }
+.tabs a, .tabs a.nav-pill {
+  position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  flex: 0 0 auto; max-width: 240px; overflow: hidden; white-space: nowrap;
+  margin: 0 -8px 0 0; padding: 13px 24px 15px;
+  border: 1px solid #3d3a35; border-bottom: 0; border-radius: 14px 14px 0 0;
+  background: #121211; color: var(--muted); box-shadow: -6px 0 14px rgba(0, 0, 0, 0.7);
+  transition: max-width .55s ease, padding .55s ease, margin .55s ease, border-width .55s ease, flex-basis .55s ease, transform .15s ease;
+}
+.tabs a.nav-pill.nav-right { margin-left: 0; margin-right: 0; }
+.tabs a.nav-record { z-index: 4; color: var(--accent); }
+.tabs a[data-href="breakdown.html"] { z-index: 3; }
+.tabs a[data-href="portrait.html"] { z-index: 2; }
+.tabs a.nav-archive { z-index: 1; color: var(--text); }
+.tabs a:hover:not([aria-disabled="true"]) { transform: translateY(-4px); background: #121211; }
+.tabs a[aria-current="page"] { z-index: 10; padding-bottom: 25px; background: #23221e; color: var(--text); border-color: #5a5650; }
+.tabs a.nav-record[aria-current="page"], .tabs a.nav-record[aria-current="page"]:hover { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+.tabs a.nav-archive[aria-current="page"], .tabs a.nav-archive[aria-current="page"]:hover { background: var(--text); color: var(--bg); border-color: var(--text); }
+/* collapsed: Your data and Portrait shrink to nothing behind Record */
+.tabs.collapsed a[data-href] { max-width: 0; padding-left: 0; padding-right: 0; margin-right: 0; border-width: 0; box-shadow: none; }
+.tabs.no-anim a { transition: none !important; }
+@media (prefers-reduced-motion: reduce) { .tabs a { transition: none !important; } }
+@media (max-width: 640px) {
+  .tabs, main:not(.wide) > .tabs { left: 0; width: 100%; justify-content: center; padding: 0 12px; }
+  .tabs a, .tabs a.nav-pill { flex: 0 0 calc(25% - 3px); max-width: none; margin-right: -5px; padding: 12px 4px 14px; font-size: 11.5px; letter-spacing: 0.04em; }
+  .tabs a.nav-pill.nav-right { margin-right: 0; }
+  .tabs a[aria-current="page"] { padding-bottom: 22px; }
+  .tabs a.nav-record::before { display: none; }
+  .tabs.collapsed a[data-href] { flex-basis: 0; }
+}
+
+/* folder tabs: a gap between tabs, and the tabs run 24px past the bottom of the screen so a tab that
+   pops up on hover never shows its bottom edge */
+.tabs, main:not(.wide) > .tabs { bottom: -24px; gap: 8px; }
+.tabs a, .tabs a.nav-pill { margin-right: 0; padding-bottom: 39px; box-shadow: none; }
+.tabs a[aria-current="page"] { padding-bottom: 49px; }
+.tabs.collapsed { gap: 0; }
+.tabs.collapsed a.nav-record { margin-right: 8px; }
+@media (max-width: 640px) {
+  .tabs, main:not(.wide) > .tabs { gap: 6px; }
+  .tabs a, .tabs a.nav-pill { flex-basis: calc(25% - 4.5px); margin-right: 0; padding-bottom: 38px; }
+  .tabs a[aria-current="page"] { padding-bottom: 46px; }
+  .tabs.collapsed a.nav-record { margin-right: 6px; }
+}
+
+/* folder tabs: every tab is blue; the page you're on turns white. All tabs are the same height
+   (only the hover lift changes it). */
+.tabs a, .tabs a.nav-pill, .tabs a.nav-record, .tabs a.nav-archive,
+.tabs a:hover:not([aria-disabled="true"]), .tabs a.nav-record:hover {
+  background: var(--accent); color: var(--accent-text); border-color: var(--accent);
+}
+.tabs a[aria-current="page"], .tabs a[aria-current="page"]:hover,
+.tabs a.nav-record[aria-current="page"], .tabs a.nav-record[aria-current="page"]:hover,
+.tabs a.nav-archive[aria-current="page"], .tabs a.nav-archive[aria-current="page"]:hover {
+  background: var(--text); color: var(--bg); border-color: var(--text);
+}
+.tabs a[aria-current="page"] { padding-bottom: 39px; }
+.tabs a[aria-disabled="true"] { background: var(--panel); color: #4d4a45; border-color: var(--line); }
+@media (max-width: 640px) { .tabs a[aria-current="page"] { padding-bottom: 38px; } }
+
+/* FOLDER TABS WITH FLARED ENDS: where each tab meets the bottom of the screen, its sides curve
+   outward like a real folder tab. The two curves are drawn by the tab's ::after, in the tab's own
+   color (--tab-bg). --flare is the size of the curve. */
+.tabs, main:not(.wide) > .tabs { gap: 24px; padding-left: 12px; }
+.tabs a, .tabs a.nav-pill {
+  --tab-bg: var(--accent); --flare: 12px;
+  overflow: visible; border: 0; border-radius: 13px 13px 0 0;
+  /* lets the curves show outside the tab, but still trims the label while the tab collapses */
+  clip-path: inset(-20px calc(-1 * var(--flare) - 1px) -80px calc(-1 * var(--flare) - 1px));
+}
+.tabs a[aria-current="page"] { --tab-bg: var(--text); }
+.tabs a[aria-disabled="true"] { --tab-bg: var(--panel); }
+.tabs a::after {
+  content: ""; position: absolute; pointer-events: none;
+  left: calc(-1 * var(--flare)); right: calc(-1 * var(--flare)); bottom: 0; height: calc(24px + var(--flare));
+  background:
+    radial-gradient(circle at 0 0, transparent calc(var(--flare) - 0.5px), var(--tab-bg) var(--flare)) left top / var(--flare) var(--flare) no-repeat,
+    radial-gradient(circle at 100% 0, transparent calc(var(--flare) - 0.5px), var(--tab-bg) var(--flare)) right top / var(--flare) var(--flare) no-repeat,
+    linear-gradient(var(--tab-bg), var(--tab-bg)) left bottom / var(--flare) calc(100% - var(--flare) + 0.5px) no-repeat,
+    linear-gradient(var(--tab-bg), var(--tab-bg)) right bottom / var(--flare) calc(100% - var(--flare) + 0.5px) no-repeat;
+}
+.tabs.collapsed a[data-href] { clip-path: inset(0); }
+.tabs.collapsed a[data-href]::after { display: none; }
+@media (max-width: 640px) {
+  .tabs, main:not(.wide) > .tabs { gap: 14px; padding: 0 16px; }
+  .tabs a, .tabs a.nav-pill { --flare: 7px; flex-basis: calc(25% - 10.5px); }
+}
+.tabs.collapsed a.nav-record { margin-right: 24px; }
+@media (max-width: 640px) { .tabs.collapsed a.nav-record { margin-right: 14px; } }
+/* OVERLAP: tabs tuck slightly under the tab to their left (Record in front, Archive at the back);
+   the current page's tab comes to the very front. A thin black edge keeps same-colored tabs apart. */
+.tabs, main:not(.wide) > .tabs { gap: 0; }
+.tabs a, .tabs a.nav-pill, .tabs.collapsed a.nav-record { margin-right: -14px; filter: drop-shadow(2px 0 0 var(--bg)); }
+.tabs a[aria-current="page"] { filter: drop-shadow(2px 0 0 var(--bg)) drop-shadow(-2px 0 0 var(--bg)); }
+.tabs a.nav-pill.nav-right { margin-right: 0; }
+.tabs a:not(.nav-record) { padding-left: 30px; } /* room so the label isn't hidden under the tab in front */
+@media (max-width: 640px) {
+  .tabs a, .tabs a.nav-pill, .tabs.collapsed a.nav-record { margin-right: -9px; flex-basis: calc(25% + 6px); }
+  .tabs a:not(.nav-record) { padding-left: 12px; }
+}
+@media (max-width: 640px) {
+  .tabs a, .tabs a.nav-pill, .tabs.collapsed a.nav-record { margin-right: -7px; flex-basis: calc(25% + 5px); font-size: 11px; letter-spacing: 0.02em; }
+  .tabs a:not(.nav-record) { padding-left: 11px; padding-right: 2px; }
+}
+/* phones: too narrow for four overlapping labels, so they sit side by side with just the curves touching */
+@media (max-width: 640px) {
+  .tabs, main:not(.wide) > .tabs { gap: 14px; }
+  .tabs a, .tabs a.nav-pill { margin-right: 0; flex-basis: calc(25% - 10.5px); padding-left: 4px; padding-right: 4px; font-size: 11.5px; letter-spacing: 0.04em; filter: none; }
+  .tabs a:not(.nav-record) { padding-left: 4px; padding-right: 4px; }
+  .tabs.collapsed a.nav-record { margin-right: 14px; filter: none; }
+}
+/* phones: a smaller overlap, with slightly smaller labels so they all stay readable */
+@media (max-width: 640px) {
+  .tabs, main:not(.wide) > .tabs { gap: 0; padding: 0 12px; }
+  .tabs a, .tabs a.nav-pill { margin-right: -6px; flex-basis: calc(25% + 4.5px); padding-left: 6px; padding-right: 6px; font-size: 10.5px; letter-spacing: 0.03em; filter: drop-shadow(1.5px 0 0 var(--bg)); }
+  .tabs a:not(.nav-record) { padding-left: 9px; padding-right: 5px; }
+  .tabs a[aria-current="page"] { filter: drop-shadow(1.5px 0 0 var(--bg)) drop-shadow(-1.5px 0 0 var(--bg)); }
+  .tabs a.nav-pill.nav-right { margin-right: 0; }
+  .tabs.collapsed a.nav-record { margin-right: -6px; filter: drop-shadow(1.5px 0 0 var(--bg)); }
+}
+
+/* FOLDER TABS — OUTLINE STYLE: inactive tabs are black with a blue outline and blue label; the
+   page you're on is a solid white tab. The tab shape (rounded top, sides that curve out at the
+   bottom of the screen) is an SVG drawn with border-image so it stretches to any label width. */
+.tabs a, .tabs a.nav-pill { background: transparent; border: 0; border-radius: 0; filter: none; clip-path: inset(-20px -13px -80px -13px);
+  border-image-source: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2252%22%20height%3D%2251%22%20viewBox%3D%220%200%2052%2051%22%3E%3Cpath%20d%3D%22M0.75%2051%20L0.75%2027%20A11.25%2011.25%200%200%200%2012%2015.75%20L12.75%2015.75%20L12.75%2013%20A12.25%2012.25%200%200%201%2025%200.75%20L27%200.75%20A12.25%2012.25%200%200%201%2039.25%2013%20L39.25%2015.75%20L40%2015.75%20A11.25%2011.25%200%200%200%2051.25%2027%20L51.25%2051%22%20fill%3D%22%23000%22%20stroke%3D%22%23748ffc%22%20stroke-width%3D%221.5%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E"); border-image-slice: 14 25 36 25 fill; border-image-width: 14px 25px 36px 25px; border-image-outset: 0 12px; border-image-repeat: stretch; border-style: solid; }
+.tabs a[aria-current="page"] { border-image-source: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2252%22%20height%3D%2251%22%20viewBox%3D%220%200%2052%2051%22%3E%3Cpath%20d%3D%22M0.75%2051%20L0.75%2027%20A11.25%2011.25%200%200%200%2012%2015.75%20L12.75%2015.75%20L12.75%2013%20A12.25%2012.25%200%200%201%2025%200.75%20L27%200.75%20A12.25%2012.25%200%200%201%2039.25%2013%20L39.25%2015.75%20L40%2015.75%20A11.25%2011.25%200%200%200%2051.25%2027%20L51.25%2051%22%20fill%3D%22%23ecebe7%22%20stroke%3D%22%23ecebe7%22%20stroke-width%3D%221.5%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E"); }
+.tabs a[aria-disabled="true"] { border-image-source: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2252%22%20height%3D%2251%22%20viewBox%3D%220%200%2052%2051%22%3E%3Cpath%20d%3D%22M0.75%2051%20L0.75%2027%20A11.25%2011.25%200%200%200%2012%2015.75%20L12.75%2015.75%20L12.75%2013%20A12.25%2012.25%200%200%201%2025%200.75%20L27%200.75%20A12.25%2012.25%200%200%201%2039.25%2013%20L39.25%2015.75%20L40%2015.75%20A11.25%2011.25%200%200%200%2051.25%2027%20L51.25%2051%22%20fill%3D%22%231f1e1c%22%20stroke%3D%22%2334322e%22%20stroke-width%3D%221.5%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E"); }
+.tabs a::after { content: none; }
+.tabs a, .tabs a.nav-pill, .tabs a.nav-record, .tabs a.nav-archive, .tabs a:hover:not([aria-disabled="true"]), .tabs a.nav-record:hover { background: transparent; color: var(--accent); }
+.tabs a[aria-current="page"], .tabs a[aria-current="page"]:hover, .tabs a.nav-record[aria-current="page"], .tabs a.nav-archive[aria-current="page"], .tabs a.nav-record[aria-current="page"]:hover, .tabs a.nav-archive[aria-current="page"]:hover { background: transparent; color: var(--bg); }
+.tabs a[aria-disabled="true"] { color: #4d4a45; }
+.tabs.collapsed a[data-href] { border-image-source: none; clip-path: inset(0); }
+.tabs a, .tabs a.nav-pill, .tabs.collapsed a.nav-record { filter: none; }
+.tabs a[aria-current="page"] { filter: none; }
+@media (max-width: 640px) {
+  .tabs a, .tabs a.nav-pill { background: transparent; border: 0; border-radius: 0; filter: none; clip-path: inset(-20px -8px -80px -8px);
+    border-image-source: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2238%22%20height%3D%2244%22%20viewBox%3D%220%200%2038%2044%22%3E%3Cpath%20d%3D%22M0.75%2044%20L0.75%2020%20A6.25%206.25%200%200%200%207%2013.75%20L7.75%2013.75%20L7.75%2011%20A10.25%2010.25%200%200%201%2018%200.75%20L20%200.75%20A10.25%2010.25%200%200%201%2030.25%2011%20L30.25%2013.75%20L31%2013.75%20A6.25%206.25%200%200%200%2037.25%2020%20L37.25%2044%22%20fill%3D%22%23000%22%20stroke%3D%22%23748ffc%22%20stroke-width%3D%221.5%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E"); border-image-slice: 12 18 31 18 fill; border-image-width: 12px 18px 31px 18px; border-image-outset: 0 7px; border-image-repeat: stretch; border-style: solid; }
+  .tabs a[aria-current="page"] { border-image-source: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2238%22%20height%3D%2244%22%20viewBox%3D%220%200%2038%2044%22%3E%3Cpath%20d%3D%22M0.75%2044%20L0.75%2020%20A6.25%206.25%200%200%200%207%2013.75%20L7.75%2013.75%20L7.75%2011%20A10.25%2010.25%200%200%201%2018%200.75%20L20%200.75%20A10.25%2010.25%200%200%201%2030.25%2011%20L30.25%2013.75%20L31%2013.75%20A6.25%206.25%200%200%200%2037.25%2020%20L37.25%2044%22%20fill%3D%22%23ecebe7%22%20stroke%3D%22%23ecebe7%22%20stroke-width%3D%221.5%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E"); }
+  .tabs a[aria-disabled="true"] { border-image-source: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2238%22%20height%3D%2244%22%20viewBox%3D%220%200%2038%2044%22%3E%3Cpath%20d%3D%22M0.75%2044%20L0.75%2020%20A6.25%206.25%200%200%200%207%2013.75%20L7.75%2013.75%20L7.75%2011%20A10.25%2010.25%200%200%201%2018%200.75%20L20%200.75%20A10.25%2010.25%200%200%201%2030.25%2011%20L30.25%2013.75%20L31%2013.75%20A6.25%206.25%200%200%200%2037.25%2020%20L37.25%2044%22%20fill%3D%22%231f1e1c%22%20stroke%3D%22%2334322e%22%20stroke-width%3D%221.5%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E"); }
+  .tabs a, .tabs a.nav-pill, .tabs.collapsed a.nav-record, .tabs a[aria-current="page"] { filter: none; }
+}
+
+/* FOLDER TABS — HOVER: hovering an inactive tab fills it blue with a black label (the tab you're
+   on stays white). No lift on hover any more. */
+.tabs a:hover:not([aria-current="page"]):not([aria-disabled="true"]) { border-image-source: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2252%22%20height%3D%2251%22%20viewBox%3D%220%200%2052%2051%22%3E%3Cpath%20d%3D%22M0.75%2051%20L0.75%2027%20A11.25%2011.25%200%200%200%2012%2015.75%20L12.75%2015.75%20L12.75%2013%20A12.25%2012.25%200%200%201%2025%200.75%20L27%200.75%20A12.25%2012.25%200%200%201%2039.25%2013%20L39.25%2015.75%20L40%2015.75%20A11.25%2011.25%200%200%200%2051.25%2027%20L51.25%2051%22%20fill%3D%22%23748ffc%22%20stroke%3D%22%23748ffc%22%20stroke-width%3D%221.5%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E"); color: var(--accent-text); transform: none; }
+.tabs a:hover { transform: none; }
+/* desktop: every tab the same width, with the label centred in the part you can see (the left
+   14px of each tab sits under the tab in front of it), so there's equal room on both sides */
+@media (min-width: 641px) {
+  .tabs a, .tabs a.nav-pill { width: 158px; flex: 0 0 158px; max-width: 158px; padding-left: 28px; padding-right: 14px; }
+  .tabs a.nav-record { padding-left: 21px; padding-right: 21px; }
+  .tabs a[aria-current="page"]:not(.nav-record) { padding-left: 21px; padding-right: 21px; }
+  .tabs.collapsed a[data-href] { width: 0; flex-basis: 0; max-width: 0; padding-left: 0; padding-right: 0; }
+}
+@media (max-width: 640px) {
+  .tabs a:hover:not([aria-current="page"]):not([aria-disabled="true"]) { border-image-source: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2238%22%20height%3D%2244%22%20viewBox%3D%220%200%2038%2044%22%3E%3Cpath%20d%3D%22M0.75%2044%20L0.75%2020%20A6.25%206.25%200%200%200%207%2013.75%20L7.75%2013.75%20L7.75%2011%20A10.25%2010.25%200%200%201%2018%200.75%20L20%200.75%20A10.25%2010.25%200%200%201%2030.25%2011%20L30.25%2013.75%20L31%2013.75%20A6.25%206.25%200%200%200%2037.25%2020%20L37.25%2044%22%20fill%3D%22%23748ffc%22%20stroke%3D%22%23748ffc%22%20stroke-width%3D%221.5%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E"); }
+}
+
+/* no tab ever moves on hover (including the current page's tab) */
+.tabs a, .tabs a:hover, .tabs a:hover:not([aria-disabled="true"]) { transform: none !important; }
+/* desktop: the tabs sit centered along the bottom of the screen */
+@media (min-width: 641px) {
+  .tabs, main:not(.wide) > .tabs { justify-content: center; padding-left: 0; padding-right: 0; }
+}
+
+/* =====================================================================================
+   VOICE ID CARD (Archive → click a portrait). The portrait is the ID photo, the fields
+   describe the voice, the "signature" is its pitch line. --id-hue is the person's own
+   pitch color (set in id-card.js) and tints the photo frame and the card's top edge.
+   ===================================================================================== */
+body.showing-id .archive-head { display: none; }
+.id-view { max-width: 980px; margin: 48px auto 0; display: grid; gap: 22px; }
+.id-loading { text-align: center; padding: 80px 0; }
+.id-card {
+  position: relative; display: grid; gap: 22px; padding: 26px 30px 22px;
+  background: #0f0f0e; border: 1px solid #3d3a35; border-top: 4px solid var(--id-hue, var(--accent)); border-radius: 22px;
+  animation: id-in 0.35s ease-out;
+}
+@keyframes id-in { from { opacity: 0; transform: translateY(12px) scale(0.985); } }
+@media (prefers-reduced-motion: reduce) { .id-card { animation: none; } }
+
+.id-top { display: flex; align-items: baseline; gap: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+.id-brand { margin: 0; font-family: var(--serif); font-weight: 300; font-size: 26px; letter-spacing: -0.02em; }
+.id-kind { margin: 0; color: var(--muted); font-size: 13.5px; }
+.id-close { margin-left: auto; align-self: center; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--line); color: var(--text); }
+.id-close:hover { border-color: var(--text); }
+.id-close:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
+.id-close svg { width: 18px; height: 18px; }
+
+.id-body { display: grid; grid-template-columns: minmax(220px, 300px) minmax(0, 1fr); gap: 30px; align-items: start; }
+.id-photo { display: block; aspect-ratio: 1 / 1; border-radius: 14px; overflow: hidden; background: #000; border: 2px solid var(--id-hue, var(--accent)); }
+.id-photo svg { display: block; width: 100%; height: 100%; }
+.id-name { margin: 2px 0 6px; font-size: clamp(36px, 4.4vw, 54px); line-height: 1.02; overflow-wrap: anywhere; }
+.id-meta { margin: 0 0 20px; display: flex; flex-wrap: wrap; gap: 4px 20px; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.id-fields { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 26px; }
+.id-field { padding-top: 9px; border-top: 1px solid var(--line); min-width: 0; }
+.id-field dt { font-size: 12.5px; color: var(--muted); }
+.id-field dd { margin: 2px 0 0; display: grid; }
+.id-value { font-family: var(--serif); font-size: 23px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.id-detail { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.id-sign { display: grid; gap: 4px; }
+.id-sign svg { width: 100%; height: 64px; color: var(--text); border-bottom: 1px solid var(--muted); padding-bottom: 6px; overflow: visible; }
+.id-sign p { margin: 0; font-size: 12px; color: var(--muted); }
+
+.id-code { margin: 0; padding-top: 14px; border-top: 1px solid var(--line); display: grid; gap: 2px; font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-size: clamp(9px, 1.45vw, 14px); letter-spacing: 0.14em; color: var(--muted); overflow: hidden; white-space: nowrap; }
+.id-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+
+@media (max-width: 760px) {
+  .id-view { margin-top: 24px; }
+  .id-card { padding: 20px 18px 18px; gap: 18px; border-radius: 18px; }
+  .id-body { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .id-photo { max-width: 360px; width: 100%; justify-self: center; }
+  .id-kind { display: none; }
+  .id-value { font-size: 20px; }
+  .id-fields { gap: 12px 18px; }
+  .id-actions .button { flex: 1 1 auto; text-align: center; }
+}

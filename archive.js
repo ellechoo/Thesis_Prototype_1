@@ -1,19 +1,21 @@
-// archive.js — every saved recording, newest first, shown by its voice portrait.
-// Each card's portrait links to that person's full portrait; small links go to the portrait and the data.
+// archive.js — every saved recording, newest first, shown by its voice portrait (the gallery).
+// Clicking a portrait opens that person's voice ID card (archive.html?id=…), still on the Archive
+// page; the card links on to the full portrait and breakdown. The card's X, Esc, or the Archive tab
+// go back to the gallery.
 // In the shared archive the list arrives without the detailed frames (to stay quick), so each card
 // loads its own data when it scrolls into view, then draws its portrait.
 import { listTakes, getTake, deleteLocalTake, archiveIsShared } from "./store.js";
 import { formatDate, pct } from "./shared.js";
 import { portraitSVG } from "./portrait.js?v=27";
+import { renderIdCard } from "./id-card.js?v=1";
 
 const $ = (id) => document.getElementById(id);
 let takes = [];
 
-$("where").textContent = archiveIsShared
-  ? "Voices from everyone who has used this site, as data. The recordings themselves are never kept."
-  : "Recordings are saved in this browser, on this device.";
 
 async function load() {
+  const id = new URLSearchParams(location.search).get("id");
+  if (id) return showCard(id);
   try { takes = await listTakes(); }
   catch (e) { $("status").textContent = `Couldn't open saved recordings in this browser: ${e.message}`; $("status").classList.add("error"); return; }
   render();
@@ -23,13 +25,12 @@ function render() {
   const grid = $("grid");
   grid.innerHTML = "";
   $("empty").hidden = takes.length > 0;
-  $("count").textContent = takes.length ? `${takes.length} voice${takes.length === 1 ? "" : "s"} so far.` : "Every voice recorded so far.";
   takes.forEach((t, n) => {
     const q = `?id=${encodeURIComponent(t.id)}`;
     const card = document.createElement("article");
     card.className = "voice-card";
     card.innerHTML = `
-      <a class="voice-thumb" href="portrait.html${q}" aria-label=""><span class="thumb-loading">Growing portrait…</span></a>
+      <a class="voice-thumb" href="archive.html${q}" aria-label=""><span class="thumb-loading">Growing portrait…</span></a>
       <div class="voice-info">
         <h2 class="voice-name"></h2>
         <p class="voice-date"></p>
@@ -38,7 +39,7 @@ function render() {
           <button class="link-button delete" hidden>Delete</button>
         </div>
       </div>`;
-    card.querySelector(".voice-thumb").setAttribute("aria-label", `${t.name}'s voice portrait`);
+    card.querySelector(".voice-thumb").setAttribute("aria-label", `Open ${t.name}'s voice ID card`);
     card.querySelector(".voice-name").textContent = t.name;
     card.querySelector(".voice-date").textContent = `${formatDate(t.createdAt)} · ${t.seconds.toFixed(1)} s`;
     const stats = [
@@ -84,6 +85,21 @@ async function drawCard(card) {
   } catch (err) {
     thumb.innerHTML = `<span class="thumb-loading">Couldn't draw this portrait.</span>`;
   }
+}
+
+// ---------- one person's ID card ----------
+async function showCard(id) {
+  document.body.classList.add("showing-id");
+  $("grid").hidden = true;
+  const view = $("idView");
+  view.hidden = false;
+  view.innerHTML = `<p class="note id-loading">Opening the ID card…</p>`;
+  let take = null;
+  try { take = await getTake(id); } catch (e) { view.innerHTML = `<p class="status error">Couldn't open this voice: ${e.message}</p>`; return; }
+  if (!take) { view.innerHTML = `<p class="status">That voice isn't in the archive any more. <a href="archive.html">Back to the archive</a></p>`; return; }
+  document.title = `${take.name} · Voice ID · Voiceprint`;
+  renderIdCard(view, take);
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") location.href = "archive.html"; });
 }
 
 load();
