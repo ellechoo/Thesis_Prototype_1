@@ -3,19 +3,19 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Your data · Voiceprint</title>
+  <title>Breakdown · Voiceprint</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300..500&display=swap" />
-  <link rel="stylesheet" href="style.css?v=5" />
+  <link rel="stylesheet" href="style.css?v=17" />
 </head>
 <body>
   <main class="wide">
     <nav class="tabs">
-      <a href="index.html">Record</a>
-      <a href="breakdown.html" aria-current="page">Your data</a>
+      <a href="index.html" class="nav-pill nav-record">Record</a>
+      <a href="breakdown.html" aria-current="page">Breakdown</a>
       <a href="portrait.html">Portrait</a>
-      <a href="archive.html" class="nav-right">Archive</a>
+      <a href="archive.html" class="nav-right nav-pill nav-archive">Archive</a>
     </nav>
 
     <section id="empty" class="empty-state" hidden>
@@ -33,7 +33,6 @@
         <p class="note" id="audioNote"></p>
         <div class="side-actions">
           <a class="button primary" id="portraitLink" href="portrait.html">See the portrait</a>
-          <a class="button" href="index.html">Record again</a>
         </div>
         <div class="downloads">
           <span class="note">Download</span>
@@ -48,12 +47,12 @@
           <h2 class="section-title">Measurements</h2>
           <p class="note block-note">Typical values across the whole reading.</p>
           <div class="readouts stats">
-            <div class="card"><span class="label">Pitch</span><span id="rPitch" class="value">–</span><span class="unit">Hz</span></div>
-            <div class="card"><span class="label">Note</span><span id="rNote" class="value">–</span><span class="unit">&nbsp;</span></div>
-            <div class="card"><span class="label">Loudness</span><span id="rDb" class="value">–</span><span class="unit">dBFS</span></div>
-            <div class="card"><span class="label">Brightness</span><span id="rCentroid" class="value">–</span><span class="unit">Hz centroid</span></div>
-            <div class="card"><span class="label">Pitch confidence</span><span id="rClarity" class="value">–</span><span class="unit">0 to 1</span></div>
-            <div class="card"><span class="label">Frames recorded</span><span id="rFrames" class="value">–</span><span class="unit" id="rDuration">s</span></div>
+            <div class="card" tabindex="0" data-tip="How high or low your voice is: how many times per second your vocal folds vibrate (hertz, Hz). This is your typical value across the reading."><span class="label">Pitch</span><span id="rPitch" class="value">–</span><span class="unit">Hz</span></div>
+            <div class="card" tabindex="0" data-tip="The musical note closest to your typical pitch, as if your voice were a key on a piano."><span class="label">Note</span><span id="rNote" class="value">–</span><span class="unit">&nbsp;</span></div>
+            <div class="card" tabindex="0" data-tip="How loud your voice reached the microphone, in decibels below the most it can take (dBFS). Closer to 0 is louder. Distance from the mic matters too."><span class="label">Loudness</span><span id="rDb" class="value">–</span><span class="unit">dBFS</span></div>
+            <div class="card" tabindex="0" data-tip="Where the energy of your voice sits across low and high frequencies (the spectral centroid). Higher numbers sound brighter or sharper; lower ones darker or mellower."><span class="label">Brightness</span><span id="rCentroid" class="value">–</span><span class="unit">Hz centroid</span></div>
+            <div class="card" tabindex="0" data-tip="How clear and steady your pitch was, from 0 to 1. Breathy, creaky or wavering moments score lower."><span class="label">Pitch confidence</span><span id="rClarity" class="value">–</span><span class="unit">0 to 1</span></div>
+            <div class="card" tabindex="0" data-tip="How many snapshots of your voice were measured: about 40 per second. Every number on this page comes from these."><span class="label">Frames recorded</span><span id="rFrames" class="value">–</span><span class="unit" id="rDuration">s</span></div>
           </div>
           <div class="chart-block">
             <div class="meter-label"><span>Pitch over the whole recording</span><span>shaded: pauses</span></div>
@@ -83,10 +82,10 @@
           <p class="note" id="rhythmEmpty" hidden>No speech was detected, so there's nothing to measure.</p>
           <div id="rhythmResult" hidden>
             <div class="readouts stats">
-              <div class="card"><span class="label">Speaking rate</span><span id="rRate" class="value">–</span><span class="unit" id="rRateUnit">syllables / s</span></div>
-              <div class="card"><span class="label">Pauses</span><span id="rPauses" class="value">–</span><span class="unit">longer than 0.2 s</span></div>
-              <div class="card"><span class="label">Pause time</span><span id="rPauseTime" class="value">–</span><span class="unit" id="rPauseShare">s</span></div>
-              <div class="card"><span class="label">Longest pause</span><span id="rLongest" class="value">–</span><span class="unit">s</span></div>
+              <div class="card" tabindex="0" data-tip="How fast you read: syllables per second across the whole reading, pauses included."><span class="label">Speaking rate</span><span id="rRate" class="value">–</span><span class="unit" id="rRateUnit">syllables / s</span></div>
+              <div class="card" tabindex="0" data-tip="How many times you went silent for longer than 0.2 seconds."><span class="label">Pauses</span><span id="rPauses" class="value">–</span><span class="unit">longer than 0.2 s</span></div>
+              <div class="card" tabindex="0" data-tip="The total time spent in those pauses, and how much of the reading it was."><span class="label">Pause time</span><span id="rPauseTime" class="value">–</span><span class="unit" id="rPauseShare">s</span></div>
+              <div class="card" tabindex="0" data-tip="Your single longest silence."><span class="label">Longest pause</span><span id="rLongest" class="value">–</span><span class="unit">s</span></div>
             </div>
             <div class="rhythm-wrap">
               <div class="meter-label"><span>Talking and pausing, start to finish</span><span id="rTotal"></span></div>
@@ -124,15 +123,16 @@
             <span class="legend-item"><span class="key cloud"></span>your voiced sounds (<span id="vowelCount">0</span>)</span>
             <span class="legend-item"><span class="key ref"></span>average American English speaker (Peterson &amp; Barney, 1952)</span>
           </p>
-          <div class="explainer look-for">
-            <p><strong>Things to look for</strong></p>
+          <details class="look-for">
+            <summary>Things to look for</summary>
+            
             <ul>
               <li><strong>The shape of your cloud.</strong> Ignore single dots, which include the slides between sounds. Look at how far the cloud stretches toward each corner.</li>
               <li><strong>Shifts from the dashed shape.</strong> Accents move vowels around. “Oo” sitting further left than the reference is common in California and southern England.</li>
               <li><strong>“Chocolate” and “small.”</strong> Many people in the US and Canada say these two vowels the same way (the cot–caught merger). If you do, the lower right of your cloud forms one blob instead of two.</li>
               <li><strong>Higher voices sit lower and further left</strong> overall, because smaller mouths and throats resonate higher. That's why the reference switches with your pitch.</li>
             </ul>
-          </div>
+          </details>
           <details>
             <summary>More about the vowel chart</summary>
             <p>Each faint dot is one moment of voiced speech (about 40 per second), placed by its first two formants. <strong>Up and down</strong> is F1, which follows how open your mouth is. <strong>Left and right</strong> is F2, which follows where your tongue is.</p>
@@ -148,8 +148,9 @@
         </section>
       </div>
     </div>
+    <div class="tip" id="tip" role="tooltip" hidden></div>
   </main>
 
-  <script type="module" src="breakdown.js?v=11"></script>
+  <script type="module" src="breakdown.js?v=16"></script>
 </body>
 </html>

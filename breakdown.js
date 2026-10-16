@@ -1,7 +1,7 @@
 // breakdown.js — shows everything measured from one saved recording.
 // Opens the recording named by ?id=…, or the most recent one.
 import { getTake, forgetLocalAudio, archiveIsShared } from "./store.js";
-import { currentTakeId } from "./nav.js?v=1";
+import { currentTakeId } from "./nav.js?v=5";
 import { framesToCSV } from "./voice-analyzer.js";
 import { drawVowelChart, pickReference, countVowelFrames } from "./vowel-chart.js";
 import { drawPitchTrace, pct, download, slug, formatDate, ACCENT_SECONDS } from "./shared.js";
@@ -166,3 +166,27 @@ $("wavBtn").addEventListener("click", () => {
 });
 
 load();
+
+// ---------- hover explanations for each measurement ----------
+// Every stat card has a data-tip. Hover, tab to it, or tap it on a phone (tap elsewhere to close) to show a small popup.
+const tip = $("tip");
+let tipFor = null;
+function showTip(card) {
+  tipFor = card;
+  tip.textContent = card.dataset.tip;
+  tip.hidden = false;
+  const r = card.getBoundingClientRect(), t = tip.getBoundingClientRect();
+  const left = Math.min(Math.max(8, r.left), window.innerWidth - t.width - 8);
+  const below = r.bottom + 8, above = r.top - t.height - 8;
+  tip.style.left = `${left}px`;
+  tip.style.top = `${below + t.height < window.innerHeight - 8 || above < 8 ? below : above}px`;
+}
+function hideTip(card) { if (!card || card === tipFor) { tip.hidden = true; tipFor = null; } }
+document.querySelectorAll(".card[data-tip]").forEach((card) => {
+  card.addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse") showTip(card); });
+  card.addEventListener("pointerleave", (e) => { if (e.pointerType === "mouse") hideTip(card); });
+  card.addEventListener("focus", () => showTip(card));
+  card.addEventListener("blur", () => hideTip(card));
+});
+window.addEventListener("scroll", () => hideTip(), { passive: true });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") hideTip(); });

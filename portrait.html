@@ -7,15 +7,15 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300..500&display=swap" />
-  <link rel="stylesheet" href="style.css?v=5" />
+  <link rel="stylesheet" href="style.css?v=17" />
 </head>
 <body>
   <main class="wide">
     <nav class="tabs">
-      <a href="index.html">Record</a>
-      <a href="breakdown.html" id="navData">Your data</a>
+      <a href="index.html" class="nav-pill nav-record">Record</a>
+      <a href="breakdown.html" id="navData">Breakdown</a>
       <a href="portrait.html" aria-current="page">Portrait</a>
-      <a href="archive.html" class="nav-right">Archive</a>
+      <a href="archive.html" class="nav-right nav-pill nav-archive">Archive</a>
     </nav>
 
     <section id="empty" class="empty-state" hidden>
@@ -28,7 +28,7 @@
       <div class="explore">
         <div class="stage-wrap">
           <header class="portrait-head">
-            <h1 id="title">Voice portrait</h1>
+            <h1 id="title">Voiceprint</h1>
             <p class="sub" id="subtitle"></p>
           </header>
           <div class="stage" id="stage"></div>
@@ -66,6 +66,6 @@
     <div class="tip" id="tip" hidden></div>
   </main>
 
-  <script type="module" src="portrait-page.js?v=33"></script>
+  <script type="module" src="portrait-page.js?v=38"></script>
 </body>
 </html>
