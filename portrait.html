@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300..500&display=swap" />
-  <link rel="stylesheet" href="style.css?v=17" />
+  <link rel="stylesheet" href="style.css?v=20" />
 </head>
 <body>
   <main class="wide">
@@ -37,7 +37,7 @@
             <button type="button" id="zoomOut" aria-label="Zoom out">−</button>
             <button type="button" id="zoomFit">Fit</button>
           </div>
-          <p class="hint zoom-hint">Pinch, ⌘/Ctrl + scroll, or double-click to zoom. Scroll with two fingers or drag to move around.</p>
+          <p class="hint zoom-hint">It turns slowly on its own. Drag to turn it yourself, scroll or pinch to zoom, and hover or tap any part to see what it shows.</p>
         </div>
 
         <details class="explore-side">
@@ -47,18 +47,18 @@
             <p class="readout-name" id="rName">Explore the portrait</p>
             <p class="readout-value" id="rValue"></p>
             <p class="readout-detail" id="rDetail"></p>
-            <p class="readout-visual" id="rVisual">Every strand, shape and color comes from this voice. Hover or tap any part of the portrait to see what it shows, or pick a measurement below.</p>
+            <p class="readout-visual" id="rVisual">This portrait is built from this voice. The white structure, the color of the glowing core and its form show the traits that most set a voice apart; smaller details show the rest. Hover or tap any part, or pick a trait below.</p>
             <p class="readout-meaning" id="rMeaning"></p>
           </div>
 
           <ul class="measure-list" id="list"></ul>
 
           <div class="controls side-actions">
-            <button id="svgBtn" class="primary">Download SVG</button>
-            <button id="pngBtn">Download PNG</button>
+            <button id="pngBtn" class="primary">Download image (PNG)</button>
+            <button id="glbBtn">Download 3D model (GLB)</button>
             <a class="button" id="dataLink" href="breakdown.html">See the data</a>
           </div>
-          <p class="hint">The rules that turn data into shapes are in the MAP section at the top of <code>portrait.js</code>.</p>
+          <p class="hint">The rules that turn data into the orb are in the MAP section at the top of <code>voice-orb.js</code>.</p>
           </div>
         </details>
       </div>
@@ -66,6 +66,12 @@
     <div class="tip" id="tip" hidden></div>
   </main>
 
-  <script type="module" src="portrait-page.js?v=39"></script>
+  <script type="importmap">
+  { "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+  } }
+  </script>
+  <script type="module" src="portrait-3d.js?v=3"></script>
 </body>
 </html>

@@ -2,7 +2,7 @@
 // The voice portrait is the ID photo; the fields summarize the voice in words and numbers;
 // the "signature" is the voice's own pitch line; the bottom has a passport-style code line.
 // Every value comes from the stored measurements, so cards always match the data.
-import { portraitSVG } from "./portrait.js?v=27";
+import { snapshot } from "./orb-snapshot.js?v=1";
 import { formatDate, pct, deviceText } from "./shared.js?v=2";
 import { makePreview } from "./store.js";
 
@@ -72,12 +72,11 @@ function codeLines(take) {
 
 /** Fill the #idView section with this take's card. */
 export function renderIdCard(root, take) {
-  const { svg, features: F } = portraitSVG({ ...take, frames: take.frames || [] }, { theme: "dark", idPrefix: "id" });
-  const hue = Math.round(F?.hue ?? 230);
+  const { url, color } = snapshot(take, 640);
   const fields = cardFields(take);
   const [l1, l2] = codeLines(take);
   const q = `?id=${encodeURIComponent(take.id)}`;
-  root.style.setProperty("--id-hue", `hsl(${hue}, 85%, 64%)`);
+  root.style.setProperty("--id-hue", color);
   root.innerHTML = `
     <article class="id-card" aria-label="${esc(take.name)}'s voice ID card">
       <header class="id-top">
@@ -88,7 +87,7 @@ export function renderIdCard(root, take) {
         </a>
       </header>
       <div class="id-body">
-        <a class="id-photo" href="portrait.html${q}" aria-label="Open ${esc(take.name)}'s full portrait">${svg}</a>
+        <a class="id-photo" href="portrait.html${q}" aria-label="Open ${esc(take.name)}'s full portrait"><img src="${url}" alt="" draggable="false" /></a>
         <div class="id-info">
           <h1 class="id-name">${esc(take.name)}</h1>
           <p class="id-meta"><span>No. ${cardNumber(take.id)}</span><span>Issued ${esc(formatDate(take.createdAt))}</span>${deviceText(take) ? `<span>Recorded on: ${esc(deviceText(take))}</span>` : ""}</p>
@@ -107,10 +106,4 @@ export function renderIdCard(root, take) {
       <a class="button primary" href="portrait.html${q}">See the full portrait</a>
       <a class="button" href="breakdown.html${q}">See the breakdown</a>
     </div>`;
-  // the ID photo: a closer crop of the portrait, with no hover/zoom behaviour
-  const photo = root.querySelector(".id-photo svg");
-  photo.removeAttribute("class");
-  photo.setAttribute("aria-hidden", "true");
-  const [x, y, w, h] = photo.getAttribute("viewBox").split(/[\s,]+/).map(Number), z = 1.3;
-  photo.setAttribute("viewBox", `${x + (w - w / z) / 2} ${y + (h - h / z) / 2} ${w / z} ${h / z}`);
 }
