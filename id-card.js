@@ -3,7 +3,7 @@
 // the "signature" is the voice's own pitch line; the bottom has a passport-style code line.
 // Every value comes from the stored measurements, so cards always match the data.
 import { portraitSVG } from "./portrait.js?v=27";
-import { formatDate, pct } from "./shared.js";
+import { formatDate, pct, deviceText } from "./shared.js?v=2";
 import { makePreview } from "./store.js";
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -91,7 +91,7 @@ export function renderIdCard(root, take) {
         <a class="id-photo" href="portrait.html${q}" aria-label="Open ${esc(take.name)}'s full portrait">${svg}</a>
         <div class="id-info">
           <h1 class="id-name">${esc(take.name)}</h1>
-          <p class="id-meta"><span>No. ${cardNumber(take.id)}</span><span>Issued ${esc(formatDate(take.createdAt))}</span></p>
+          <p class="id-meta"><span>No. ${cardNumber(take.id)}</span><span>Issued ${esc(formatDate(take.createdAt))}</span>${deviceText(take) ? `<span>Recorded on: ${esc(deviceText(take))}</span>` : ""}</p>
           <dl class="id-fields">
             ${fields.map(([k, v, d]) => `<div class="id-field"><dt>${esc(k)}</dt><dd><span class="id-value">${esc(v)}</span><span class="id-detail">${esc(d)}</span></dd></div>`).join("")}
           </dl>
