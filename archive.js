@@ -6,8 +6,8 @@
 // loads its own data when it scrolls into view, then draws its portrait.
 import { listTakes, getTake, deleteLocalTake, archiveIsShared } from "./store.js";
 import { formatDate, pct } from "./shared.js?v=2";
-import { portraitSVG } from "./portrait.js?v=27";
-import { renderIdCard } from "./id-card.js?v=2";
+import { snapshot } from "./orb-snapshot.js?v=1";
+import { renderIdCard } from "./id-card.js?v=3";
 
 const $ = (id) => document.getElementById(id);
 let takes = [];
@@ -77,11 +77,8 @@ async function drawCard(card) {
   try {
     let t = card._take;
     if (!t.frames) t = card._take = { ...t, ...(await getTake(t.id)) };
-    const { svg } = portraitSVG({ ...t, frames: t.frames || [] }, { theme: "dark", idPrefix: `a${card._n}` });
-    thumb.innerHTML = svg;
-    const el = thumb.querySelector("svg");
-    el.removeAttribute("class");      // a thumbnail: no hover/zoom behaviour
-    el.setAttribute("aria-hidden", "true");
+    const { url } = snapshot(t);
+    thumb.innerHTML = `<img src="${url}" alt="" draggable="false" />`;
   } catch (err) {
     thumb.innerHTML = `<span class="thumb-loading">Couldn't draw this portrait.</span>`;
   }
