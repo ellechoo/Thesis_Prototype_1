@@ -4,7 +4,7 @@ import { getTake, forgetLocalAudio, archiveIsShared } from "./store.js";
 import { currentTakeId } from "./nav.js?v=5";
 import { framesToCSV } from "./voice-analyzer.js";
 import { drawVowelChart, pickReference, countVowelFrames } from "./vowel-chart.js";
-import { drawPitchTrace, pct, download, slug, formatDate, ACCENT_SECONDS } from "./shared.js";
+import { drawPitchTrace, pct, download, slug, formatDate, ACCENT_SECONDS, deviceText } from "./shared.js?v=2";
 
 const SHOW_TOP = 6;
 const $ = (id) => document.getElementById(id);
@@ -36,6 +36,10 @@ function render() {
   $("title").textContent = `${take.name}'s voice`;
   $("subtitle").textContent = `${formatDate(take.createdAt)} · ${take.seconds.toFixed(1)} s` +
     (take.source === "microphone" ? "" : ` · from ${take.source}`);
+
+  const dev = deviceText(take);
+  $("deviceNote").hidden = !dev;
+  if (dev) $("deviceNote").textContent = `Recorded on: ${dev}`;
 
   $("portraitLink").href = `portrait.html?id=${encodeURIComponent(take.id)}`;
   showSaveNotice();

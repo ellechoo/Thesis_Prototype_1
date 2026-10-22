@@ -148,3 +148,32 @@ export function formatDate(iso) {
   try { return new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }); }
   catch { return iso; }
 }
+
+// ---------- recording device ----------
+// Saved with every recording (inside settings.device) because the microphone colors the timbre
+// measurements. Only broad categories are kept — never the mic's actual name, which often
+// includes its owner's name ("Michelle's AirPods").
+export function describeDevice(stream) {
+  const ua = navigator.userAgent || "";
+  const mobileHint = navigator.userAgentData?.mobile;
+  const tablet = /iPad|Tablet/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) || (/Android/i.test(ua) && !/Mobile/i.test(ua));
+  const type = tablet ? "tablet" : (mobileHint ?? /Mobi|iPhone|Android/i.test(ua)) ? "phone" : "computer";
+  const label = (stream?.getAudioTracks?.()[0]?.label || "").toLowerCase();
+  let mic = "unknown";
+  if (label) {
+    if (/airpods|buds|headset|headphone|earphone|beats|bluetooth|hands-free|hands free|jabra|bose|sony wh|sony wf/.test(label)) mic = "headphones";
+    else if (/built-in|internal|macbook|imac|iphone|ipad|default|microphone array|realtek|intel|laptop/.test(label)) mic = "built-in";
+    else if (/usb|blue yeti|yeti|rode|shure|audio-technica|focusrite|scarlett|interface|external|webcam|c9\d\d|logitech/.test(label)) mic = "external";
+    else mic = "built-in";
+  } else if (type !== "computer") mic = "built-in";
+  return { type, mic };
+}
+
+/** "Computer · built-in mic", or null when the recording didn't save its device */
+export function deviceText(take) {
+  const d = take?.settings?.device;
+  if (!d) return null;
+  const type = { phone: "Phone", tablet: "Tablet", computer: "Computer" }[d.type] || "Unknown device";
+  const mic = { "built-in": "built-in mic", headphones: "headphone / earbud mic", external: "external mic" }[d.mic];
+  return mic ? `${type} · ${mic}` : type;
+}

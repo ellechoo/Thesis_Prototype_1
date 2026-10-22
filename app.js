@@ -6,8 +6,7 @@ import { makePassageTracker, canFollowWords } from "./progress.js?v=8";
 import { saveTake, newId, archiveIsShared } from "./store.js";
 import {
   RATE, MIN_ACCENT_SECONDS, summarize, drawPitchTrace, warmUpAccentModel, classifyAccent,
-  noteName, clock, toDb, dbToPct, round2,
-} from "./shared.js";
+  noteName, clock, toDb, dbToPct, round2, describeDevice } from "./shared.js?v=2";
 
 const COUNTDOWN = 3;             // seconds; the room-noise check runs during it
 const CALIBRATE_MS = 1500;
@@ -179,7 +178,7 @@ async function finishRecording() {
   rec = null;
   stopFollowing?.(); stopFollowing = null;
   passage.finish();
-  const info = { frames: va.frames, sampleRate: va.sampleRate, noiseFloor: va.noiseFloor, gate: va.gate, settings: va.opts };
+  const info = { frames: va.frames, sampleRate: va.sampleRate, noiseFloor: va.noiseFloor, gate: va.gate, settings: { ...va.opts, device: describeDevice(va.stream) } };
   stopMic();
   if (samples.length / sampleRate < MIN_TAKE_SECONDS) {
     setPhase("idle");

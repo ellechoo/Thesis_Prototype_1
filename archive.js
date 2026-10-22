@@ -5,9 +5,9 @@
 // In the shared archive the list arrives without the detailed frames (to stay quick), so each card
 // loads its own data when it scrolls into view, then draws its portrait.
 import { listTakes, getTake, deleteLocalTake, archiveIsShared } from "./store.js";
-import { formatDate, pct } from "./shared.js";
+import { formatDate, pct } from "./shared.js?v=2";
 import { portraitSVG } from "./portrait.js?v=27";
-import { renderIdCard } from "./id-card.js?v=1";
+import { renderIdCard } from "./id-card.js?v=2";
 
 const $ = (id) => document.getElementById(id);
 let takes = [];
