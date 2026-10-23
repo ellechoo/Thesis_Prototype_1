@@ -26,7 +26,7 @@ export const MAP = {
   range: { perSemitone: 0.1, minLight: 0.12, maxLight: 0.74, band: [0.1, 0.65] },
   // the core: one smooth, softly glowing body that fades out toward its edges.
   // solid: how far in from the edge the glow becomes fully opaque (0 = hard edge, 1 = see-through all over).
-  //   The structure behind the core is hidden by it as much as the core is opaque.
+  //   The structure behind the core fades out as much as the core is opaque there.
   core: { radius: 0.58, solid: 0.5 },
   // timbre: 12 numbers compared with a typical voice (measured from the archive's first recordings).
   // Where this voice is above typical, the form swells there; below, it dips.
@@ -49,7 +49,7 @@ export const MAP = {
     },
     // each accent's own variation of its family's structure
     variants: {
-      us: "a geodesic shell", canada: "two nested polyhedra",
+      us: "a geodesic shell", canada: "a spiky star with 20 points",
       england: "one ring", scotland: "two crossed rings", ireland: "one loose, tilted ring", wales: "three stacked rings",
       indian: "lens-shaped petals", malaysia: "big round puffs", philippines: "many small puffs", hongkong: "double-bumped petals", singapore: "swirling petals",
       australia: "wrapping the sides", newzealand: "wrapping the top and bottom",
@@ -137,20 +137,38 @@ function core(T) {
   });
   const mesh = new THREE.Mesh(geo, mat);
   mesh.userData.part = "core";
-  // Draw order: an invisible, slightly smaller sphere first (it only blocks what is behind the core's solid
-  // middle), then the glow, then the structures — so lines in front of the core stay crisp on top of it,
-  // and lines behind it are hidden.
+  // The glow is drawn first; the structures are drawn over it and fade out behind it (see fadeBehindCore).
   mesh.renderOrder = -1;
-  const occ = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ colorWrite: false }));
-  occ.scale.setScalar(0.86); occ.renderOrder = -2; occ.userData.occluder = true; occ.raycast = () => {};
-  mesh.add(occ);
   return { pts: mesh, color: cMain };
 }
 
 // ---------------------------------------------------------------- the white structures (accent)
 // Every structure is an outer layer around the core. The family sets the kind of structure; the
 // voice's top accent inside that family picks one of the family's variations.
-const lineMat = (o) => new THREE.LineBasicMaterial({ color: MAP.lineColor, transparent: true, opacity: o });
+// Parts of a structure that sit behind the core fade out exactly as much as the core's glow covers them
+// there: fully hidden behind its solid middle, gently showing through its soft rim. Each pixel checks
+// whether the line of sight to it passes through the core (a sphere at the centre) before reaching it.
+function fadeBehindCore(mat) {
+  mat.onBeforeCompile = (sh) => {
+    sh.uniforms.coreR = { value: MAP.core.radius };
+    sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nvarying vec3 vWorldP;")
+      .replace("#include <project_vertex>", "#include <project_vertex>\nvWorldP = (modelMatrix * vec4(transformed, 1.0)).xyz;");
+    sh.fragmentShader = sh.fragmentShader.replace("#include <common>", `#include <common>
+varying vec3 vWorldP; uniform float coreR;
+float behindCore() {
+  vec3 rd = vWorldP - cameraPosition; float dist = length(rd); rd /= dist;
+  float b = dot(cameraPosition, rd), c = dot(cameraPosition, cameraPosition) - coreR * coreR, h = b * b - c;
+  if (h <= 0.0) return 1.0;
+  float t = -b - sqrt(h);
+  if (t <= 0.0 || t >= dist) return 1.0;
+  float face = clamp(dot(normalize(cameraPosition + rd * t), -rd), 0.0, 1.0);
+  return 1.0 - smoothstep(0.0, ${MAP.core.solid.toFixed(3)}, face);
+}`).replace("#include <opaque_fragment>", "#include <opaque_fragment>\ngl_FragColor.a *= behindCore();");
+  };
+  mat.customProgramCacheKey = () => "fadeBehindCore";
+  return mat;
+}
+const lineMat = (o) => fadeBehindCore(new THREE.LineBasicMaterial({ color: MAP.lineColor, transparent: true, opacity: o, depthWrite: false }));
 function segs(arr, o) { const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(arr, 3)); const l = new THREE.LineSegments(g, lineMat(o)); l.userData.part = "accent"; return l; }
 const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
 const sph = (lat, lon, r) => V3(r * Math.cos(lat) * Math.cos(lon), r * Math.sin(lat), r * Math.cos(lat) * Math.sin(lon));
@@ -201,27 +219,31 @@ function puffEdges(out, geo, { R0, puff, mode, q }) {
   }
 }
 
-// ---- wings: two separate curved caps that wrap round the core, each with a feathered lower edge
-function wingCap(group, { side, q, w }) {
-  const nu = 60, nv = 14, pos = [], idx = [], edgeTop = [], edgeBot = [], root = [];
-  const P = (u, v) => {
-    const top = (48 - 18 * u - 22 * Math.pow(u, 3)) * D;
-    const bot = (-38 + 34 * Math.pow(u, 1.4)) * D - 10 * D * Math.pow(Math.sin(Math.PI * 4.5 * u), 2) * (1 - 0.4 * u);
-    const lat = bot + v * (top - bot), lon = (270 + side * (14 + 150 * u)) * D, r = 0.9 + 0.08 * Math.sin(Math.PI * u) * Math.sin(Math.PI * v);
-    const p = sph(lat, lon, r); return q ? p.applyQuaternion(q) : p;
+// ---- wings: two wings wrapping the core, each made of three stacked teardrops (round head, tapering tail)
+// that curve round the shell. The teardrops are filled, mostly opaque, with a crisp outline.
+function teardrop(group, out, { lat0, lon0, len, th, dir, r, curve, q, op }) {
+  const nu = 48, nv = 6, pos = [], idx = [];
+  const P = (u, v) => { // u: head → tail, v: −1 … 1 across
+    const h = th * Math.sqrt(Math.min(1, u / 0.16)) * Math.pow(1 - u, 1.1) * 1.25;
+    const lat = lat0 - curve * u * u + v * h, lon = lon0 + dir * len * u;
+    const p = sph(lat, lon, r + 0.03 * Math.sin(Math.PI * u) * (1 - v * v)); return q ? p.applyQuaternion(q) : p;
   };
-  for (let i = 0; i <= nu; i++) for (let j = 0; j <= nv; j++) { const p = P(i / nu, j / nv); pos.push(p.x, p.y, p.z); }
+  for (let i = 0; i <= nu; i++) for (let j = 0; j <= nv; j++) { const p = P(i / nu, -1 + (2 * j) / nv); pos.push(p.x, p.y, p.z); }
   for (let i = 0; i < nu; i++) for (let j = 0; j < nv; j++) { const a = i * (nv + 1) + j, b = a + nv + 1; idx.push(a, b, a + 1, b, b + 1, a + 1); }
   const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx);
-  const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: MAP.lineColor, transparent: true, opacity: 0.16 * (0.3 + 0.7 * w), side: THREE.DoubleSide, depthWrite: false }));
-  m.renderOrder = 2; // the see-through wing skin is drawn last
-  m.userData.part = "accent"; group.add(m);
-  const out = [];
-  for (let i = 0; i <= nu; i++) { edgeTop.push(P(i / nu, 1)); edgeBot.push(P(i / nu, 0)); }
-  for (let j = 0; j <= nv; j++) root.push(P(0, j / nv));
-  line(edgeTop, out); line(edgeBot, out); line(root, out);
-  for (let k = 1; k < 5; k++) { const u = (k - 0.5) / 4.5 + 0.11, c = []; for (let i = 0; i <= 12; i++) c.push(P(Math.max(0, u - 0.16 * (i / 12)), 0.08 + 0.5 * (i / 12))); line(c, out); } // feather divisions
-  group.add(segs(out, opa(0.9, w)));
+  const m = new THREE.Mesh(g, fadeBehindCore(new THREE.MeshBasicMaterial({ color: MAP.lineColor, transparent: true, opacity: op, side: THREE.DoubleSide, depthWrite: false })));
+  m.renderOrder = 2; m.userData.part = "accent"; group.add(m);
+  const top = [], bot = []; for (let i = 0; i <= nu; i++) { top.push(P(i / nu, 1)); bot.push(P(i / nu, -1)); }
+  line(top.concat(bot.reverse()), out);
+}
+function wingCap(group, { q, w, flip = false }) {
+  const out = [], op = 0.25 + 0.75 * w; // fill follows the accent's share: 100% → solid, 30% → about half
+  // the second wing is the first turned half way round, so the two sweep in opposite directions
+  const qq = flip ? (q ? q.clone().multiply(quat(0, Math.PI, 0)) : quat(0, Math.PI, 0)) : q;
+  // three teardrops, stacked top to bottom, each a little longer than the one above
+  [[38, 84], [14, 108], [-10, 128]].forEach(([lat, len], k) =>
+    teardrop(group, out, { lat0: lat * D, lon0: 298 * D, len: len * D, th: 6.5 * D, dir: 1, r: 0.88 + 0.025 * k, curve: 20 * D, q: qq, op }));
+  group.add(segs(out, opa(0.95, w)));
 }
 
 // ---- coil: one solid, weighted line wound round the sphere from pole to pole
@@ -230,15 +252,26 @@ class SphereSpiral extends THREE.Curve {
   getPoint(t, target = new THREE.Vector3()) { const lat = (-this.span + 2 * this.span * t) * D, lon = this.off + t * this.turns * Math.PI * 2; return target.copy(sph(lat, lon, this.r)); }
 }
 function tube(curve, radius, w) {
-  const m = new THREE.Mesh(new THREE.TubeGeometry(curve, 900, radius, 10, false), new THREE.MeshBasicMaterial({ color: MAP.lineColor, transparent: true, opacity: opa(0.95, w) }));
+  const m = new THREE.Mesh(new THREE.TubeGeometry(curve, 900, radius, 10, false), fadeBehindCore(new THREE.MeshBasicMaterial({ color: MAP.lineColor, transparent: true, opacity: opa(0.95, w) })));
   m.userData.part = "accent"; return m;
+}
+
+// a spiky star: a 20-sided shell with a sharp three-sided spike rising from every face
+function spikyStar(out, q, rb = 0.72, ra = 1.2) {
+  const p = new THREE.IcosahedronGeometry(1, 0).attributes.position;
+  const seg = (a, b) => out.push(a.x, a.y, a.z, b.x, b.y, b.z);
+  for (let i = 0; i < p.count; i += 3) {
+    const t = [0, 1, 2].map((k) => new THREE.Vector3().fromBufferAttribute(p, i + k).normalize().applyQuaternion(q));
+    const apex = t[0].clone().add(t[1]).add(t[2]).normalize().multiplyScalar(ra);
+    t.forEach((a, k) => { const A = a.clone().multiplyScalar(rb), B = t[(k + 1) % 3].clone().multiplyScalar(rb); seg(A, B); seg(A, apex); });
+  }
 }
 
 // One builder per family; v = which accent inside the family (its variation).
 const STRUCT = {
   americas(T, w, v) { // prisms
     const out = [];
-    if (v === "canada") prism(new THREE.DodecahedronGeometry(1, 0), 0.98, quat(0.4, 0.3, 0), out), prism(new THREE.IcosahedronGeometry(1, 0), 0.8, quat(0.2, 0.9, 0.3), out);
+    if (v === "canada") spikyStar(out, quat(0.4, 0.3, 0));
     else prism(new THREE.IcosahedronGeometry(1, 1), 0.95, quat(0.3, 0.2, 0.1), out);
     return segs(out, opa(0.85, w));
   },
@@ -263,8 +296,8 @@ const STRUCT = {
     return segs(out, opa(0.85, w));
   },
   oceania(T, w, v) { // wings: two caps wrapping the core
-    const g = new THREE.Group(), q = v === "newzealand" ? quat(0, 0, Math.PI / 2) : null;
-    wingCap(g, { side: 1, q, w }); wingCap(g, { side: -1, q, w });
+    const g = new THREE.Group(), q = v === "newzealand" ? quat(0, 0, Math.PI / 2) : quat(0.25, 0, -0.55); // Australia: tilted about 30° on the diagonal
+    wingCap(g, { q, w }); wingCap(g, { q, w, flip: true });
     return g;
   },
   atlantic(T, w, v) { // coils: one solid line spiralling round the sphere

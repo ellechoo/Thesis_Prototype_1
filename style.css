@@ -728,51 +728,72 @@ main { padding-bottom: calc(104px + env(safe-area-inset-bottom)); }
    pitch color (set in id-card.js) and tints the photo frame and the card's top edge.
    ===================================================================================== */
 body.showing-id .archive-head { display: none; }
-.id-view { max-width: 980px; margin: 48px auto 0; display: grid; gap: 22px; }
+/* The card has the proportions of a real ID card (ISO/IEC 7810 ID-1, 85.60 × 53.98 mm), landscape on
+   wide screens and upright on phones. Everything inside is sized in cqw (% of the card's width), so the
+   whole card scales together like a picture of a real card. */
+.id-view { max-width: 980px; margin: 22px auto 0; display: grid; gap: 22px; container-type: inline-size; }
 .id-loading { text-align: center; padding: 80px 0; }
 .id-card {
-  position: relative; display: grid; gap: 22px; padding: 26px 30px 22px;
-  background: #0f0f0e; border: 1px solid #3d3a35; border-top: 4px solid var(--id-hue, var(--accent)); border-radius: 22px;
+  position: relative; width: 100%; aspect-ratio: 85.6 / 53.98; box-sizing: border-box; overflow: hidden;
+  display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 1.5cqw; padding: 2.4cqw 3.2cqw 2.1cqw;
+  background: #0f0f0e; border: 1px solid #3d3a35; border-top: 0.45cqw solid var(--id-hue, var(--accent)); border-radius: 3.7cqw;
   animation: id-in 0.35s ease-out;
 }
 @keyframes id-in { from { opacity: 0; transform: translateY(12px) scale(0.985); } }
 @media (prefers-reduced-motion: reduce) { .id-card { animation: none; } }
 
-.id-top { display: flex; align-items: baseline; gap: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
-.id-brand { margin: 0; font-family: var(--serif); font-weight: 300; font-size: 26px; letter-spacing: -0.02em; }
-.id-kind { margin: 0; color: var(--muted); font-size: 13.5px; }
-.id-close { margin-left: auto; align-self: center; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--line); color: var(--text); }
+.id-top { display: flex; align-items: center; gap: 1.4cqw; padding-bottom: 1.1cqw; border-bottom: 1px solid var(--line); }
+.id-brand { margin: 0; font-family: var(--serif); font-weight: 300; font-size: 2.5cqw; line-height: 1; letter-spacing: -0.02em; }
+.id-kind { margin: 0; color: var(--muted); font-size: 1.3cqw; }
+.id-close { margin-left: auto; display: grid; place-items: center; width: 3.6cqw; height: 3.6cqw; min-width: 30px; min-height: 30px; border-radius: 50%; border: 1px solid var(--line); color: var(--text); }
 .id-close:hover { border-color: var(--text); }
 .id-close:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
-.id-close svg { width: 18px; height: 18px; }
+.id-close svg { width: 50%; height: 50%; }
 
-.id-body { display: grid; grid-template-columns: minmax(220px, 300px) minmax(0, 1fr); gap: 30px; align-items: start; }
-.id-photo { display: block; aspect-ratio: 1 / 1; border-radius: 14px; overflow: hidden; background: #000; border: 2px solid var(--id-hue, var(--accent)); }
+.id-body { display: grid; grid-template-columns: 33cqw minmax(0, 1fr); gap: 3cqw; min-height: 0; align-items: start; }
+.id-photo { display: block; aspect-ratio: 1 / 1; max-height: 100%; border-radius: 1.4cqw; overflow: hidden; background: #000; border: 2px solid var(--id-hue, var(--accent)); }
 .id-photo svg { display: block; width: 100%; height: 100%; }
-.id-name { margin: 2px 0 6px; font-size: clamp(36px, 4.4vw, 54px); line-height: 1.02; overflow-wrap: anywhere; }
-.id-meta { margin: 0 0 20px; display: flex; flex-wrap: wrap; gap: 4px 20px; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
-.id-fields { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 26px; }
-.id-field { padding-top: 9px; border-top: 1px solid var(--line); min-width: 0; }
-.id-field dt { font-size: 12.5px; color: var(--muted); }
-.id-field dd { margin: 2px 0 0; display: grid; }
-.id-value { font-family: var(--serif); font-size: 23px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.id-detail { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.id-info { display: flex; flex-direction: column; min-height: 0; min-width: 0; align-self: stretch; }
+.id-info > * { flex-shrink: 0; }
+.id-name { margin: 0 0 0.6cqw; font-size: 4.3cqw; line-height: 1.04; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.id-meta { margin: 0 0 1.5cqw; display: flex; flex-wrap: wrap; gap: 0.3cqw 2cqw; color: var(--muted); font-size: 1.2cqw; font-variant-numeric: tabular-nums; }
+.id-fields { margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.1cqw 2.2cqw; }
+.id-field { padding-top: 0.75cqw; border-top: 1px solid var(--line); min-width: 0; }
+.id-field dt { font-size: 1.1cqw; color: var(--muted); }
+.id-field dd { margin: 0.15cqw 0 0; display: grid; }
+.id-value { font-family: var(--serif); font-size: 2cqw; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.id-detail { font-size: 1.05cqw; color: var(--muted); font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.id-sign { display: grid; gap: 4px; }
-.id-sign svg { width: 100%; height: 64px; color: var(--text); border-bottom: 1px solid var(--muted); padding-bottom: 6px; overflow: visible; }
-.id-sign p { margin: 0; font-size: 12px; color: var(--muted); }
+.id-sign { margin-top: auto; padding-top: 1cqw; display: grid; gap: 0.3cqw; }
+.id-sign svg { width: 100%; height: 4.4cqw; color: var(--text); border-bottom: 1px solid var(--muted); padding-bottom: 0.4cqw; overflow: visible; }
+.id-sign p { margin: 0; font-size: 1.05cqw; color: var(--muted); }
 
-.id-code { margin: 0; padding-top: 14px; border-top: 1px solid var(--line); display: grid; gap: 2px; font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-size: clamp(9px, 1.45vw, 14px); letter-spacing: 0.14em; color: var(--muted); overflow: hidden; white-space: nowrap; }
+.id-code { margin: 0; padding-top: 1.1cqw; border-top: 1px solid var(--line); display: grid; gap: 0.15cqw; font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-size: 1.3cqw; line-height: 1.25; letter-spacing: 0.14em; color: var(--muted); overflow: hidden; white-space: nowrap; }
 .id-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
 
+/* phones: the same card stood upright (53.98 × 85.60). Photo and name side by side like a real ID,
+   the measurements below in two columns. Sizes are % of the card's width (cqw). */
 @media (max-width: 760px) {
-  .id-view { margin-top: 24px; }
-  .id-card { padding: 20px 18px 18px; gap: 18px; border-radius: 18px; }
-  .id-body { grid-template-columns: minmax(0, 1fr); gap: 18px; }
-  .id-photo { max-width: 360px; width: 100%; justify-self: center; }
-  .id-kind { display: none; }
-  .id-value { font-size: 20px; }
-  .id-fields { gap: 12px 18px; }
+  .id-view { margin-top: 10px; }
+  .id-card { aspect-ratio: 53.98 / 85.6; grid-template-rows: auto minmax(0, 1fr) auto; gap: 3.2cqw; padding: 4.5cqw 5cqw 4cqw; border-radius: 5.8cqw; border-top-width: 0.9cqw; }
+  .id-top { gap: 2.2cqw; padding-bottom: 2.4cqw; }
+  .id-brand { font-size: 4.2cqw; }
+  .id-kind { font-size: 2.6cqw; }
+  .id-close { width: 7cqw; height: 7cqw; }
+  .id-body { display: grid; grid-template-columns: 47cqw minmax(0, 1fr); grid-template-rows: auto auto auto minmax(0, 1fr); column-gap: 4cqw; row-gap: 0; align-items: start; }
+  .id-info { display: contents; }
+  .id-photo { grid-column: 1; grid-row: 1 / span 2; width: 100%; aspect-ratio: 1 / 1; border-radius: 3cqw; }
+  .id-name { grid-column: 2; grid-row: 1; align-self: end; font-size: 6.2cqw; line-height: 1.08; margin: 0 0 2cqw; -webkit-line-clamp: 3; }
+  .id-meta { grid-column: 2; grid-row: 2; flex-direction: column; flex-wrap: nowrap; gap: 0.9cqw; font-size: 2.5cqw; line-height: 1.25; margin: 0; }
+  .id-fields { grid-column: 1 / -1; grid-row: 3; margin-top: 3.5cqw; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.4cqw 4.5cqw; }
+  .id-field { padding-top: 1.4cqw; }
+  .id-field dt { font-size: 2.5cqw; }
+  .id-value { font-size: 4.2cqw; }
+  .id-detail { font-size: 2.4cqw; }
+  .id-sign { grid-column: 1 / -1; grid-row: 4; align-self: end; padding-top: 2.5cqw; }
+  .id-sign svg { height: 6cqw; padding-bottom: 0.8cqw; }
+  .id-sign p { display: none; } /* no room on the upright card; the line speaks for itself */
+  .id-code { font-size: 2.45cqw; padding-top: 2.4cqw; letter-spacing: 0.08em; }
   .id-actions .button { flex: 1 1 auto; text-align: center; }
 }
 

@@ -10,12 +10,13 @@ import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
 import { getTake, archiveIsShared } from "./store.js";
 import { currentTakeId } from "./nav.js?v=5";
 import { download, slug, formatDate } from "./shared.js?v=2";
-import { buildOrb } from "./voice-orb.js?v=14";
+import { buildOrb } from "./voice-orb.js?v=21";
 const esc = (x) => String(x ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 const $ = (id) => document.getElementById(id);
 const VIEW_RADIUS = 1.4;   // how much of the scene "Fit" shows (the structures reach about 1.3 from the center)
 const SPIN_SPEED = 0.6;    // slow turn (OrbitControls units; 2 = one turn every 30 s)
+const CORE_STILL = true;    // the core keeps facing you while you turn the portrait; only the structure moves
 const SPIN_RESUME_MS = 4000; // after someone turns it by hand, wait this long before turning again
 const TIER_NAMES = { 1: "Seen first", 2: "Look closer", 3: "Details" };
 let take, orbInfo, renderer, scene, camera, controls, byKey = {};
@@ -95,7 +96,12 @@ function setUpScene() {
     camera.position.copy(controls.target).add(off.setFromSpherical(sph));
     controls.update();
   }, { capture: true, passive: false });
-  renderer.setAnimationLoop(() => { controls.update(); render(); });
+  const coreMesh = orbInfo.group.children.find((o) => o.isMesh && o.userData.part === "core");
+  renderer.setAnimationLoop(() => {
+    controls.update();
+    if (CORE_STILL && coreMesh) coreMesh.quaternion.copy(camera.quaternion); // turn the core with the camera, so it looks still
+    render();
+  });
 
   new ResizeObserver(() => { resize(); }).observe(stage);
   resize();
@@ -235,9 +241,7 @@ $("pngBtn").addEventListener("click", () => {
   }, "image/png");
 });
 $("glbBtn").addEventListener("click", async () => {
-  const hidden = []; orbInfo.group.traverse((o) => { if (o.userData.occluder) { o.visible = false; hidden.push(o); } }); // not part of the model
   const data = await new GLTFExporter().parseAsync(orbInfo.group, { binary: true });
-  hidden.forEach((o) => (o.visible = true));
   download(new Blob([data], { type: "model/gltf-binary" }), `${slug(take.name)}-voiceprint.glb`);
 });
 
