@@ -2,7 +2,7 @@
 // The voice portrait is the ID photo; the fields summarize the voice in words and numbers;
 // the "signature" is the voice's own pitch line; the bottom has a passport-style code line.
 // Every value comes from the stored measurements, so cards always match the data.
-import { snapshot } from "./orb-snapshot.js?v=12";
+import { snapshot } from "./orb-snapshot.js?v=19";
 import { formatDate, pct, deviceText } from "./shared.js?v=2";
 import { makePreview } from "./store.js";
 
@@ -81,7 +81,7 @@ export function renderIdCard(root, take) {
     <article class="id-card" aria-label="${esc(take.name)}'s voice ID card">
       <header class="id-top">
         <p class="id-brand">Voiceprint</p>
-        <p class="id-kind">Voice identity card</p>
+        <p class="id-kind">Voice Identity Card</p>
         <a class="id-close" href="archive.html" aria-label="Close and go back to the archive">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         </a>
@@ -94,16 +94,12 @@ export function renderIdCard(root, take) {
           <dl class="id-fields">
             ${fields.map(([k, v, d]) => `<div class="id-field"><dt>${esc(k)}</dt><dd><span class="id-value">${esc(v)}</span><span class="id-detail">${esc(d)}</span></dd></div>`).join("")}
           </dl>
+          <div class="id-sign">
+            <svg viewBox="0 0 600 70" preserveAspectRatio="none" aria-hidden="true"><path d="${signaturePath(take)}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>
+            <p>Voice signature: this voice's pitch, start to finish</p>
+          </div>
         </div>
       </div>
-      <div class="id-sign">
-        <svg viewBox="0 0 600 70" preserveAspectRatio="none" aria-hidden="true"><path d="${signaturePath(take)}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>
-        <p>Voice signature: this voice's pitch, start to finish</p>
-      </div>
       <p class="id-code" aria-hidden="true"><span>${esc(l1)}</span><span>${esc(l2)}</span></p>
-    </article>
-    <div class="id-actions">
-      <a class="button primary" href="portrait.html${q}">See the full portrait</a>
-      <a class="button" href="breakdown.html${q}">See the breakdown</a>
-    </div>`;
+    </article>`;
 }

@@ -6,11 +6,26 @@
 // loads its own data when it scrolls into view, then draws its portrait.
 import { listTakes, getTake, deleteLocalTake, archiveIsShared } from "./store.js";
 import { formatDate, pct } from "./shared.js?v=2";
-import { snapshot } from "./orb-snapshot.js?v=12";
-import { renderIdCard } from "./id-card.js?v=14";
+import { snapshot } from "./orb-snapshot.js?v=19";
+import { renderIdCard } from "./id-card.js?v=24";
 
 const $ = (id) => document.getElementById(id);
 let takes = [];
+// Coming back from an ID card (X, Esc, the Archive tab or the browser's back button) returns to the
+// same spot in the gallery: the scroll position is remembered when a portrait is clicked.
+const SPOT = "archiveSpot";
+if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+const remember = (id) => { try { sessionStorage.setItem(SPOT, JSON.stringify({ y: window.scrollY, id })); } catch {} };
+function restoreSpot() {
+  let spot = null;
+  try { spot = JSON.parse(sessionStorage.getItem(SPOT) || "null"); sessionStorage.removeItem(SPOT); } catch {}
+  if (!spot) return;
+  requestAnimationFrame(() => {
+    const max = document.documentElement.scrollHeight - innerHeight;
+    if (spot.y <= max + 1) window.scrollTo(0, spot.y);
+    else document.querySelector(`.voice-card[data-id="${CSS.escape(spot.id || "")}"]`)?.scrollIntoView({ block: "center" });
+  });
+}
 
 
 async function load() {
@@ -19,6 +34,7 @@ async function load() {
   try { takes = await listTakes(); }
   catch (e) { $("status").textContent = `Couldn't open saved recordings in this browser: ${e.message}`; $("status").classList.add("error"); return; }
   render();
+  restoreSpot();
 }
 
 function render() {
@@ -29,6 +45,7 @@ function render() {
     const q = `?id=${encodeURIComponent(t.id)}`;
     const card = document.createElement("article");
     card.className = "voice-card";
+    card.dataset.id = t.id;
     card.innerHTML = `
       <a class="voice-thumb" href="archive.html${q}" aria-label=""><span class="thumb-loading">Growing portrait…</span></a>
       <div class="voice-info">
@@ -40,6 +57,7 @@ function render() {
         </div>
       </div>`;
     card.querySelector(".voice-thumb").setAttribute("aria-label", `Open ${t.name}'s voice ID card`);
+    card.querySelector(".voice-thumb").addEventListener("click", () => remember(t.id));
     card.querySelector(".voice-name").textContent = t.name;
     card.querySelector(".voice-date").textContent = `${formatDate(t.createdAt)} · ${t.seconds.toFixed(1)} s`;
     const stats = [
