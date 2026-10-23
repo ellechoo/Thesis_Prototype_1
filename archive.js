@@ -6,8 +6,8 @@
 // loads its own data when it scrolls into view, then draws its portrait.
 import { listTakes, getTake, deleteLocalTake, archiveIsShared } from "./store.js";
 import { formatDate, pct } from "./shared.js?v=2";
-import { snapshot } from "./orb-snapshot.js?v=1";
-import { renderIdCard } from "./id-card.js?v=3";
+import { snapshot } from "./orb-snapshot.js?v=12";
+import { renderIdCard } from "./id-card.js?v=14";
 
 const $ = (id) => document.getElementById(id);
 let takes = [];
