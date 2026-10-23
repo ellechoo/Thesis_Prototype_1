@@ -1,5 +1,6 @@
 // portrait-3d.js — the Portrait page: one voice as a 3D portrait (built in voice-orb.js).
-// It turns slowly on its own; drag to turn it yourself, scroll / pinch / + − to zoom, Fit to reset.
+// It turns slowly on its own; drag (or swipe with two fingers on a trackpad) to turn it yourself,
+// pinch / mouse wheel / + − to zoom, Fit to reset.
 // Hover (or tap) a part to see what it shows. (People who ask their device for reduced motion
 // get no automatic turning.)
 import * as THREE from "three";
@@ -9,7 +10,7 @@ import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
 import { getTake, archiveIsShared } from "./store.js";
 import { currentTakeId } from "./nav.js?v=5";
 import { download, slug, formatDate } from "./shared.js?v=2";
-import { buildOrb } from "./voice-orb.js?v=3";
+import { buildOrb } from "./voice-orb.js?v=14";
 const esc = (x) => String(x ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 const $ = (id) => document.getElementById(id);
@@ -70,6 +71,30 @@ function setUpScene() {
   let resume = null;
   controls.addEventListener("start", () => { controls.autoRotate = false; clearTimeout(resume); });
   controls.addEventListener("end", () => { clearTimeout(resume); if (!still) resume = setTimeout(() => (controls.autoRotate = true), SPIN_RESUME_MS); });
+
+  // Two-finger swipe on a trackpad turns it (instead of zooming). A pinch (sent as a wheel event with
+  // ctrlKey) and a real mouse wheel still zoom, handled by OrbitControls as before.
+  const looksLikeTrackpad = (e) => {
+    if (e.ctrlKey || e.deltaMode !== 0) return false;
+    if (e.deltaX !== 0) return true;
+    const legacy = e.wheelDeltaY;
+    if (typeof legacy === "number" && legacy !== 0) return Math.abs(legacy) === Math.abs(e.deltaY) * 3 || Math.abs(legacy) % 120 !== 0;
+    return Math.abs(e.deltaY) < 50;
+  };
+  const sph = new THREE.Spherical();
+  renderer.domElement.parentElement.addEventListener("wheel", (e) => {
+    if (e.target !== renderer.domElement || !looksLikeTrackpad(e)) return;
+    e.preventDefault(); e.stopPropagation();
+    controls.autoRotate = false; clearTimeout(resume);
+    if (!still) resume = setTimeout(() => (controls.autoRotate = true), SPIN_RESUME_MS);
+    const k = (2 * Math.PI) / Math.max(300, renderer.domElement.clientHeight);
+    const off = camera.position.clone().sub(controls.target);
+    sph.setFromVector3(off);
+    sph.theta += e.deltaX * k;
+    sph.phi = Math.min(Math.PI - 0.05, Math.max(0.05, sph.phi + e.deltaY * k));
+    camera.position.copy(controls.target).add(off.setFromSpherical(sph));
+    controls.update();
+  }, { capture: true, passive: false });
   renderer.setAnimationLoop(() => { controls.update(); render(); });
 
   new ResizeObserver(() => { resize(); }).observe(stage);
@@ -128,7 +153,7 @@ function wireHover() {
     const hit = ray.intersectObjects(orbInfo.group.children, true).find((h) => h.object.userData.part);
     if (!hit) return null;
     const part = hit.object.userData.part;
-    return { keys: { core: ["core", "timbre"], accent: ["accent"], note: ["note"] }[part] || [part] };
+    return { keys: { core: ["core", "range"], accent: ["accent"] }[part] || [part] };
   };
   const show = (p, x, y) => {
     if (!p) { tip.hidden = true; canvas.style.cursor = ""; return; }
@@ -210,7 +235,9 @@ $("pngBtn").addEventListener("click", () => {
   }, "image/png");
 });
 $("glbBtn").addEventListener("click", async () => {
+  const hidden = []; orbInfo.group.traverse((o) => { if (o.userData.occluder) { o.visible = false; hidden.push(o); } }); // not part of the model
   const data = await new GLTFExporter().parseAsync(orbInfo.group, { binary: true });
+  hidden.forEach((o) => (o.visible = true));
   download(new Blob([data], { type: "model/gltf-binary" }), `${slug(take.name)}-voiceprint.glb`);
 });
 
