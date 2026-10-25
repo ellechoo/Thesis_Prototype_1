@@ -10,7 +10,7 @@ import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
 import { getTake, archiveIsShared } from "./store.js";
 import { currentTakeId } from "./nav.js?v=5";
 import { download, slug, formatDate } from "./shared.js?v=2";
-import { buildOrb } from "./voice-orb.js?v=29";
+import { buildOrb } from "./voice-orb.js?v=30";
 const esc = (x) => String(x ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 const $ = (id) => document.getElementById(id);
