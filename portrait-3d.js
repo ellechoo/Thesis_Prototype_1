@@ -10,13 +10,13 @@ import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
 import { getTake, archiveIsShared } from "./store.js";
 import { currentTakeId } from "./nav.js?v=5";
 import { download, slug, formatDate } from "./shared.js?v=2";
-import { buildOrb } from "./voice-orb.js?v=21";
+import { buildOrb } from "./voice-orb.js?v=29";
 const esc = (x) => String(x ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 const $ = (id) => document.getElementById(id);
 const VIEW_RADIUS = 1.4;   // how much of the scene "Fit" shows (the structures reach about 1.3 from the center)
 const SPIN_SPEED = 0.6;    // slow turn (OrbitControls units; 2 = one turn every 30 s)
-const CORE_STILL = true;    // the core keeps facing you while you turn the portrait; only the structure moves
+const CORE_STILL = false;   // true: the core keeps facing you while you turn the portrait (its top/bottom shading stays on screen either way)
 const SPIN_RESUME_MS = 4000; // after someone turns it by hand, wait this long before turning again
 const TIER_NAMES = { 1: "Seen first", 2: "Look closer", 3: "Details" };
 let take, orbInfo, renderer, scene, camera, controls, byKey = {};
@@ -159,7 +159,7 @@ function wireHover() {
     const hit = ray.intersectObjects(orbInfo.group.children, true).find((h) => h.object.userData.part);
     if (!hit) return null;
     const part = hit.object.userData.part;
-    return { keys: { core: ["core", "range"], accent: ["accent"] }[part] || [part] };
+    return { keys: { core: ["core", "timbre", "range"], accent: ["accent"] }[part] || [part] };
   };
   const show = (p, x, y) => {
     if (!p) { tip.hidden = true; canvas.style.cursor = ""; return; }
@@ -241,7 +241,9 @@ $("pngBtn").addEventListener("click", () => {
   }, "image/png");
 });
 $("glbBtn").addEventListener("click", async () => {
+  const hidden = []; orbInfo.group.traverse((o) => { if (o.userData.screenOnly && o.visible) { o.visible = false; hidden.push(o); } }); // flat, screen-facing parts aren't part of the model
   const data = await new GLTFExporter().parseAsync(orbInfo.group, { binary: true });
+  hidden.forEach((o) => (o.visible = true));
   download(new Blob([data], { type: "model/gltf-binary" }), `${slug(take.name)}-voiceprint.glb`);
 });
 

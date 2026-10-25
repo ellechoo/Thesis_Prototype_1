@@ -7,7 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300..500&display=swap" />
-  <link rel="stylesheet" href="style.css?v=28" />
+  <link rel="stylesheet" href="style.css?v=29" />
+  <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}</script>
 </head>
 <body>
   <main class="wide">
@@ -75,6 +76,22 @@
             <p>The model (CommonAccent) was trained on volunteer recordings from Mozilla Common Voice. It sorts speech into 16 broad groups, such as “United States” or “England”. It can't tell regions within a country apart, and it has no group for many accents, so a mixed or regional accent gets matched to whichever group sounds most similar.</p>
             <p>The percentages show how much the model leans toward each group. They aren't a measure of how “strong” an accent is. Background noise, a far-away mic or very short recordings make results less reliable.</p>
             <p>Accents say nothing about ability or intelligence. Treat this as a curiosity, not a judgment about a person.</p>
+          </details>
+        </section>
+
+        <section class="block">
+          <h2 class="section-title">Timbre</h2>
+          <p class="note" id="timbreEmpty" hidden>There was too little clear voice in this recording to read its timbre.</p>
+          <div id="timbreResult" hidden>
+            <p class="top-line" id="timbreLine"></p>
+            <p class="note">Where this voice sits on three scales, compared with everyone in the archive. The middle line is a typical voice.</p>
+            <div class="scales" id="scales"></div>
+          </div>
+          <details>
+            <summary>How to read timbre</summary>
+            <p>Timbre is the colour of a voice: what makes two people sound different even on the same note. It's measured from the voiced moments of the reading, then compared with the rest of the archive, so “bright” means brighter than most voices here, not bright in any absolute sense.</p>
+            <p><strong>Bright ↔ dark</strong> is where the sound's energy sits: more in the high frequencies is brighter. <strong>Breathy ↔ clean</strong> is how much air and noise is mixed into the tone. <strong>Raspy ↔ smooth</strong> is how much the pitch wobbles from one moment to the next.</p>
+            <p>The microphone matters: phones and laptops colour sound differently, so compare voices recorded on similar devices.</p>
           </details>
         </section>
 
@@ -152,6 +169,6 @@
     <div class="tip" id="tip" role="tooltip" hidden></div>
   </main>
 
-  <script type="module" src="breakdown.js?v=17"></script>
+  <script type="module" src="breakdown.js?v=18"></script>
 </body>
 </html>
