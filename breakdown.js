@@ -4,6 +4,7 @@ import { getTake, forgetLocalAudio, archiveIsShared } from "./store.js";
 import { currentTakeId } from "./nav.js?v=5";
 import { framesToCSV } from "./voice-analyzer.js";
 import { drawVowelChart, pickReference, countVowelFrames } from "./vowel-chart.js";
+import { traits, timbreWords } from "./voice-orb.js?v=29";
 import { drawPitchTrace, pct, download, slug, formatDate, ACCENT_SECONDS, deviceText } from "./shared.js?v=2";
 
 const SHOW_TOP = 6;
@@ -54,6 +55,7 @@ function render() {
   $("rFrames").textContent = s.frames.toLocaleString();
   $("rDuration").textContent = `${take.seconds.toFixed(1)} s`;
 
+  renderTimbre(); // first, so a problem elsewhere can't hide it
   renderAccent();
   renderRhythm();
   draw();
@@ -118,6 +120,45 @@ function renderAccent() {
   $("moreBtn").textContent = showAll ? `Show top ${SHOW_TOP}` : `Show all ${r.results.length}`;
 }
 $("moreBtn").addEventListener("click", () => { showAll = !showAll; renderAccent(); });
+
+// Timbre: the same three dials (−1 … 1) the portrait uses, each shown as a scale with a typical voice in the middle
+function renderTimbre() {
+  let tb = null;
+  try { tb = traits(take).timbre; } catch (e) { tb = null; }
+  const ok = !!tb?.enough;
+  $("timbreEmpty").hidden = ok;
+  $("timbreResult").hidden = !ok;
+  if (!ok) return;
+  $("timbreLine").textContent = timbreWords(tb);
+  const m = tb.measures || {};
+  const rows = [
+    { v: tb.bright, lo: "Dark", hi: "Bright", detail: m.centroid ? `${Math.round(m.centroid).toLocaleString()} Hz brightness` : "",
+      tip: "Where the energy of the voice sits. Brighter voices carry more high frequencies. In the portrait: bright voices get sun rays, dark voices a swirl." },
+    { v: tb.breathy, lo: "Clean", hi: "Breathy", detail: m.flatness != null ? `${(m.flatness * 100).toFixed(1)}% air and noise in the tone` : "",
+      tip: "How much air and noise is mixed into the tone. In the portrait: breathy voices get a cloudy, misty edge, clean voices a crisp one." },
+    { v: tb.raspy, lo: "Smooth", hi: "Raspy", detail: m.jitter != null ? `${m.jitter.toFixed(1)}% pitch wobble` : "",
+      tip: "How much the pitch wobbles from moment to moment. In the portrait: raspy voices grow small spikes, smooth voices turn glossy." },
+  ];
+  const word = (v, lo, hi) => { const a = Math.abs(v); if (a < 0.2) return "Typical"; return (a >= 0.75 ? "Very " : a >= 0.4 ? "" : "Slightly ") + (v > 0 ? hi.toLowerCase() : lo.toLowerCase()); };
+  const box = $("scales");
+  box.innerHTML = "";
+  for (const r of rows) {
+    const el = document.createElement("div");
+    el.className = "scale card"; el.tabIndex = 0; el.dataset.tip = r.tip;
+    const pos = 50 + 50 * Math.max(-1, Math.min(1, r.v));
+    el.innerHTML = `<div class="scale-head"><span class="scale-word"></span><span class="scale-detail"></span></div>
+      <div class="scale-track"><span class="scale-mid"></span><span class="scale-fill"></span><span class="scale-dot"></span></div>
+      <div class="scale-ends"><span></span><span></span></div>`;
+    const w = word(r.v, r.lo, r.hi); el.querySelector(".scale-word").textContent = w[0].toUpperCase() + w.slice(1);
+    el.querySelector(".scale-detail").textContent = r.detail;
+    el.querySelector(".scale-dot").style.left = `${pos}%`;
+    const f = el.querySelector(".scale-fill"); f.style.left = `${Math.min(pos, 50)}%`; f.style.width = `${Math.abs(pos - 50)}%`;
+    const ends = el.querySelectorAll(".scale-ends span"); ends[0].textContent = r.lo; ends[1].textContent = r.hi;
+    el.setAttribute("aria-label", `${r.lo} to ${r.hi}: ${w}`);
+    box.appendChild(el);
+    hookTip(el);
+  }
+}
 
 function renderRhythm() {
   const r = take.rhythm;
@@ -186,11 +227,13 @@ function showTip(card) {
   tip.style.top = `${below + t.height < window.innerHeight - 8 || above < 8 ? below : above}px`;
 }
 function hideTip(card) { if (!card || card === tipFor) { tip.hidden = true; tipFor = null; } }
-document.querySelectorAll(".card[data-tip]").forEach((card) => {
+function hookTip(card) {
+  if (card._tip) return; card._tip = true;
   card.addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse") showTip(card); });
   card.addEventListener("pointerleave", (e) => { if (e.pointerType === "mouse") hideTip(card); });
   card.addEventListener("focus", () => showTip(card));
   card.addEventListener("blur", () => hideTip(card));
-});
+}
+document.querySelectorAll(".card[data-tip]").forEach(hookTip);
 window.addEventListener("scroll", () => hideTip(), { passive: true });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") hideTip(); });
