@@ -123,7 +123,9 @@ export function traits(take) {
 // timbre: the three measures from the voiced moments, then the three dials (−1 … 1)
 function timbreOf(take, frames) {
   const v = frames.filter((f) => f.active && f.pitch && f.centroidHz);
-  let m = take.timbreMeasures || null; // (lets a test page pass the measures in directly)
+  // measures stored with the take (summary.timbre: e.g. set by hand for recordings with too little clear voice)
+  // win over measuring the frames; a test page can also pass them in directly
+  let m = take.timbreMeasures || take.summary?.timbre || null;
   if (!m && v.length) {
     const med = (xs) => { const s = xs.slice().sort((a, b) => a - b); return s[s.length >> 1]; };
     const jit = []; for (let i = 1; i < v.length; i++) jit.push(Math.abs(v[i].pitch - v[i - 1].pitch) / v[i].pitch);
