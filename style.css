@@ -868,3 +868,43 @@ body.showing-id .archive-head { display: none; }
 /* animate width too: desktop tabs have a fixed width, so without it they snapped shut instead of sliding */
 .tabs a, .tabs a.nav-pill { transition: max-width .55s ease, width .55s ease, padding .55s ease, margin .55s ease, border-width .55s ease, flex-basis .55s ease, font-size .55s ease, transform .15s ease; }
 
+/* ---- Record page as a step (the landing page is the front door now) ----
+   Before Start: instructions, then name + Start, then a quiet preview of the passage so people can read ahead.
+   Counting down / recording: the instructions step aside and the passage moves to the top and grows.
+   Analyzing / listening back: just that panel. One centred column on every screen size. */
+.record-page .rec-grid { display: flex; flex-direction: column; max-width: 680px; margin: 0 auto; }
+.record-page .rec-left, .record-page .rec-right { display: contents; }
+.record-page .rec-head { order: 1; margin: clamp(40px, 11vh, 120px) 0 34px; }
+.record-page .start-card { order: 2; }
+.record-page #status { order: 3; }
+.record-page .passage-wrap { order: 4; margin: 48px 0 0; }
+.record-page #session { order: 5; }
+.record-page .review, .record-page .processing { order: 6; }
+.record-page .settings-box { order: 7; }
+.rec-title { font-family: var(--serif); font-weight: 400; font-size: clamp(32px, 5vw, 46px); line-height: 1.08; letter-spacing: -0.02em; margin: 0 0 20px; text-wrap: balance; }
+.rec-steps { list-style: none; counter-reset: step; margin: 0; padding: 0; display: grid; gap: 8px; font-size: 16.5px; line-height: 1.5; color: var(--muted); }
+.rec-steps li { counter-increment: step; position: relative; padding-left: 24px; }
+.rec-steps li::before { content: counter(step); position: absolute; left: 0; color: var(--accent); font-weight: 600; }
+.rec-steps b { color: var(--text); font-weight: 600; }
+.passage-label { margin: 0 0 12px; font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.record-page .passage { transition: font-size .45s ease, color .45s ease; }
+/* before Start: the passage is a preview, smaller and quieter */
+body[data-phase="idle"] .record-page .passage-box { padding: 20px 0 22px; border-top-color: var(--line); }
+body[data-phase="idle"] .record-page .passage { font-size: clamp(19px, 2.4vw, 22px); color: #b3afa7; }
+/* counting down and recording: the passage leads */
+body:is([data-phase="countdown"], [data-phase="recording"]) .record-page :is(.rec-head, .passage-label, .settings-box, .field-label, .start-row input, .fine) { display: none; }
+body:is([data-phase="countdown"], [data-phase="recording"]) .record-page .passage-wrap { order: 0; margin: clamp(40px, 11vh, 120px) 0 0; }
+body:is([data-phase="countdown"], [data-phase="recording"]) .record-page #session { order: 1; margin-top: 24px; }
+body:is([data-phase="countdown"], [data-phase="recording"]) .record-page .start-card { order: 2; margin-top: 24px; }
+body:is([data-phase="countdown"], [data-phase="recording"]) .record-page .btn-stack { width: min(100%, 320px); }
+/* analyzing and listening back: only that panel (and any message) */
+body:is([data-phase="processing"], [data-phase="review"]) .record-page :is(.rec-head, .passage-wrap, .start-card, .settings-box) { display: none; }
+body:is([data-phase="processing"], [data-phase="review"]) .record-page :is(.review, .processing) { order: 0; margin-top: clamp(40px, 11vh, 120px); }
+@media (max-width: 640px) {
+  .record-page .rec-head { margin: 28px 0 26px; }
+  .rec-steps { font-size: 15.5px; }
+  .record-page .passage-wrap { margin-top: 36px; }
+  body:is([data-phase="countdown"], [data-phase="recording"]) .record-page .passage-wrap { margin-top: 28px; }
+  body:is([data-phase="countdown"], [data-phase="recording"]) .record-page .btn-stack { width: 100%; }
+}
+

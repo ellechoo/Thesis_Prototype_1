@@ -7,9 +7,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300..500&display=swap" />
-  <link rel="stylesheet" href="style.css?v=37" />
+  <link rel="stylesheet" href="style.css?v=38" />
 </head>
-<body>
+<body data-phase="idle">
   <main class="record-page wide">
     <nav class="tabs">
       <a href="index.html" class="nav-home">Voiceprint</a>
@@ -22,8 +22,12 @@
     <div class="rec-grid">
     <div class="rec-left">
     <header class="rec-head">
-      <h1 class="wordmark">Voiceprint</h1>
-      <p class="rec-intro">For best results, find a quiet place. Enter your name and tap Start<span class="kbd-hint"> (or press the space bar)</span>. When the countdown ends, read the passage aloud, then tap Done as soon as you finish.</p>
+      <h1 class="rec-title">Read one short passage aloud</h1>
+      <ol class="rec-steps">
+        <li>Find a quiet place.</li>
+        <li>Enter your name and tap <b>Start</b><span class="kbd-hint"> (or press the space bar)</span>.</li>
+        <li>After the 3-2-1, read the passage at your usual pace, then tap <b>Done</b>.</li>
+      </ol>
     </header>
 
       <section id="session" class="session" hidden>
@@ -39,6 +43,7 @@
 
     <div class="rec-right">
     <section class="passage-wrap">
+      <p class="passage-label">You'll read this</p>
       <div class="passage-box">
         <p class="passage" id="passage" data-syllables="42">Momo is a small poodle and she is the color of milk chocolate. She has fluffy fur, a good nose for snacks, and she barks at every red truck that passes our house.</p>
         <div class="countdown" id="countdown" hidden><span id="countNum">3</span></div>
@@ -92,6 +97,6 @@
   </main>
   <script type="module" src="nav.js?v=8"></script>
 
-  <script type="module" src="app.js?v=17"></script>
+  <script type="module" src="app.js?v=18"></script>
 </body>
 </html>
