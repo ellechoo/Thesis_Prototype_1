@@ -191,9 +191,8 @@ const CORE_FRAG = `uniform vec3 cMain; uniform vec3 cTop; uniform vec3 cBot; uni
 uniform float edgeW; uniform float cloud; uniform vec3 seed; uniform float gloss; uniform vec4 gw1; uniform vec4 gw2; uniform vec3 gShape;
 uniform sampler2D vMap; uniform float vOn; uniform vec3 vFront; uniform vec3 vBack; uniform mat3 vTilt;
 varying vec3 vP; varying vec3 vS; varying vec3 vN; varying vec3 vV; varying float vR;
-float glassWin(vec2 p, vec4 w, float rot, float panes){ vec2 d = p - w.xy; float cs = cos(rot), sn = sin(rot); d = vec2(cs * d.x + sn * d.y, -sn * d.x + cs * d.y);
-  vec2 q = abs(d) - w.zw; float rr = min(w.z, w.w) * 0.55; float k = 1.0 - smoothstep(-0.012, 0.012, length(max(q + rr, 0.0)) + min(max(q.x + rr, q.y + rr), 0.0) - rr);
-  if (panes > 1.5) k *= smoothstep(0.006, 0.013, abs(d.x)); if (panes > 2.5) k *= smoothstep(0.006, 0.013, abs(d.y)); return k; }
+float glassSpot(vec2 p, vec4 w, float rot){ vec2 d = p - w.xy; float cs = cos(rot), sn = sin(rot); d = vec2(cs * d.x + sn * d.y, -sn * d.x + cs * d.y);
+  return 1.0 - smoothstep(-0.014, 0.014, (length(d / w.zw) - 1.0) * min(w.z, w.w)); } // a tilted oval with a crisp, slightly soft edge
 float h3(vec3 p){ p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
 float vnoise(vec3 x){ vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);
   return mix(mix(mix(h3(i), h3(i + vec3(1,0,0)), f.x), mix(h3(i + vec3(0,1,0)), h3(i + vec3(1,1,0)), f.x), f.y),
@@ -213,32 +212,30 @@ void main(){
   // the edge: measured as distance from the outline on screen (so it works the same for round and spiky cores)
   float rr = vR + cloud * (n - 0.5) * ${MAP.timbre.noise.toFixed(3)};
   // smooth → polished glass: a glossy surface reflecting a soft light above-left (a sheen strongest towards the rim,
-  // as real reflections are), a crisp studio window reflected upper-left and a dimmer one lower-right, and a bright rim.
-  // The windows are placed on screen (vS), so they stay put like real reflections while the core turns. Each voice's
-  // windows differ a little (place, size, shape, tilt, panes; see glassLook), always lit from the upper left.
+  // as real reflections are), a crisp oval highlight upper-left, a small round glint lower-right, and a bright rim.
+  // The highlights are placed on screen (vS), so they stay put like real reflections while the core turns. Each
+  // voice's differ a little (place, size, shape, tilt; see glassLook), always lit from the upper left.
   if (gloss > 0.0) {
     vec3 Rf = reflect(-vV, vN);
     float fres = pow(1.0 - face, 2.2);
     float sky = smoothstep(0.25, 0.85, dot(Rf, normalize(vec3(-0.55, 0.8, 0.15))));
     vec3 Ls = normalize(vec3(-0.5, 0.62, 0.6)); float nh = max(dot(vN, normalize(Ls + vV)), 0.0);
     c += vec3(1.0) * (sky * (0.06 + 0.75 * fres) + pow(nh, 60.0) * 0.45) * gloss;
-    float w1 = glassWin(vS.xy, gw1, gShape.x, gShape.z), w2 = glassWin(vS.xy, gw2, gShape.y, 1.0);
+    float w1 = glassSpot(vS.xy, gw1, gShape.x), w2 = glassSpot(vS.xy, gw2, gShape.y);
     c = mix(c, vec3(1.0), clamp((w1 * 0.92 + w2 * 0.45) * step(0.0, vS.z), 0.0, 1.0) * gloss);
     c += vec3(1.0) * pow(1.0 - face, 3.0) * 0.9 * gloss;
   }
   float a = 1.0 - smoothstep(1.0 - edgeW, 1.0, rr);
   gl_FragColor = vec4(c, a);
 }`;
-// smooth voices' glass reflections, a little different for every voice: where each window sits (the main one
-// upper left, a smaller one lower right), how big and how wide or tall it is, its tilt, and whether the main
-// window is one pane, two (split down the middle) or four (a cross). Returns the shader's gw1, gw2 and gShape.
+// smooth voices' glass highlights, a little different for every voice: where each sits (a larger oval upper left,
+// a small, rounder glint lower right), how big and how stretched it is, and its tilt. Returns gw1, gw2 and gShape.
 function glassLook(rnd) {
   const u = (a, b) => a + (b - a) * rnd();
-  const s1 = u(0.78, 1.22), a1 = u(0.65, 1.35), s2 = u(0.7, 1.3), a2 = u(0.6, 1.5);
-  const w1 = new THREE.Vector4(u(-0.44, -0.27), u(0.33, 0.5), 0.15 * s1 * Math.sqrt(a1), 0.085 * s1 / Math.sqrt(a1));
-  const w2 = new THREE.Vector4(u(0.28, 0.44), u(-0.48, -0.32), 0.09 * s2 * Math.sqrt(a2), 0.026 * s2 / Math.sqrt(a2));
-  const r = rnd(), panes = r < 0.4 ? 1 : r < 0.75 ? 2 : 4;
-  return { w1, w2, shape: new THREE.Vector3(u(-0.22, 0.22), u(-0.3, 0.3), panes) };
+  const s1 = u(0.8, 1.25), a1 = u(1.3, 2.4), s2 = u(0.7, 1.35), a2 = u(1.0, 1.6);
+  const w1 = new THREE.Vector4(u(-0.44, -0.27), u(0.33, 0.5), 0.12 * s1 * Math.sqrt(a1), 0.12 * s1 / Math.sqrt(a1));
+  const w2 = new THREE.Vector4(u(0.28, 0.44), u(-0.48, -0.32), 0.04 * s2 * Math.sqrt(a2), 0.04 * s2 / Math.sqrt(a2));
+  return { w1, w2, shape: new THREE.Vector3(u(-0.75, 0.15), u(-0.5, 0.5), 0) }; // the main oval leans along the sphere's curve
 }
 function core(T) {
   const C = MAP.core, TM = MAP.timbre, tb = T.timbre;
@@ -773,7 +770,7 @@ export function legendFor(T) {
       visual: T.hasAccent ? `The white structure: ${mix}. Each accent family has its own kind of structure, and each of the 16 accents its own variation; mixed accents layer theirs, smaller shares fainter.` : "No accent result, so the structure defaults to the prism shell." },
     { key: "core", tier: 1, data: "Note & pitch", value: `${T.note} · ${Math.round(T.pitch)} Hz`, visual: `The color of the glowing core. The note picks the hue (the 12 notes go round the color wheel, C = red); the pitch picks how deep or pale it is — lower voices richer, higher voices lighter (scale stretched to this archive, ${MAP.color.lowHz}–${MAP.color.highHz} Hz).` },
     { key: "timbre", tier: 1, data: "Timbre", value: timbreWords(T.timbre), visual: T.timbre.enough
-        ? "The core's surroundings, edge and shape. Bright voices shine like a sun (rays in the core's colour); dark voices pull in a swirl of their own colour, like water down a drain. Breathy voices have a cloudy edge, clean ones a crisp edge. Raspy voices grow small spikes; smooth ones turn glossy, like polished glass, with crisp window reflections and a bright rim. Each is as strong as it is in the voice, compared with the rest of the archive."
+        ? "The core's surroundings, edge and shape. Bright voices shine like a sun (rays in the core's colour); dark voices pull in a swirl of their own colour, like water down a drain. Breathy voices have a cloudy edge, clean ones a crisp edge. Raspy voices grow small spikes; smooth ones turn glossy, like polished glass, with crisp highlights and a bright rim. Each is as strong as it is in the voice, compared with the rest of the archive."
         : "There was too little clear voice in this recording to read its timbre, so the core is left plain." },
     { key: "vowels", tier: 1, data: "Vowel space", value: T.vowels.pts.length ? `${T.vowels.n} vowel moments` : "Not enough to map",
       visual: T.vowels.pts.length ? "The soft glowing spots in the core's surface. Every vowel this voice made is one spot, placed where it sits on the vowel chart and wrapped all the way round the core: front vowels like “ee” one way, back vowels like “oo” the other (they meet at the back), closed vowels toward the top and open ones like “ah” toward the bottom. Each voice is stretched to fill the whole core, so the pattern shows the shape of its own vowel space. The spots come in the core's two neighbouring colors on the color wheel: front vowels like “ee” in one and back vowels like “oo” in the other. Where vowels crowd together they overlap into solid patches."
