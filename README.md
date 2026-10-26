@@ -1,10 +1,11 @@
 # Voiceprint
 
-A small website that listens to a microphone (computer or phone) and turns a voice into numbers you can save and visualize. It has four pages:
+A small website that listens to a microphone (computer or phone) and turns a voice into numbers you can save and visualize. It has five pages:
 
 | Page | What it does |
 |---|---|
-| **Record** (`index.html`) | The landing page. Enter a name or nickname, tap Start, wait for the 3-2-1 countdown (it measures room noise meanwhile), then read the passage. Words light up as you read; pitch and loudness show live. Tap Done to listen back, then choose **Use this recording** (it's saved and the breakdown opens) or **Try again** (it's thrown away and the countdown restarts). |
+| **Voiceprint** (`index.html`) | The landing page: an endless honeycomb of the archive's newest voice portraits, all turning (one shared 3D renderer draws them all). Drag, or swipe with two fingers on a trackpad, to explore; hover for a name; click a portrait to open it. The **Add your voice** button leads to Record. The nav here leaves out the Record tab, since the button does that job. |
+| **Record** (`record.html`) | Enter a name or nickname, tap Start, wait for the 3-2-1 countdown (it measures room noise meanwhile), then read the passage. Words light up as you read; pitch and loudness show live. Tap Done to listen back, then choose **Use this recording** (it's saved and the breakdown opens) or **Try again** (it's thrown away and the countdown restarts). |
 | **Your data** (`breakdown.html`) | Everything measured from one recording: typical pitch, note, loudness, brightness, pitch confidence, frames; pitch over time with pauses shaded; the 16-group accent result; rhythm; the vowel chart; playback and downloads (JSON, CSV, WAV). Opens `?id=…`, or the latest recording. |
 | **Portrait** (`portrait.html`) | A living, explorable portrait (animated SVG) made from one recording: a glowing bloom whose body is shaped by the voice's timbre, with one strand per moment. Each strand's color, reach, sharpness, glow and flicker come from that moment's data; the bloom breathes at the speaking tempo. Every voice grows a different creature, all at the same size. Hover or tap any part, or a measurement in the side list, to see what it shows. Adapts to light and dark mode; respects reduced-motion settings. Download as SVG (animated) or PNG. |
 | **Archive** (`archive.html`) | Every voice recorded on the site, newest first, as cards with a mini pitch line, pitch, pace and closest accent. Each links to its breakdown. |
@@ -25,7 +26,8 @@ Everything is free: no accounts, no API keys.
 | `accent-model.js` | Runs the accent model in the browser (onnxruntime-web). |
 | `accent-model.onnx`, `accent-labels.json` | The accent model itself. **Not included**: you create them once with `accent-server/export_model.py` (see below). |
 | `config.js` | Settings: where the accent check runs, and the shared archive's Supabase address and key. |
-| `index.html`, `app.js` | Record page: name, countdown, recording, analysis, saving. |
+| `index.html`, `home.js` | Landing page: the portrait honeycomb and the way in to recording. |
+| `record.html`, `app.js` | Record page: name, countdown, recording, analysis, saving. |
 | `breakdown.html`, `breakdown.js` | Breakdown page for one saved recording. |
 | `archive.html`, `archive.js` | Archive page. |
 | `portrait.html`, `portrait-page.js` | Portrait page. |
@@ -37,7 +39,7 @@ Everything is free: no accounts, no API keys.
 | `rhythm.js` | Finds pauses and works out speaking rate from the frames. |
 | `vowel-chart.js` | Draws the vowel chart and holds the Peterson & Barney reference values. |
 | `style.css` | Styling (light and dark mode). |
-| `accent.html`, `vowels.html` | Redirects to `index.html` for old links. `accent.js` and `vowels.js` are the old separate pages' scripts and are no longer used. |
+| `accent.html`, `vowels.html` | Redirects to `record.html` for old links. `accent.js` and `vowels.js` are the old separate pages' scripts and are no longer used. |
 | `accent-server/` | Python tools: `export_model.py` makes the browser model; `app.py` is an optional server version. **Don't upload this folder to your website.** |
 
 Libraries load free from the jsDelivr CDN: **Meyda** (timbre features), **Pitchy** (pitch detection) and **onnxruntime-web** (runs the accent model).
@@ -134,7 +136,7 @@ After you stop, the page finds the pauses using the same sound/silence decision 
 - Silence before the first sound and after the last is ignored.
 - Silences shorter than 0.2 s count as speech (consonants like “t” and “k” make tiny gaps), and sounds shorter than 0.06 s inside a pause (clicks) are ignored.
 
-The breakdown shows the number of pauses, total and longest pause, a talking/pausing timeline, and shades the pauses on the pitch trace. **Speaking rate** is the passage's syllable count (42, set with `data-syllables` on the passage in `index.html`; update it if you change the text) divided by the reading time. The JSON also has **articulation rate**, which counts only the time spent talking.
+The breakdown shows the number of pauses, total and longest pause, a talking/pausing timeline, and shades the pauses on the pitch trace. **Speaking rate** is the passage's syllable count (42, set with `data-syllables` on the passage in `record.html`; update it if you change the text) divided by the reading time. The JSON also has **articulation rate**, which counts only the time spent talking.
 
 Pause detection depends on the noise gate, so a noisy room can hide short pauses.
 
@@ -156,7 +158,7 @@ The model is **CommonAccent** (ECAPA version, MIT license), trained on Mozilla C
 - Results are less reliable with noise or short clips.
 - The percentages show how much the model leans toward each group, not how “strong” an accent is.
 
-The passage is short (about 8 seconds): “Momo is a small poodle and she is the color of milk chocolate. She has fluffy fur, a good nose for snacks, and she barks at every red truck that passes our house.” Any text works, because the accent model ignores the words and listens only to how they sound; edit it in `index.html` (the `passage` block), and update its `data-syllables` count. Longer readings give steadier accent results, and words with many different vowels fill out the vowel chart. The vowel chart's corner labels (in `vowel-chart.js`) and the “things to look for” notes on `breakdown.html` use words from the passage, so update them too. You could swap in the Speech Accent Archive's “Please call Stella” paragraph if you want to compare against that archive's recordings.
+The passage is short (about 8 seconds): “Momo is a small poodle and she is the color of milk chocolate. She has fluffy fur, a good nose for snacks, and she barks at every red truck that passes our house.” Any text works, because the accent model ignores the words and listens only to how they sound; edit it in `record.html` (the `passage` block), and update its `data-syllables` count. Longer readings give steadier accent results, and words with many different vowels fill out the vowel chart. The vowel chart's corner labels (in `vowel-chart.js`) and the “things to look for” notes on `breakdown.html` use words from the passage, so update them too. You could swap in the Speech Accent Archive's “Please call Stella” paragraph if you want to compare against that archive's recordings.
 
 **Server mode (optional).** `accent-server/app.py` runs the same model as a web service. To use it instead, set `ACCENT_MODE = "server"` in `config.js` and put the server's address in `ACCENT_SERVER`. The in-browser mode is simpler and free, so you normally won't need this.
 

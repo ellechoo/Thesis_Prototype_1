@@ -76,7 +76,7 @@ export const MAP = {
     // each accent's own variation of its family's structure
     variants: {
       us: "a geodesic shell", canada: "a spiky star with 20 points",
-      england: "a bold scribbled coil", scotland: "a double helix of two twisting strands", ireland: "a Celtic braid of three strands", wales: "a flat band twisting over itself",
+      england: "a double helix of two twisting strands", scotland: "a bold scribbled coil", ireland: "a Celtic braid of three strands", wales: "a flat band twisting over itself",
       indian: "lens-shaped petals", malaysia: "big round puffs", philippines: "many small puffs", hongkong: "double-bumped petals", singapore: "swirling petals",
       australia: "teardrop wings wrapping the sides", newzealand: "fern-frond wings with curled tips",
       african: "thin and tight", southatlandtic: "thick and loose", bermuda: "two spirals winding together",
@@ -396,9 +396,10 @@ const ringTube = (pts, radius, w, seg) => lineTube(new THREE.CatmullRomCurve3(pt
 const ringAt = (t, R, rad = 0, up = 0) => V3((R + rad) * Math.cos(t), up, (R + rad) * Math.sin(t));
 function ringGroup(q) { const g = new THREE.Group(); g.quaternion.copy(q); return g; }
 const RINGS = {
-  // England: the scribbled donut, as one bold coil looping round the ring (two passes); the same for every voice
-  england(w) {
-    const g = ringGroup(quat(0.22, 0, 0.12)), R = 0.86, rand = rng("england ring");
+  // Scotland: the scribbled donut, as one bold coil looping round the ring (two passes); the same for every voice
+  scotland(w) {
+    // (England and Scotland swapped designs; each kept its own tilt and size)
+    const g = ringGroup(quat(0.22, 0, 0.12)), R = 0.86, rand = rng("scotland ring");
     for (let pass = 0; pass < 2; pass++) {
       const turns = 58, N = turns * 24, ph = [rand() * 6.28, rand() * 6.28, rand() * 6.28], pts = [];
       for (let i = 0; i < N; i++) {
@@ -410,8 +411,8 @@ const RINGS = {
     }
     return g;
   },
-  // Scotland: a double helix, two strands twisting round each other, joined by thin rungs
-  scotland(w) {
+  // England: a double helix, two strands twisting round each other, joined by thin rungs
+  england(w) {
     const g = ringGroup(quat(0.3, 0, -0.16)), R = 0.9, A = [], B = [], N = 600;
     for (let i = 0; i < N; i++) {
       const t = (i / N) * Math.PI * 2, a = 14 * t, c = 0.08 * Math.cos(a), s = 0.08 * Math.sin(a);
@@ -600,7 +601,7 @@ const STRUCT = {
     return segs(out, opa(0.85, w));
   },
   british(T, w, v) { // one solid ring round the middle; the accent picks how it is built
-    return (RINGS[v] || RINGS.england)(w);
+    return (RINGS[v] || RINGS.scotland)(w);
   },
   asia(T, w, v) { // a petal cloud; the petal edges change shape
     const out = [], q = quat(0.35, 0.5, 0.15);

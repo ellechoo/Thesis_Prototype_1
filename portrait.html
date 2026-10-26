@@ -7,12 +7,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300..500&display=swap" />
-  <link rel="stylesheet" href="style.css?v=29" />
+  <link rel="stylesheet" href="style.css?v=31" />
 </head>
 <body>
   <main class="wide">
     <nav class="tabs">
-      <a href="index.html" class="nav-pill nav-record">Record</a>
+      <a href="index.html" class="nav-home">Voiceprint</a>
+      <a href="record.html" class="nav-pill nav-record">Record</a>
       <a href="breakdown.html" id="navData">Breakdown</a>
       <a href="portrait.html" aria-current="page">Portrait</a>
       <a href="archive.html" class="nav-right nav-pill nav-archive">Archive</a>
@@ -21,7 +22,7 @@
     <section id="empty" class="empty-state" hidden>
       <h1>No portrait yet</h1>
       <p class="sub" id="emptyText">Record your voice, or pick someone's portrait from the archive, and it shows up here.</p>
-      <p class="empty-actions"><a class="button primary" href="index.html">Record your voice</a> <a class="button" href="archive.html">Open the archive</a></p>
+      <p class="empty-actions"><a class="button primary" href="record.html">Record your voice</a> <a class="button" href="archive.html">Open the archive</a></p>
     </section>
 
     <div id="content" hidden>
@@ -72,6 +73,6 @@
       "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
   } }
   </script>
-  <script type="module" src="portrait-3d.js?v=31"></script>
+  <script type="module" src="portrait-3d.js?v=32"></script>
 </body>
 </html>

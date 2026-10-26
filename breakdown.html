@@ -7,13 +7,14 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300..500&display=swap" />
-  <link rel="stylesheet" href="style.css?v=29" />
+  <link rel="stylesheet" href="style.css?v=31" />
   <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}</script>
 </head>
 <body>
   <main class="wide">
     <nav class="tabs">
-      <a href="index.html" class="nav-pill nav-record">Record</a>
+      <a href="index.html" class="nav-home">Voiceprint</a>
+      <a href="record.html" class="nav-pill nav-record">Record</a>
       <a href="breakdown.html" aria-current="page">Breakdown</a>
       <a href="portrait.html">Portrait</a>
       <a href="archive.html" class="nav-right nav-pill nav-archive">Archive</a>
@@ -22,7 +23,7 @@
     <section id="empty" class="empty-state" hidden>
       <h1>Nothing to show yet</h1>
       <p class="sub" id="emptyText">Record your voice, or open someone's portrait from the archive, and the data shows up here.</p>
-      <p class="empty-actions"><a class="button primary" href="index.html">Record your voice</a> <a class="button" href="archive.html">Open the archive</a></p>
+      <p class="empty-actions"><a class="button primary" href="record.html">Record your voice</a> <a class="button" href="archive.html">Open the archive</a></p>
     </section>
 
     <div id="content" class="page-grid" hidden>
@@ -169,6 +170,6 @@
     <div class="tip" id="tip" role="tooltip" hidden></div>
   </main>
 
-  <script type="module" src="breakdown.js?v=19"></script>
+  <script type="module" src="breakdown.js?v=20"></script>
 </body>
 </html>
