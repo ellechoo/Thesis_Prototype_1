@@ -922,3 +922,14 @@ body:is([data-phase="countdown"], [data-phase="recording"]) .record-page .btn-st
   body:is([data-phase="countdown"], [data-phase="recording"]) .record-page .btn-stack { width: auto; }
   body:is([data-phase="countdown"], [data-phase="recording"]) .record-page .btn-stack button { padding: 12px 20px; }
 }
+/* phones, while counting down / recording: bigger reading text, and the passage + controls centred in the
+   screen above the tabs instead of sitting at the top with empty space below */
+@media (max-width: 640px) {
+  body:is([data-phase="countdown"], [data-phase="recording"]) main.record-page { padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px)); }
+  body:is([data-phase="countdown"], [data-phase="recording"]) .record-page .rec-grid { min-height: calc(100svh - 64px - env(safe-area-inset-bottom, 0px)); align-content: center; }
+  body:is([data-phase="countdown"], [data-phase="recording"]) .record-page .passage-wrap { margin-top: 0; }
+  body:is([data-phase="countdown"], [data-phase="recording"]) .record-page .passage { font-size: clamp(28px, 9vw, 38px); line-height: 1.3; }
+  body:is([data-phase="countdown"], [data-phase="recording"]) .record-page .passage-box { padding: 22px 0 24px; }
+}
+/* an empty status line shouldn't push the recording controls up off centre */
+body:is([data-phase="countdown"], [data-phase="recording"]) .record-page #status:empty { display: none; }
