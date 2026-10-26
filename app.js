@@ -259,6 +259,7 @@ document.addEventListener("keydown", (e) => {
   const t = e.target;
   if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
   if (t.closest?.("input, textarea, select, button, audio, summary, a, [contenteditable]")) return;
+  try { if (document.querySelector(":popover-open")) return; } catch {} // the "Why this passage?" popup is open
   if (phase === "idle") { e.preventDefault(); startSession(); }
   else if (phase === "recording") { e.preventDefault(); finishRecording(); }
   else if (phase === "countdown") { e.preventDefault(); cancelSession(); }
