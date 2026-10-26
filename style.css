@@ -852,7 +852,7 @@ body.showing-id .archive-head { display: none; }
   .home-below h1 { font-size: 36px; line-height: 1.02; margin: 0 0 10px; }
   .home-below .home-lede { margin: 0 0 16px; font-size: 16px; }
 }
-/* the landing page leaves Record out of the nav (its big button leads there), so phones split the bar into quarters again */
+/* the landing page and the Archive leave Record out of the nav (the landing page's big button leads there), so phones split the bar into quarters again */
 @media (max-width: 640px) {
   .tabs.no-record a.nav-home, .tabs.no-record a.nav-home ~ a:not([data-href]), .tabs.no-record:not(.collapsed) a.nav-home ~ a { flex-basis: calc(25% + 4.5px); font-size: 10.5px; letter-spacing: 0.03em; padding-left: 9px; padding-right: 5px; }
 }
