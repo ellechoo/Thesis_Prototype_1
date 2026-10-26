@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300..500&display=swap" />
-  <link rel="stylesheet" href="style.css?v=36" />
+  <link rel="stylesheet" href="style.css?v=37" />
 </head>
 <body class="home-page">
   <section class="home-field" id="field" aria-label="Voice portraits from the archive, drifting past">
@@ -31,9 +31,10 @@
     <p class="home-small">About a minute · Your recording is never kept</p>
   </div>
 
-  <!-- no Record tab here: the "Add your voice" button is the way in from the landing page -->
+  <!-- the Record tab is folded away here (class no-record): the "Add your voice" button is the way in -->
   <nav class="tabs no-record">
     <a href="index.html" class="nav-home" aria-current="page">Voiceprint</a>
+    <a href="record.html" class="nav-pill nav-record">Record</a>
     <a href="breakdown.html">Breakdown</a>
     <a href="portrait.html">Portrait</a>
     <a href="archive.html" class="nav-right nav-pill nav-archive">Archive</a>
@@ -44,7 +45,7 @@
       "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
   } }
   </script>
-  <script type="module" src="nav.js?v=7"></script>
+  <script type="module" src="nav.js?v=8"></script>
   <script type="module" src="home.js?v=2"></script>
 </body>
 </html>

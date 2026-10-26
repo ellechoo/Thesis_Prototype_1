@@ -862,3 +862,9 @@ body.showing-id .archive-head { display: none; }
 @media (max-width: 640px) { .tabs.tabs a.nav-home.nav-home { padding-left: 6px; padding-right: 6px; } }
 /* the current tab sits in front of its neighbours, so nothing covers it either: centre its label too */
 @media (min-width: 641px) { .tabs.tabs a[aria-current="page"][aria-current="page"] { padding-left: 21px; padding-right: 21px; } }
+/* the Record tab folds away (like Breakdown and Portrait when locked) on every page but Record */
+.tabs.tabs.no-record a.nav-record.nav-record { width: 0; max-width: 0; flex-basis: 0; padding-left: 0; padding-right: 0; margin-right: 0; border-width: 0; box-shadow: none; border-image-source: none; clip-path: inset(0); }
+.tabs.no-record a.nav-record::after { display: none; }
+/* animate width too: desktop tabs have a fixed width, so without it they snapped shut instead of sliding */
+.tabs a, .tabs a.nav-pill { transition: max-width .55s ease, width .55s ease, padding .55s ease, margin .55s ease, border-width .55s ease, flex-basis .55s ease, font-size .55s ease, transform .15s ease; }
+
