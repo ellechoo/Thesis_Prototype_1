@@ -828,7 +828,7 @@ body.showing-id .archive-head { display: none; }
 
 /* ---- Landing page (index.html): an endless honeycomb of turning voice portraits, the pitch on a block in its middle ---- */
 .home-page { --display: "Newsreader", "Iowan Old Style", Georgia, serif; font-size: 16px; line-height: 1.55; }
-.home-field { position: relative; margin: 0; height: clamp(480px, calc(100svh - 72px), 900px); overflow: hidden; }
+.home-field { position: relative; margin: 0; height: max(480px, 100svh); overflow: hidden; } /* the whole screen; the nav tabs sit over the bottom of it */
 .home-field canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; } /* a backdrop only: nothing to click or drag */
 .home-pitch { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; pointer-events: none; padding: 0 max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px)); }
 .home-block { pointer-events: auto; background: var(--bg); padding: 38px clamp(24px, 4vw, 56px) 34px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; max-width: 640px; }

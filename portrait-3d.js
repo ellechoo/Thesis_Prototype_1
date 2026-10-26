@@ -8,7 +8,7 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
 import { getTake, archiveIsShared } from "./store.js";
-import { currentTakeId } from "./nav.js?v=6";
+import { currentTakeId } from "./nav.js?v=7";
 import { download, slug, formatDate } from "./shared.js?v=2";
 import { buildOrb } from "./voice-orb.js?v=31";
 const esc = (x) => String(x ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
