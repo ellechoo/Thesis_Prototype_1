@@ -11,9 +11,9 @@ const onTakePage = page === "breakdown.html" || page === "portrait.html" || (pag
 function read() { try { return sessionStorage.getItem(KEY); } catch { return null; } }
 export function setCurrentTakeId(id) { try { sessionStorage.setItem(KEY, id); } catch {} }
 if (onTakePage && urlId) setCurrentTakeId(urlId);
-// Going to the Record page or the Archive gallery starts over: Breakdown and Portrait lock (and fold away) again
+// Going to the landing page, the Record page or the Archive gallery starts over: Breakdown and Portrait lock (and fold away) again
 // until the next recording, or until a portrait is opened from the archive.
-if (page === "record.html" || (page === "archive.html" && !urlId)) { try { sessionStorage.removeItem(KEY); } catch {} }
+if (page === "index.html" || page === "record.html" || (page === "archive.html" && !urlId)) { try { sessionStorage.removeItem(KEY); } catch {} }
 
 /** The recording the Breakdown / Portrait pages should show, or null. */
 export function currentTakeId() { return (onTakePage && urlId) || read(); }
