@@ -8,10 +8,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300..500&display=swap" />
-  <link rel="stylesheet" href="style.css?v=31" />
+  <link rel="stylesheet" href="style.css?v=32" />
 </head>
 <body class="home-page">
-  <section class="home-field" id="field" aria-label="Voice portraits from the archive. Drag to explore; click one to open it.">
+  <section class="home-field" id="field" aria-label="Voice portraits from the archive, drifting past">
     <canvas id="view"></canvas>
     <div class="home-pitch"><div class="home-block">
       <p class="home-count">Voices from the archive</p>
@@ -20,8 +20,6 @@
       <a class="home-btn" href="record.html"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8.5" y="2.5" width="7" height="12" rx="3.5" fill="currentColor"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5M8.5 21.5h7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Add your voice</a>
       <p class="home-small">About a minute · Your recording is never kept</p>
     </div></div>
-    <div class="home-hint" id="hint">Drag, or swipe with two fingers, to explore</div>
-    <div class="home-tip" id="tip" hidden></div>
   </section>
 
   <!-- phones: the same pitch, under the gallery instead of on top of it -->
@@ -47,6 +45,6 @@
   } }
   </script>
   <script type="module" src="nav.js?v=6"></script>
-  <script type="module" src="home.js?v=1"></script>
+  <script type="module" src="home.js?v=2"></script>
 </body>
 </html>
