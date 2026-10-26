@@ -959,4 +959,17 @@ body:is([data-phase="countdown"], [data-phase="recording"]) .record-page #status
 .why-pop dt:first-child { margin-top: 0; }
 .why-pop dd { margin: 3px 0 0; color: #cfccc6; font-size: 15px; line-height: 1.55; }
 .why-pop .why-close { margin-top: 20px; padding: 10px 22px; border-radius: 999px; background: var(--accent); border-color: var(--accent); color: var(--accent-text); font-weight: 600; }
+/* landing page, desktop: the text sits in an off-white speech bubble, left-aligned, tail at the lower left
+   (home.js draws the bubble's outline; before it does, the block is a plain off-white box so the dark text still reads) */
+.bub-shape { display: none; }
+@media (min-width: 641px) {
+  .home-block { position: relative; isolation: isolate; align-items: flex-start; text-align: left; background: var(--text); border-radius: 34px; padding: 44px 60px 42px; }
+  .home-block.bubbled { background: transparent; }
+  .home-block .bub-shape { display: block; position: absolute; left: 0; top: 0; z-index: -1; overflow: visible; pointer-events: none; }
+  .home-block .bub-shape path { fill: var(--text); pointer-events: auto; }
+  .home-block .home-count { color: #6b675f; }
+  .home-block h1 { color: #0e0e0d; }
+  .home-block .home-lede { color: #3b3935; text-wrap: pretty; }
+  .home-block .home-small { color: #6b675f; }
+}
 
