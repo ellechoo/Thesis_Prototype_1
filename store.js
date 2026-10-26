@@ -47,17 +47,23 @@ export async function saveTake(take) {
   return result;
 }
 
-/** One take: this device's copy if there is one (it has the audio), otherwise the shared archive's. */
+/**
+ * One take. The shared archive's copy wins when there is one, so edits made to the archive (e.g. hand-set
+ * measures) show up everywhere, including on the computer the recording was made on. This device's copy is
+ * used only for its audio (never uploaded), or when the take isn't in the shared archive or it can't be reached.
+ */
 export async function getTake(id) {
-  let take = null;
-  try { take = await local("readonly", (s) => s.get(id)); } catch {}
-  if (!take && archiveIsShared) {
-    const sb = await client();
-    const { data, error } = await sb.from("takes").select("*").eq("id", id).maybeSingle();
-    if (error) throw new Error(error.message);
-    take = data ? fromRow(data) : null;
+  let mine = null;
+  try { mine = await local("readonly", (s) => s.get(id)); } catch {}
+  if (archiveIsShared) {
+    try {
+      const sb = await client();
+      const { data, error } = await sb.from("takes").select("*").eq("id", id).maybeSingle();
+      if (error) throw new Error(error.message);
+      if (data) { const take = fromRow(data); if (mine?.wav) take.wav = mine.wav; return take; }
+    } catch (e) { if (!mine) throw e; }
   }
-  return take || null;
+  return mine || null;
 }
 
 /** The archive, newest first (without the full frames, to keep it quick). */
