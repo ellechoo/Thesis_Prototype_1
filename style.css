@@ -856,3 +856,9 @@ body.showing-id .archive-head { display: none; }
 @media (max-width: 640px) {
   .tabs.no-record a.nav-home, .tabs.no-record a.nav-home ~ a:not([data-href]), .tabs.no-record:not(.collapsed) a.nav-home ~ a { flex-basis: calc(25% + 4.5px); font-size: 10.5px; letter-spacing: 0.03em; padding-left: 9px; padding-right: 5px; }
 }
+/* the Voiceprint tab is always first, so no tab overlaps its left edge: even padding keeps its label centred
+   (the other tabs get extra left padding to clear the tab overlapping them) */
+@media (min-width: 641px) { .tabs.tabs a.nav-home.nav-home { padding-left: 21px; padding-right: 21px; } }
+@media (max-width: 640px) { .tabs.tabs a.nav-home.nav-home { padding-left: 6px; padding-right: 6px; } }
+/* the current tab sits in front of its neighbours, so nothing covers it either: centre its label too */
+@media (min-width: 641px) { .tabs.tabs a[aria-current="page"][aria-current="page"] { padding-left: 21px; padding-right: 21px; } }
