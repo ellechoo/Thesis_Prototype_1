@@ -986,4 +986,19 @@ body:is([data-phase="countdown"], [data-phase="recording"]) .record-page #status
   .home-btn::before, .home-btn::after { animation: none; }
   .home-btn:hover { transform: none; }
 }
+/* ---- Archive gallery: every voice as a live, turning portrait, no boxes or labels ----
+   The name appears on hover (or keyboard focus); click opens the ID card. */
+.visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.archive-grid.orb-grid { max-width: 1280px; margin: 28px auto 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 6px 10px; }
+.orb-tile { position: relative; display: block; aspect-ratio: 1 / 1; border-radius: 50%; color: var(--text); text-decoration: none; outline: none; }
+.orb-tile canvas { display: block; width: 100%; height: 100%; }
+.orb-tile.failed canvas { opacity: 0.25; }
+.orb-name { position: absolute; left: 50%; bottom: 4%; transform: translate(-50%, 6px); max-width: 92%; padding: 5px 12px; border-radius: 999px; background: rgba(0, 0, 0, .78); border: 1px solid var(--line); font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0; pointer-events: none; transition: opacity .18s ease, transform .18s ease; }
+.orb-tile:hover .orb-name, .orb-tile:focus-visible .orb-name { opacity: 1; transform: translate(-50%, 0); }
+.orb-tile:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
+@media (max-width: 640px) {
+  .archive-grid.orb-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px 4px; margin-top: 16px; }
+  .orb-name { font-size: 12px; padding: 4px 9px; }
+}
+@media (prefers-reduced-motion: reduce) { .orb-name { transition: none; } }
 
