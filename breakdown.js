@@ -4,7 +4,7 @@ import { getTake, forgetLocalAudio, archiveIsShared } from "./store.js";
 import { currentTakeId } from "./nav.js?v=8";
 import { framesToCSV } from "./voice-analyzer.js";
 import { drawVowelChart, pickReference, countVowelFrames } from "./vowel-chart.js";
-import { traits, timbreWords } from "./voice-orb.js?v=31";
+import { traits, timbreWords } from "./voice-orb.js?v=32";
 import { drawPitchTrace, pct, download, slug, formatDate, ACCENT_SECONDS, deviceText } from "./shared.js?v=2";
 
 const SHOW_TOP = 6;

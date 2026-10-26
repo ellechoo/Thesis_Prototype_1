@@ -209,14 +209,19 @@ void main(){
   float n = vnoise(vP * 3.2 + seed) * 0.6 + vnoise(vP * 7.0 + seed.yzx) * 0.4;
   // the edge: measured as distance from the outline on screen (so it works the same for round and spiky cores)
   float rr = vR + cloud * (n - 0.5) * ${MAP.timbre.noise.toFixed(3)};
-  // smooth → a glossy surface reflecting a soft light above-left: a sheen strongest towards the rim (as real
-  // reflections are), plus a small, gentle highlight where the light hits head-on
+  // smooth → polished glass: a glossy surface reflecting a soft light above-left (a sheen strongest towards the rim,
+  // as real reflections are), a crisp studio window reflected upper-left and a dimmer one lower-right, and a bright rim.
+  // The windows are placed on screen (vS), so they stay put like real reflections while the core turns.
   if (gloss > 0.0) {
     vec3 Rf = reflect(-vV, vN);
     float fres = pow(1.0 - face, 2.2);
     float sky = smoothstep(0.25, 0.85, dot(Rf, normalize(vec3(-0.55, 0.8, 0.15))));
     vec3 Ls = normalize(vec3(-0.5, 0.62, 0.6)); float nh = max(dot(vN, normalize(Ls + vV)), 0.0);
     c += vec3(1.0) * (sky * (0.06 + 0.75 * fres) + pow(nh, 60.0) * 0.45) * gloss;
+    vec2 q1 = abs(vS.xy - vec2(-0.36, 0.42)) - vec2(0.15, 0.085); float w1 = 1.0 - smoothstep(-0.012, 0.012, length(max(q1, 0.0)) + min(max(q1.x, q1.y), 0.0) - 0.06);
+    vec2 q2 = abs(vS.xy - vec2(0.38, -0.40)) - vec2(0.09, 0.025); float w2 = 1.0 - smoothstep(-0.012, 0.012, length(max(q2, 0.0)) + min(max(q2.x, q2.y), 0.0) - 0.03);
+    c = mix(c, vec3(1.0), clamp((w1 * 0.92 + w2 * 0.45) * step(0.0, vS.z), 0.0, 1.0) * gloss);
+    c += vec3(1.0) * pow(1.0 - face, 3.0) * 0.9 * gloss;
   }
   float a = 1.0 - smoothstep(1.0 - edgeW, 1.0, rr);
   gl_FragColor = vec4(c, a);
@@ -753,7 +758,7 @@ export function legendFor(T) {
       visual: T.hasAccent ? `The white structure: ${mix}. Each accent family has its own kind of structure, and each of the 16 accents its own variation; mixed accents layer theirs, smaller shares fainter.` : "No accent result, so the structure defaults to the prism shell." },
     { key: "core", tier: 1, data: "Note & pitch", value: `${T.note} · ${Math.round(T.pitch)} Hz`, visual: `The color of the glowing core. The note picks the hue (the 12 notes go round the color wheel, C = red); the pitch picks how deep or pale it is — lower voices richer, higher voices lighter (scale stretched to this archive, ${MAP.color.lowHz}–${MAP.color.highHz} Hz).` },
     { key: "timbre", tier: 1, data: "Timbre", value: timbreWords(T.timbre), visual: T.timbre.enough
-        ? "The core's surroundings, edge and shape. Bright voices shine like a sun (rays in the core's colour); dark voices pull in a swirl of their own colour, like water down a drain. Breathy voices have a cloudy edge, clean ones a crisp edge. Raspy voices grow small spikes; smooth ones turn glossy, like polished glass. Each is as strong as it is in the voice, compared with the rest of the archive."
+        ? "The core's surroundings, edge and shape. Bright voices shine like a sun (rays in the core's colour); dark voices pull in a swirl of their own colour, like water down a drain. Breathy voices have a cloudy edge, clean ones a crisp edge. Raspy voices grow small spikes; smooth ones turn glossy, like polished glass, with crisp window reflections and a bright rim. Each is as strong as it is in the voice, compared with the rest of the archive."
         : "There was too little clear voice in this recording to read its timbre, so the core is left plain." },
     { key: "vowels", tier: 1, data: "Vowel space", value: T.vowels.pts.length ? `${T.vowels.n} vowel moments` : "Not enough to map",
       visual: T.vowels.pts.length ? "The soft glowing spots in the core's surface. Every vowel this voice made is one spot, placed where it sits on the vowel chart and wrapped all the way round the core: front vowels like “ee” one way, back vowels like “oo” the other (they meet at the back), closed vowels toward the top and open ones like “ah” toward the bottom. Each voice is stretched to fill the whole core, so the pattern shows the shape of its own vowel space. The spots come in the core's two neighbouring colors on the color wheel: front vowels like “ee” in one and back vowels like “oo” in the other. Where vowels crowd together they overlap into solid patches."
