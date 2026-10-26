@@ -10,8 +10,8 @@
 // its tile first scrolls near the screen, then its portrait fades in.
 import * as THREE from "three";
 import { listTakes, getTake } from "./store.js";
-import { buildOrb } from "./voice-orb.js?v=32";
-import { renderIdCard } from "./id-card.js?v=35";
+import { buildOrb } from "./voice-orb.js?v=33";
+import { renderIdCard } from "./id-card.js?v=36";
 
 const $ = (id) => document.getElementById(id);
 const still = matchMedia("(prefers-reduced-motion: reduce)").matches; // then the portraits don't turn

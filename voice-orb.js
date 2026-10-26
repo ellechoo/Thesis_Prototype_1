@@ -130,7 +130,7 @@ export function traits(take) {
   const timbre = timbreOf(take, frames);
   const vowels = vowelsOf(frames);
   return { vowels, pitch, note: s.note || noteOf(pitch), lo: q(0.08), hi: q(0.92), rangeSt: 12 * Math.log2(q(0.92) / q(0.08)), accents, timbre,
-    accentTop: take.accent?.top || null, hasAccent: !!take.accent, rand: rng(take.id || take.name || "voice"), trand: rng((take.id || take.name || "voice") + "/timbre") };
+    accentTop: take.accent?.top || null, hasAccent: !!take.accent, rand: rng(take.id || take.name || "voice"), trand: rng((take.id || take.name || "voice") + "/timbre"), grand: rng((take.id || take.name || "voice") + "/glass") };
 }
 // vowel space: the frames that land on the vowel chart, evenly sampled, with this voice's own range (log Hz)
 function vowelsOf(frames) {
@@ -188,9 +188,12 @@ function spikyCore(R, amt) {
 const CORE_VERT = `uniform float coreRad; varying vec3 vP; varying vec3 vS; varying vec3 vN; varying vec3 vV; varying float vR;
 void main(){ vP = normalize(position); vS = normalize(mat3(modelViewMatrix) * position); vR = length((mat3(modelViewMatrix) * position).xy) / coreRad; vec4 mv = modelViewMatrix * vec4(position, 1.); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }`;
 const CORE_FRAG = `uniform vec3 cMain; uniform vec3 cTop; uniform vec3 cBot; uniform vec2 band;
-uniform float edgeW; uniform float cloud; uniform vec3 seed; uniform float gloss;
+uniform float edgeW; uniform float cloud; uniform vec3 seed; uniform float gloss; uniform vec4 gw1; uniform vec4 gw2; uniform vec3 gShape;
 uniform sampler2D vMap; uniform float vOn; uniform vec3 vFront; uniform vec3 vBack; uniform mat3 vTilt;
 varying vec3 vP; varying vec3 vS; varying vec3 vN; varying vec3 vV; varying float vR;
+float glassWin(vec2 p, vec4 w, float rot, float panes){ vec2 d = p - w.xy; float cs = cos(rot), sn = sin(rot); d = vec2(cs * d.x + sn * d.y, -sn * d.x + cs * d.y);
+  vec2 q = abs(d) - w.zw; float rr = min(w.z, w.w) * 0.55; float k = 1.0 - smoothstep(-0.012, 0.012, length(max(q + rr, 0.0)) + min(max(q.x + rr, q.y + rr), 0.0) - rr);
+  if (panes > 1.5) k *= smoothstep(0.006, 0.013, abs(d.x)); if (panes > 2.5) k *= smoothstep(0.006, 0.013, abs(d.y)); return k; }
 float h3(vec3 p){ p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
 float vnoise(vec3 x){ vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);
   return mix(mix(mix(h3(i), h3(i + vec3(1,0,0)), f.x), mix(h3(i + vec3(0,1,0)), h3(i + vec3(1,1,0)), f.x), f.y),
@@ -211,21 +214,32 @@ void main(){
   float rr = vR + cloud * (n - 0.5) * ${MAP.timbre.noise.toFixed(3)};
   // smooth → polished glass: a glossy surface reflecting a soft light above-left (a sheen strongest towards the rim,
   // as real reflections are), a crisp studio window reflected upper-left and a dimmer one lower-right, and a bright rim.
-  // The windows are placed on screen (vS), so they stay put like real reflections while the core turns.
+  // The windows are placed on screen (vS), so they stay put like real reflections while the core turns. Each voice's
+  // windows differ a little (place, size, shape, tilt, panes; see glassLook), always lit from the upper left.
   if (gloss > 0.0) {
     vec3 Rf = reflect(-vV, vN);
     float fres = pow(1.0 - face, 2.2);
     float sky = smoothstep(0.25, 0.85, dot(Rf, normalize(vec3(-0.55, 0.8, 0.15))));
     vec3 Ls = normalize(vec3(-0.5, 0.62, 0.6)); float nh = max(dot(vN, normalize(Ls + vV)), 0.0);
     c += vec3(1.0) * (sky * (0.06 + 0.75 * fres) + pow(nh, 60.0) * 0.45) * gloss;
-    vec2 q1 = abs(vS.xy - vec2(-0.36, 0.42)) - vec2(0.15, 0.085); float w1 = 1.0 - smoothstep(-0.012, 0.012, length(max(q1, 0.0)) + min(max(q1.x, q1.y), 0.0) - 0.06);
-    vec2 q2 = abs(vS.xy - vec2(0.38, -0.40)) - vec2(0.09, 0.025); float w2 = 1.0 - smoothstep(-0.012, 0.012, length(max(q2, 0.0)) + min(max(q2.x, q2.y), 0.0) - 0.03);
+    float w1 = glassWin(vS.xy, gw1, gShape.x, gShape.z), w2 = glassWin(vS.xy, gw2, gShape.y, 1.0);
     c = mix(c, vec3(1.0), clamp((w1 * 0.92 + w2 * 0.45) * step(0.0, vS.z), 0.0, 1.0) * gloss);
     c += vec3(1.0) * pow(1.0 - face, 3.0) * 0.9 * gloss;
   }
   float a = 1.0 - smoothstep(1.0 - edgeW, 1.0, rr);
   gl_FragColor = vec4(c, a);
 }`;
+// smooth voices' glass reflections, a little different for every voice: where each window sits (the main one
+// upper left, a smaller one lower right), how big and how wide or tall it is, its tilt, and whether the main
+// window is one pane, two (split down the middle) or four (a cross). Returns the shader's gw1, gw2 and gShape.
+function glassLook(rnd) {
+  const u = (a, b) => a + (b - a) * rnd();
+  const s1 = u(0.78, 1.22), a1 = u(0.65, 1.35), s2 = u(0.7, 1.3), a2 = u(0.6, 1.5);
+  const w1 = new THREE.Vector4(u(-0.44, -0.27), u(0.33, 0.5), 0.15 * s1 * Math.sqrt(a1), 0.085 * s1 / Math.sqrt(a1));
+  const w2 = new THREE.Vector4(u(0.28, 0.44), u(-0.48, -0.32), 0.09 * s2 * Math.sqrt(a2), 0.026 * s2 / Math.sqrt(a2));
+  const r = rnd(), panes = r < 0.4 ? 1 : r < 0.75 ? 2 : 4;
+  return { w1, w2, shape: new THREE.Vector3(u(-0.22, 0.22), u(-0.3, 0.3), panes) };
+}
 function core(T) {
   const C = MAP.core, TM = MAP.timbre, tb = T.timbre;
   const spiky = Math.max(0, tb.raspy), spikeH = spiky >= TM.spikes.from ? TM.spikes.height * spiky : 0;
@@ -239,11 +253,12 @@ function core(T) {
   const nb = (dh) => new THREE.Color().setHSL((hsl.h + dh + 1) % 1, Math.max(0.8, hsl.s), 0.5); // the core's neighbours on the color wheel
   const vFront = nb(MAP.vowels.hue), vBack = nb(-MAP.vowels.hue);
   const tilt = MAP.vowels.tilt * D, vTilt = new THREE.Matrix3().set(1, 0, 0, 0, Math.cos(tilt), -Math.sin(tilt), 0, Math.sin(tilt), Math.cos(tilt)); // undoes the map's tilt toward the viewer
+  const G = glassLook(T.grand);
   const mat = new THREE.ShaderMaterial({
     vertexShader: CORE_VERT, fragmentShader: CORE_FRAG, transparent: true, depthWrite: false,
     uniforms: { cMain: { value: cMain }, cTop: { value: cTop }, cBot: { value: cBot }, band: { value: new THREE.Vector2(...R.band) },
 
-      gloss: { value: tb.raspy <= -TM.from ? Math.min(1, -tb.raspy * 1.1) : 0 },
+      gloss: { value: tb.raspy <= -TM.from ? Math.min(1, -tb.raspy * 1.1) : 0 }, gw1: { value: G.w1 }, gw2: { value: G.w2 }, gShape: { value: G.shape },
       edgeW: { value: tb.breathy < 0 ? TM.edge[1] + (TM.edge[1] - TM.edge[0]) * tb.breathy : TM.edge[1] + (TM.edge[2] - TM.edge[1]) * tb.breathy }, coreRad: { value: C.radius },
       cloud: { value: Math.max(0, tb.breathy) },
       vMap: { value: vMap }, vOn: { value: vMap ? 1 : 0 }, vFront: { value: vFront }, vBack: { value: vBack }, vTilt: { value: vTilt },
