@@ -4,7 +4,7 @@
 // moment. Tapping pins the selection; tapping empty space clears it.
 // Elements carry data-key="a b c": the first key is what hovering it explains; all keys decide
 // which list items light it up.
-import { getTake, archiveIsShared } from "./store.js";
+import { getTake, archiveIsShared } from "./store.js?v=2";
 import { currentTakeId } from "./nav.js?v=8";
 import { portraitSVG } from "./portrait.js?v=27";
 import { download, slug, formatDate } from "./shared.js?v=2";

@@ -3,7 +3,7 @@ import { VoiceAnalyzer } from "./voice-analyzer.js";
 import { startRecording, resampleTo, encodeWav } from "./recorder.js";
 import { computeRhythm } from "./rhythm.js";
 import { makePassageTracker, canFollowWords } from "./progress.js?v=8";
-import { saveTake, newId, archiveIsShared } from "./store.js";
+import { saveTake, newId, archiveIsShared } from "./store.js?v=2";
 import {
   RATE, MIN_ACCENT_SECONDS, summarize, drawPitchTrace, warmUpAccentModel, classifyAccent,
   noteName, clock, toDb, dbToPct, round2, describeDevice } from "./shared.js?v=2";

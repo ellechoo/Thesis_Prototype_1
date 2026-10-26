@@ -4,7 +4,7 @@
 // Every value comes from the stored measurements, so cards always match the data.
 import { snapshot } from "./orb-snapshot.js?v=32";
 import { formatDate, pct, deviceText } from "./shared.js?v=2";
-import { makePreview } from "./store.js";
+import { makePreview } from "./store.js?v=2";
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 

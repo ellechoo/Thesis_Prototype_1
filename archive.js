@@ -9,9 +9,9 @@
 // The list arrives without the detailed frames (to stay quick), so each voice's full data is loaded when
 // its tile first scrolls near the screen, then its portrait fades in.
 import * as THREE from "three";
-import { listTakes, getTake } from "./store.js";
+import { listTakes, getTake } from "./store.js?v=2";
 import { buildOrb } from "./voice-orb.js?v=34";
-import { renderIdCard } from "./id-card.js?v=37";
+import { renderIdCard } from "./id-card.js?v=38";
 
 const $ = (id) => document.getElementById(id);
 const still = matchMedia("(prefers-reduced-motion: reduce)").matches; // then the portraits don't turn

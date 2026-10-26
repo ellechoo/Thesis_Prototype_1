@@ -9,7 +9,7 @@
 // The list arrives without the detailed frames (store.js keeps it quick), so each voice's full data
 // is fetched a few at a time and its portrait fades into the field when it arrives.
 import * as THREE from "three";
-import { listTakes, getTake } from "./store.js";
+import { listTakes, getTake } from "./store.js?v=2";
 import { buildOrb } from "./voice-orb.js?v=34";
 
 const MAX_VOICES = 48;       // the newest ones; plenty to fill the field without a long download
