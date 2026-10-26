@@ -17,6 +17,24 @@ const DRIFT = [0.016, 0.01]; // pixels per millisecond: right-to-left and bottom
 const field = document.getElementById("field"), view = document.getElementById("view"), ctx = view.getContext("2d");
 const still = matchMedia("(prefers-reduced-motion: reduce)").matches; // then the portraits neither turn nor drift
 
+// ---- desktop: the text sits in a speech bubble. Its outline (body + tail) is one SVG path drawn to the
+// block's exact size, so the rounded corners never stretch. Until this runs, the block is a plain off-white box.
+{
+  const block = document.querySelector(".home-block"), svg = block?.querySelector(".bub-shape"), path = svg?.querySelector("path");
+  if (path) {
+    const draw = () => {
+      const w = block.offsetWidth, h = block.offsetHeight, r = 34, x = Math.round(Math.min(w * 0.12, 90));
+      if (!w || !h) return;
+      svg.setAttribute("width", w); svg.setAttribute("height", h);
+      path.setAttribute("d", `M${r} 0H${w - r}A${r} ${r} 0 0 1 ${w} ${r}V${h - r}A${r} ${r} 0 0 1 ${w - r} ${h}` +
+        `H${x + 70}C${x + 52} ${h + 14} ${x + 34} ${h + 30} ${x + 6} ${h + 48}C${x + 16} ${h + 28} ${x + 18} ${h + 12} ${x} ${h}` + // the tail
+        `H${r}A${r} ${r} 0 0 1 0 ${h - r}V${r}A${r} ${r} 0 0 1 ${r} 0Z`);
+      block.classList.add("bubbled");
+    };
+    new ResizeObserver(draw).observe(block); draw();
+  }
+}
+
 let people = [];
 try { people = (await listTakes()).slice(0, MAX_VOICES); } catch (e) { console.warn("Couldn't load the archive:", e); }
 const N = people.length;
