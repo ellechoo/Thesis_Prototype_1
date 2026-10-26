@@ -908,3 +908,17 @@ body:is([data-phase="processing"], [data-phase="review"]) .record-page :is(.revi
   body:is([data-phase="countdown"], [data-phase="recording"]) .record-page .btn-stack { width: 100%; }
 }
 
+/* while counting down / recording: timer and level meter on the left, Cancel and Done side by side on the right,
+   all on one row under the passage (instead of the buttons stacking underneath) */
+body:is([data-phase="countdown"], [data-phase="recording"]) .record-page .rec-grid { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 24px; align-items: center; }
+body:is([data-phase="countdown"], [data-phase="recording"]) .record-page :is(.passage-wrap, #status, #followNote) { grid-column: 1 / -1; }
+body:is([data-phase="countdown"], [data-phase="recording"]) .record-page #session { grid-column: 1; margin-top: 24px; width: auto; max-width: 260px; }
+body:is([data-phase="countdown"], [data-phase="recording"]) .record-page .start-card { grid-column: 2; margin-top: 24px; }
+body:is([data-phase="countdown"], [data-phase="recording"]) .record-page .start-row { justify-content: flex-end; }
+body:is([data-phase="countdown"], [data-phase="recording"]) .record-page .btn-stack { display: flex; gap: 10px; width: auto; flex-basis: auto; }
+body:is([data-phase="countdown"], [data-phase="recording"]) .record-page .btn-stack button { width: auto; }
+@media (max-width: 640px) {
+  body:is([data-phase="countdown"], [data-phase="recording"]) .record-page .rec-grid { column-gap: 14px; }
+  body:is([data-phase="countdown"], [data-phase="recording"]) .record-page .btn-stack { width: auto; }
+  body:is([data-phase="countdown"], [data-phase="recording"]) .record-page .btn-stack button { padding: 12px 20px; }
+}
