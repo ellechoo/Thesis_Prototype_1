@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300..500&display=swap" />
-  <link rel="stylesheet" href="style.css?v=42" />
+  <link rel="stylesheet" href="style.css?v=43" />
 </head>
 <body data-phase="idle">
   <main class="record-page wide">
@@ -43,7 +43,21 @@
 
     <div class="rec-right">
     <section class="passage-wrap">
-      <p class="passage-label">You'll read this</p>
+      <p class="passage-label">You'll read this <button type="button" class="why-btn" popovertarget="whyPassage" aria-label="Why this passage?">?</button></p>
+      <div id="whyPassage" class="why-pop" popover>
+        <h2>Why this passage?</h2>
+        <dl>
+          <dt>Everyone reads the same words</dt>
+          <dd>So the archive compares voices, not sentences. When two portraits differ, it's because of how two people speak, not what they said. The accent check listens to sound rather than words, and the same text keeps that comparison fair.</dd>
+          <dt>It holds every main English vowel</dt>
+          <dd>From the “ee” in <i>she</i> and the “i” in <i>milk</i> to the “oo” in <i>poodle</i> and the “ur” in <i>fur</i>. Your vowels, and how you shape each one, are among the clearest clues to where you learned English. They become the spots on your portrait and the points on your vowel chart.</dd>
+          <dt>Its length is known</dt>
+          <dd>It has exactly 42 syllables, so dividing by your reading time gives your speaking rate.</dd>
+          <dt>It's plain and quick</dt>
+          <dd>Everyday words, nothing hard to pronounce, and under ten seconds to read. Researchers who collect accents work the same way: the Speech Accent Archive has every speaker read one shared paragraph.</dd>
+        </dl>
+        <button type="button" class="why-close" popovertarget="whyPassage" popovertargetaction="hide">Got it</button>
+      </div>
       <div class="passage-box">
         <p class="passage" id="passage" data-syllables="42">Momo is a small poodle and she is the color of milk chocolate. She has fluffy fur, a good nose for snacks, and she barks at every red truck that passes our house.</p>
         <div class="countdown" id="countdown" hidden><span id="countNum">3</span></div>
@@ -97,6 +111,6 @@
   </main>
   <script type="module" src="nav.js?v=8"></script>
 
-  <script type="module" src="app.js?v=18"></script>
+  <script type="module" src="app.js?v=19"></script>
 </body>
 </html>

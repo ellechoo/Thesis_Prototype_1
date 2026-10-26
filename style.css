@@ -948,3 +948,15 @@ body:is([data-phase="countdown"], [data-phase="recording"]) .record-page #status
   .home-pitch h1 { white-space: nowrap; }
   .home-block { max-width: none; }
 }
+/* Record page: the "?" by "You'll read this", and the popup explaining why everyone reads this passage */
+.why-btn { display: inline-grid; place-items: center; width: 20px; height: 20px; margin-left: 6px; padding: 0; border: 1px solid var(--muted); border-radius: 50%; background: transparent; color: var(--muted); font: 600 12px/1 system-ui, -apple-system, "Segoe UI", sans-serif; letter-spacing: 0; vertical-align: 1px; cursor: pointer; }
+.why-btn:hover, .why-btn:focus-visible { color: var(--text); border-color: var(--text); }
+.why-pop { width: min(460px, calc(100vw - 32px)); max-height: calc(100svh - 48px); overflow: auto; margin: auto; padding: 26px 26px 22px; border: 1px solid var(--line); border-radius: 16px; background: var(--panel); color: var(--text); }
+.why-pop::backdrop { background: rgba(0, 0, 0, .6); }
+.why-pop h2 { margin: 0 0 14px; font-family: var(--serif); font-weight: 400; font-size: 28px; letter-spacing: -0.01em; }
+.why-pop dl { margin: 0; }
+.why-pop dt { font-weight: 600; margin-top: 14px; }
+.why-pop dt:first-child { margin-top: 0; }
+.why-pop dd { margin: 3px 0 0; color: #cfccc6; font-size: 15px; line-height: 1.55; }
+.why-pop .why-close { margin-top: 20px; padding: 10px 22px; border-radius: 999px; background: var(--accent); border-color: var(--accent); color: var(--accent-text); font-weight: 600; }
+
