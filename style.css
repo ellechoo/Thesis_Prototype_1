@@ -943,3 +943,8 @@ body:is([data-phase="countdown"], [data-phase="recording"]) .record-page #status
   .home-below h1 { margin-top: 16px; }
   .home-below .home-small { margin-top: 0; }
 }
+/* landing page, desktop: the headline always stays on one line (the block widens to fit it) */
+@media (min-width: 641px) {
+  .home-pitch h1 { white-space: nowrap; }
+  .home-block { max-width: none; }
+}
