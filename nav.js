@@ -34,21 +34,27 @@ document.querySelectorAll(".tabs a").forEach((a) => {
   }
 });
 
-// FOLDER-TAB ANIMATION: Breakdown and Portrait sit collapsed behind Record while locked.
-// If that changed since the last page (e.g. just finished recording, or came back to Record),
-// the page starts in the old state and then animates to the new one.
+// FOLDER-TAB ANIMATION: Breakdown and Portrait sit collapsed (folded away) while locked, and the
+// Record tab is folded away on every page except Record itself. If either changed since the last page
+// (e.g. just finished recording, came back to the landing page, opened an ID card), the page starts in
+// the old state and then animates to the new one, so tabs slide open and shut instead of popping.
 const nav = document.querySelector(".tabs");
 if (nav) {
-  const collapsed = !id;
-  let was = null;
-  try { was = sessionStorage.getItem("navCollapsed"); } catch {}
-  const start = was === null ? collapsed : was === "1";
+  const states = { collapsed: !id, "no-record": page !== "record.html" };
+  const memory = { collapsed: "navCollapsed", "no-record": "navNoRecord" };
   nav.classList.add("no-anim");
-  nav.classList.toggle("collapsed", start);
+  for (const [cls, now] of Object.entries(states)) {
+    let was = null;
+    try { was = sessionStorage.getItem(memory[cls]); } catch {}
+    nav.classList.toggle(cls, was === null ? now : was === "1");
+    try { sessionStorage.setItem(memory[cls], now ? "1" : "0"); } catch {}
+  }
   void nav.offsetWidth; // apply the starting state without animating
   requestAnimationFrame(() => requestAnimationFrame(() => {
     nav.classList.remove("no-anim");
-    nav.classList.toggle("collapsed", collapsed);
+    for (const [cls, now] of Object.entries(states)) nav.classList.toggle(cls, now);
   }));
-  try { sessionStorage.setItem("navCollapsed", collapsed ? "1" : "0"); } catch {}
+  // a folded-away Record tab can't be reached with the keyboard or a screen reader
+  const rec = nav.querySelector(".nav-record");
+  if (rec && states["no-record"]) { rec.tabIndex = -1; rec.setAttribute("aria-hidden", "true"); }
 }
