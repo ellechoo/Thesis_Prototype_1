@@ -51,13 +51,24 @@ export const MAP = {
     edge: [0.03, 0.14, 0.42], noise: 0.35, mist: { reach: 1.32, strength: 0.75 },
     spikes: { height: 0.22, from: 0.15 }, // raspy → small pyramids rise from every face, the tips reaching the normal outline: height for the raspiest voice; smoother than `from` stays a plain sphere
   },
+  // VOWELS → soft glowing spots in the core's own surface (painted into it, so on a spiky core they ride up
+  //   and down the spikes with it). Two colors, the core's neighbours on the color wheel (`hue` of a turn either
+  //   side): front vowels (“ee”, high F2) in one, back vowels (“oo”, low F2) in the other. Every vowel moment (F1/F2, the same points
+  //   as the vowel chart) is one spot. The chart is wrapped all the way round the sphere: F2 (front ↔ back of
+  //   the mouth) goes round it, F1 (closed ↔ open) runs top to bottom. Each voice is stretched to its own
+  //   range (its 2nd–98th percentile, log scale) so its vowels use every side of the core; front and back
+  //   vowels meet at the back. The spots lie flat on the surface and overlap, so places where vowels crowd
+  //   together are solidly colored. At most `max` spots (evenly sampled); spot: each spot's size (radians).
+//   tilt: the whole map is tipped toward the viewer by this many degrees (the same for everyone), so the open
+//   vowels near the bottom face the camera at the start instead of hiding underneath.
+  vowels: { max: 260, spot: 0.26, opacity: 0.42, lat: 80, tilt: 40, hue: 30 / 360, f1: [200, 1100], f2: [600, 3200] },
   // accent families → kinds of structure. Each of the 16 accents is drawn as its own layer (its family's
   // structure, in its own variation), as strong as its share; accents under minShare are left out.
   accent: {
     minShare: 0.06,
     families: {
       americas: { labels: ["us", "canada"], name: "Americas", structure: "a prism shell" },
-      british: { labels: ["england", "scotland", "ireland", "wales"], name: "British Isles", structure: "scribbled donut rings" },
+      british: { labels: ["england", "scotland", "ireland", "wales"], name: "British Isles", structure: "a ring round the middle, drawn in fine lines" },
       asia: { labels: ["indian", "malaysia", "philippines", "hongkong", "singapore"], name: "Asia", structure: "a soft petal cloud" },
       oceania: { labels: ["australia", "newzealand"], name: "Oceania", structure: "two wings" },
       atlantic: { labels: ["african", "southatlandtic", "bermuda"], name: "Africa & South Atlantic", structure: "a spiral coil" },
@@ -65,9 +76,9 @@ export const MAP = {
     // each accent's own variation of its family's structure
     variants: {
       us: "a geodesic shell", canada: "a spiky star with 20 points",
-      england: "one ring", scotland: "two crossed rings", ireland: "one loose, tilted ring", wales: "three stacked rings",
+      england: "a bold scribbled coil", scotland: "a double helix of two twisting strands", ireland: "a Celtic braid of three strands", wales: "a flat band twisting over itself",
       indian: "lens-shaped petals", malaysia: "big round puffs", philippines: "many small puffs", hongkong: "double-bumped petals", singapore: "swirling petals",
-      australia: "wrapping the sides", newzealand: "wrapping the top and bottom",
+      australia: "teardrop wings wrapping the sides", newzealand: "fern-frond wings with curled tips",
       african: "thin and tight", southatlandtic: "thick and loose", bermuda: "two spirals winding together",
     },
   },
@@ -117,8 +128,18 @@ export function traits(take) {
   tot = accents.reduce((a, x) => a + x.w, 0);
   accents = accents.map((x) => ({ ...x, w: x.w / tot })).sort((a, b) => b.w - a.w);
   const timbre = timbreOf(take, frames);
-  return { pitch, note: s.note || noteOf(pitch), lo: q(0.08), hi: q(0.92), rangeSt: 12 * Math.log2(q(0.92) / q(0.08)), accents, timbre,
+  const vowels = vowelsOf(frames);
+  return { vowels, pitch, note: s.note || noteOf(pitch), lo: q(0.08), hi: q(0.92), rangeSt: 12 * Math.log2(q(0.92) / q(0.08)), accents, timbre,
     accentTop: take.accent?.top || null, hasAccent: !!take.accent, rand: rng(take.id || take.name || "voice"), trand: rng((take.id || take.name || "voice") + "/timbre") };
+}
+// vowel space: the frames that land on the vowel chart, evenly sampled, with this voice's own range (log Hz)
+function vowelsOf(frames) {
+  const V = MAP.vowels, all = frames.filter((f) => f.f1 && f.f2 && f.f1 >= V.f1[0] && f.f1 <= V.f1[1] && f.f2 >= V.f2[0] && f.f2 <= V.f2[1]);
+  if (all.length < 8) return { n: all.length, pts: [] };
+  const step = Math.max(1, all.length / V.max), pts = [];
+  for (let i = 0; i < all.length && pts.length < V.max; i += step) { const f = all[Math.floor(i)]; pts.push([Math.log(f.f1), Math.log(f.f2)]); }
+  const span = (k) => { const xs = pts.map((p) => p[k]).sort((a, b) => a - b), lo = xs[Math.floor(0.02 * xs.length)], hi = xs[Math.min(xs.length - 1, Math.floor(0.98 * xs.length))]; return [lo, Math.max(hi, lo + 1e-3)]; };
+  return { n: all.length, pts, f1: span(0), f2: span(1) };
 }
 // timbre: the three measures from the voiced moments, then the three dials (−1 … 1)
 function timbreOf(take, frames) {
@@ -168,6 +189,7 @@ const CORE_VERT = `uniform float coreRad; varying vec3 vP; varying vec3 vS; vary
 void main(){ vP = normalize(position); vS = normalize(mat3(modelViewMatrix) * position); vR = length((mat3(modelViewMatrix) * position).xy) / coreRad; vec4 mv = modelViewMatrix * vec4(position, 1.); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }`;
 const CORE_FRAG = `uniform vec3 cMain; uniform vec3 cTop; uniform vec3 cBot; uniform vec2 band;
 uniform float edgeW; uniform float cloud; uniform vec3 seed; uniform float gloss;
+uniform sampler2D vMap; uniform float vOn; uniform vec3 vFront; uniform vec3 vBack; uniform mat3 vTilt;
 varying vec3 vP; varying vec3 vS; varying vec3 vN; varying vec3 vV; varying float vR;
 float h3(vec3 p){ p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
 float vnoise(vec3 x){ vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);
@@ -178,6 +200,11 @@ void main(){
   vec3 c = mix(cMain, cTop, smoothstep(band.x, band.y, vS.y));
   c = mix(c, cBot, smoothstep(band.x, band.y, -vS.y));
   c *= 0.78 + 0.32 * face;
+  // vowel space: glowing spots in the surface, looked up by this point's direction from the centre
+  if (vOn > 0.0) { vec3 d = normalize(vTilt * vP);
+    vec2 uv = vec2(fract(atan(d.z, d.x) / 6.2831853 + 1.0), 0.5 + asin(clamp(d.y, -1.0, 1.0)) / 3.1415927); // (the map is stored flipped: north at the top)
+    vec4 tx = texture2D(vMap, uv); float wt = tx.r + tx.g;
+    if (wt > 0.0) c = mix(c, (vFront * tx.r + vBack * tx.g) / wt * (0.8 + 0.35 * face), 1.0 - exp(-wt * 1.6)); } // blended in (not added), so the spots keep their own color
   // breathy ↔ clean: a soft, cloudy edge or a crisp one
   float n = vnoise(vP * 3.2 + seed) * 0.6 + vnoise(vP * 7.0 + seed.yzx) * 0.4;
   // the edge: measured as distance from the outline on screen (so it works the same for round and spiky cores)
@@ -203,6 +230,10 @@ function core(T) {
   // the top/bottom: same hue, lighter or darker by how many semitones the highest/lowest pitch sits from the average
   const shift = (hz) => { const h = {}; cMain.getHSL(h); const st = 12 * Math.log2(hz / T.pitch); return new THREE.Color().setHSL(h.h, h.s, Math.max(R.minLight, Math.min(R.maxLight, h.l + R.perSemitone * st))); };
   const cTop = shift(T.hi), cBot = shift(T.lo);
+  const vMap = vowelMap(T), hsl = {}; cMain.getHSL(hsl);
+  const nb = (dh) => new THREE.Color().setHSL((hsl.h + dh + 1) % 1, Math.max(0.8, hsl.s), 0.5); // the core's neighbours on the color wheel
+  const vFront = nb(MAP.vowels.hue), vBack = nb(-MAP.vowels.hue);
+  const tilt = MAP.vowels.tilt * D, vTilt = new THREE.Matrix3().set(1, 0, 0, 0, Math.cos(tilt), -Math.sin(tilt), 0, Math.sin(tilt), Math.cos(tilt)); // undoes the map's tilt toward the viewer
   const mat = new THREE.ShaderMaterial({
     vertexShader: CORE_VERT, fragmentShader: CORE_FRAG, transparent: true, depthWrite: false,
     uniforms: { cMain: { value: cMain }, cTop: { value: cTop }, cBot: { value: cBot }, band: { value: new THREE.Vector2(...R.band) },
@@ -210,6 +241,7 @@ function core(T) {
       gloss: { value: tb.raspy <= -TM.from ? Math.min(1, -tb.raspy * 1.1) : 0 },
       edgeW: { value: tb.breathy < 0 ? TM.edge[1] + (TM.edge[1] - TM.edge[0]) * tb.breathy : TM.edge[1] + (TM.edge[2] - TM.edge[1]) * tb.breathy }, coreRad: { value: C.radius },
       cloud: { value: Math.max(0, tb.breathy) },
+      vMap: { value: vMap }, vOn: { value: vMap ? 1 : 0 }, vFront: { value: vFront }, vBack: { value: vBack }, vTilt: { value: vTilt },
       seed: { value: new THREE.Vector3(T.trand() * 50, T.trand() * 50, T.trand() * 50) } },
   });
   const mesh = new THREE.Mesh(geo, mat);
@@ -217,6 +249,36 @@ function core(T) {
   // The glow is drawn first; the structures are drawn over it and fade out behind it (see fadeBehindCore).
   mesh.renderOrder = -1;
   return { pts: mesh, color: cMain, size: C.radius, reach: C.radius };
+}
+
+// ---------------------------------------------------------------- vowel space (spots in the core's surface)
+// The spots are drawn into a small world map (longitude across, latitude down) that the core's shader reads
+// by direction, so every point of the surface — smooth or spiky — shows whatever spot lies in its direction.
+// Spots are widened toward the poles to stay round on the sphere, and wrap round the back seam. Each spot is
+// feathered: a long, gentle fade at its edge, and the color builds up gradually where spots overlap.
+// Front vowels go in the map's red channel and back vowels in its green one, so the shader can color them apart.
+function vowelMap(T) {
+  const V = MAP.vowels, vw = T.vowels;
+  if (!vw.pts.length) return null;
+  const W = 1024, H = 512, c = document.createElement("canvas"); c.width = W; c.height = H;
+  const x = c.getContext("2d"); x.fillStyle = "#000"; x.fillRect(0, 0, W, H); x.globalCompositeOperation = "lighter";
+  const at = (v, [lo, hi]) => Math.max(0, Math.min(1, (v - lo) / (hi - lo)));
+  const ry = (V.spot / Math.PI) * H;
+  for (const [l1, l2] of vw.pts) {
+    const lat = (0.5 - at(l1, vw.f1)) * 2 * V.lat * D, lon = (90 + (at(l2, vw.f2) - 0.5) * 360) * D; // 90° = facing the viewer at the start
+    const front = at(l2, vw.f2) > 0.5; // front vowel (“ee” side of this voice's range) or back vowel (“oo” side)
+    const u = (((lon / (2 * Math.PI)) % 1) + 1) % 1, cy = (0.5 - lat / Math.PI) * H, rx = (V.spot / (2 * Math.PI)) * W / Math.max(0.15, Math.cos(lat));
+    for (const off of [-W, 0, W]) {
+      const cx = u * W + off; if (cx + rx < 0 || cx - rx > W) continue;
+      x.save(); x.translate(cx, cy); x.scale(rx / ry, 1);
+      const g = x.createRadialGradient(0, 0, 0, 0, 0, ry);
+      for (let i = 0; i <= 24; i++) { const t = i / 24; g.addColorStop(t, `rgba(${front ? 255 : 0},${front ? 0 : 255},0,${V.opacity * Math.exp(-2.6 * t * t) * Math.pow(1 - t * t, 1.5)})`); }
+      x.fillStyle = g; x.beginPath(); x.arc(0, 0, ry, 0, Math.PI * 2); x.fill(); x.restore();
+    }
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = THREE.RepeatWrapping; tex.minFilter = THREE.LinearFilter; tex.generateMipmaps = false;
+  return tex;
 }
 
 // ---------------------------------------------------------------- the white structures (accent)
@@ -261,18 +323,139 @@ function prism(geo, r, q, out) {
   const e = new THREE.EdgesGeometry(geo, 1).attributes.position;
   for (let i = 0; i < e.count; i++) { const v = new THREE.Vector3().fromBufferAttribute(e, i).multiplyScalar(r); if (q) v.applyQuaternion(q); out.push(v.x, v.y, v.z); }
 }
-// a donut: a ring of small scribbled loops (a coil wound tightly round a ring)
-function donut(T, out, { R = 0.86, r = 0.1, turns = 70, q = null, y = 0, loose = 0.3 }) {
-  for (let pass = 0; pass < 2; pass++) {
-  const N = turns * 22, ph = [T.rand() * 6.28, T.rand() * 6.28, T.rand() * 6.28], pts = [];
-  for (let i = 0; i <= N; i++) {
-    const t = (i / N) * Math.PI * 2, a = turns * t + 1.4 * Math.sin(5 * t + ph[0]);
-    const rr = r * (1 + loose * Math.sin(9 * t + ph[1]) + 0.5 * loose * Math.sin(23 * t + ph[2]));
-    pts.push(V3((R + rr * Math.cos(a)) * Math.cos(t), y + rr * Math.sin(a), (R + rr * Math.cos(a)) * Math.sin(t)));
-  }
-  line(pts, out, q);
-  }
+
+// ---- drawn tubes: a tube drawn as white lines running along its length (like an engraving), with small
+// cross-section rings every `rings` steps, like a wireframe sketch. Each line is lighter on the side facing the
+// light (upper left) and only slightly dimmer on the shadow side (so it stays white), so the form still reads as round and 3D while looking drawn,
+// like the other line structures. `taper`: the share of the length over which each end narrows to a point.
+const LIGHT = new THREE.Vector3(-0.5, 0.75, 0.45).normalize();
+function lineTube(curve, radius, w, { closed = false, seg = 700, n = 7, taper = 0, rings = 6, op = 0.95 } = {}) {
+  const fr = curve.computeFrenetFrames(seg, closed), pos = [], col = [], P = [], R = [];
+  for (let i = 0; i <= seg; i++) { const u = i / seg, e = taper ? Math.min(1, Math.min(u, 1 - u) / taper) : 1; P.push(curve.getPointAt(u)); R.push(radius * (taper ? 1 - (1 - e) * (1 - e) : 1)); }
+  const at = (i, th) => { const N = fr.normals[i % (seg + (closed ? 0 : 1))] || fr.normals[0], B = fr.binormals[i % (seg + (closed ? 0 : 1))] || fr.binormals[0];
+    const d = N.clone().multiplyScalar(Math.cos(th)).add(B.clone().multiplyScalar(Math.sin(th))); return [P[i].clone().add(d.clone().multiplyScalar(R[i])), 0.72 + 0.28 * Math.max(0, d.dot(LIGHT))]; };
+  const seg2 = (a, b) => { pos.push(a[0].x, a[0].y, a[0].z, b[0].x, b[0].y, b[0].z); col.push(a[1], a[1], a[1], b[1], b[1], b[1]); };
+  const lines = radius < 0.012 ? 1 : n; // very thin tubes (England's coil) are drawn as a single line
+  for (let k = 0; k < lines; k++) { const th = (k / lines) * Math.PI * 2; for (let i = 0; i < seg; i++) seg2(at(i, th), at(i + 1, th)); }
+  if (rings && lines > 1) for (let i = 0; i <= seg; i += rings) for (let k = 0; k < 14; k++) seg2(at(i, (k / 14) * Math.PI * 2), at(i, ((k + 1) / 14) * Math.PI * 2));
+  const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
+  const m = fadeBehindCore(new THREE.LineBasicMaterial({ color: MAP.lineColor, vertexColors: true, transparent: true, opacity: opa(1, w), depthWrite: false }));
+  const l = new THREE.LineSegments(g, m); l.userData.part = "accent"; return l;
 }
+// ---- rings (British Isles): one ring round the middle, drawn in engraved lines, each accent built differently.
+// Every ring lies near the horizontal, with its own slight tilt and size so mixed accents layer cleanly.
+// Finish: core-lit chrome. The shading is baked into a small "matcap" picture of a polished chrome ball
+// (bright sky, a dark horizon band, a pale floor, one sharp highlight), so the rings look like metal whether
+// or not the scene has lights (the Archive and ID-card pictures are drawn without any). On top of that, the
+// side of each ring that faces the core reflects the core's color, so the ring looks lit by the voice itself.
+// Wales is the exception: a soft, matte white (no reflections, no core color), like porcelain.
+let RING_SHADE = null, RING_MATTE = null, CORE_COL = null; // CORE_COL: the core's color for the orb being built (set in buildOrb)
+function ringMatte() {
+  if (RING_MATTE) return RING_MATTE;
+  const c = document.createElement("canvas"); c.width = c.height = 256; const x = c.getContext("2d");
+  const g = x.createRadialGradient(110, 100, 20, 128, 128, 128);
+  [[0, "#f7f4ee"], [0.6, "#ece8e0"], [0.9, "#d6d1c7"], [1, "#c6c0b5"]].forEach(([o, col]) => g.addColorStop(o, col));
+  x.fillStyle = g; x.fillRect(0, 0, 256, 256);
+  RING_MATTE = new THREE.CanvasTexture(c); RING_MATTE.colorSpace = THREE.SRGBColorSpace;
+  return RING_MATTE;
+}
+function ringShade() {
+  if (RING_SHADE) return RING_SHADE;
+  const c = document.createElement("canvas"); c.width = c.height = 256; const x = c.getContext("2d");
+  const band = x.createLinearGradient(0, 0, 0, 256);
+  [[0, "#ffffff"], [0.3, "#dfe3e8"], [0.47, "#a9b0b8"], [0.5, "#2f3338"], [0.56, "#5b6168"], [0.75, "#b7bcc2"], [1, "#f2f3f4"]].forEach(([o, col]) => band.addColorStop(o, col));
+  x.fillStyle = band; x.fillRect(0, 0, 256, 256);
+  const hi = x.createRadialGradient(84, 70, 0, 128, 128, 128);
+  hi.addColorStop(0, "rgba(255,255,255,0.95)"); hi.addColorStop(0.18, "rgba(255,255,255,0)"); hi.addColorStop(1, "rgba(255,255,255,0)");
+  x.fillStyle = hi; x.fillRect(0, 0, 256, 256);
+  RING_SHADE = new THREE.CanvasTexture(c); RING_SHADE.colorSpace = THREE.SRGBColorSpace;
+  return RING_SHADE;
+}
+function ringMat(w, matte = false) {
+  const m = fadeBehindCore(new THREE.MeshMatcapMaterial({ matcap: matte ? ringMatte() : ringShade(), transparent: true, opacity: opa(0.95, w), side: THREE.DoubleSide }));
+  if (matte || !CORE_COL) return m;
+  const fade = m.onBeforeCompile, col = CORE_COL.clone();
+  m.onBeforeCompile = (sh, r) => {
+    fade(sh, r);
+    sh.uniforms.coreCol = { value: col };
+    sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nvarying vec3 vWN;")
+      .replace("#include <defaultnormal_vertex>", "#include <defaultnormal_vertex>\nvWN = normalize(mat3(modelMatrix) * objectNormal);");
+    // inward: how squarely this bit of ring faces the core; near: stronger close to it
+    sh.fragmentShader = sh.fragmentShader.replace("#include <common>", "#include <common>\nvarying vec3 vWN; uniform vec3 coreCol;")
+      .replace("#include <opaque_fragment>", `#include <opaque_fragment>
+{ vec3 n = normalize(vWN); if (!gl_FrontFacing) n = -n;
+  float inward = clamp(dot(n, -normalize(vWorldP)), 0.0, 1.0), near = 1.0 - smoothstep(0.75, 1.15, length(vWorldP));
+  gl_FragColor.rgb = mix(gl_FragColor.rgb, gl_FragColor.rgb * coreCol * 1.5 + coreCol * 0.25, pow(inward, 1.3) * (0.55 + 0.35 * near)); }`);
+  };
+  m.customProgramCacheKey = () => "ringCoreLitChrome";
+  return m;
+}
+const ringMesh = (geo, w, matte = false) => { const m = new THREE.Mesh(geo, ringMat(w, matte)); m.userData.part = "accent"; return m; };
+const ringTube = (pts, radius, w, seg) => lineTube(new THREE.CatmullRomCurve3(pts, true), radius, w, { closed: true, seg: Math.min(seg, 1400) });
+// a point on the ring (radius R) at angle t, pushed out by `rad` (away from the centre) and `up`
+const ringAt = (t, R, rad = 0, up = 0) => V3((R + rad) * Math.cos(t), up, (R + rad) * Math.sin(t));
+function ringGroup(q) { const g = new THREE.Group(); g.quaternion.copy(q); return g; }
+const RINGS = {
+  // England: the scribbled donut, as one bold coil looping round the ring (two passes); the same for every voice
+  england(w) {
+    const g = ringGroup(quat(0.22, 0, 0.12)), R = 0.86, rand = rng("england ring");
+    for (let pass = 0; pass < 2; pass++) {
+      const turns = 58, N = turns * 24, ph = [rand() * 6.28, rand() * 6.28, rand() * 6.28], pts = [];
+      for (let i = 0; i < N; i++) {
+        const t = (i / N) * Math.PI * 2, a = turns * t + 1.2 * Math.sin(5 * t + ph[0]) + pass * 1.7;
+        const r = 0.1 * (1 + 0.16 * Math.sin(9 * t + ph[1]) + 0.08 * Math.sin(23 * t + ph[2]));
+        pts.push(ringAt(t, R, r * Math.cos(a), r * Math.sin(a)));
+      }
+      g.add(ringTube(pts, 0.0055, w, N * 2, 6));
+    }
+    return g;
+  },
+  // Scotland: a double helix, two strands twisting round each other, joined by thin rungs
+  scotland(w) {
+    const g = ringGroup(quat(0.3, 0, -0.16)), R = 0.9, A = [], B = [], N = 600;
+    for (let i = 0; i < N; i++) {
+      const t = (i / N) * Math.PI * 2, a = 14 * t, c = 0.08 * Math.cos(a), s = 0.08 * Math.sin(a);
+      A.push(ringAt(t, R, c, s)); B.push(ringAt(t, R, -c, -s));
+    }
+    g.add(ringTube(A, 0.016, w, 1200)); g.add(ringTube(B, 0.016, w, 1200));
+    const rungs = [];
+    for (let i = 0; i < N; i += 15) {
+      rungs.push(A[i].x, A[i].y, A[i].z, B[i].x, B[i].y, B[i].z); // each rung: one straight line between the strands
+    }
+    { const rg = new THREE.BufferGeometry(); rg.setAttribute("position", new THREE.Float32BufferAttribute(rungs, 3)); const rl = new THREE.LineSegments(rg, lineMat(opa(0.95, w))); rl.userData.part = "accent"; g.add(rl); }
+    return g;
+  },
+  // Ireland: a Celtic braid, three strands plaited round the ring
+  ireland(w) {
+    const g = ringGroup(quat(0.16, 0, 0.26)), R = 0.83;
+    for (let k = 0; k < 3; k++) {
+      const pts = [];
+      for (let i = 0; i < 600; i++) { const t = (i / 600) * Math.PI * 2, a = 9 * t + (k * 2 * Math.PI) / 3; pts.push(ringAt(t, R, 0.065 * Math.cos(a), 0.039 * Math.sin(2 * a))); }
+      g.add(ringTube(pts, 0.022, w, 1200));
+    }
+    return g;
+  },
+  // Wales: a slim band, drawn as its edges and rulings, that twists over itself five half-turns on its way round, tipped more steeply than the
+  // other rings (the opposite way) so it crosses them instead of lying on top of them
+  wales(w) {
+    const g = ringGroup(quat(0.5, 0, -0.42)), R = 0.88, N = 480, half = 0.085, pos = [], idx = [];
+    for (let i = 0; i <= N; i++) {
+      const t = (i / N) * Math.PI * 2, a = 2.5 * t;
+      for (const s of [-1, 1]) { const p = ringAt(t, R, s * half * Math.cos(a), s * half * Math.sin(a)); pos.push(p.x, p.y, p.z); }
+    }
+    for (let i = 0; i < N; i++) { const a = i * 2; idx.push(a, a + 2, a + 1, a + 1, a + 2, a + 3); }
+    const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); geo.setIndex(idx); geo.computeVertexNormals();
+    // drawn as its two edges plus rulings across the band, each ruling lighter where the band faces the light
+    { const lp = [], lc = [], P2 = (i, sd) => { const t = (i / N) * Math.PI * 2, a = 2.5 * t; return ringAt(t, R, sd * half * Math.cos(a), sd * half * Math.sin(a)); };
+      const shade = (i) => { const t = (i / N) * Math.PI * 2, a = 2.5 * t, tan = V3(-Math.sin(t), 0, Math.cos(t)), across = V3(Math.cos(a) * Math.cos(t), Math.sin(a), Math.cos(a) * Math.sin(t)), nrm = new THREE.Vector3().crossVectors(tan, across).normalize().applyQuaternion(g.quaternion); return 0.75 + 0.25 * Math.abs(nrm.dot(LIGHT)); };
+      const add = (a, b, ca, cb) => { lp.push(a.x, a.y, a.z, b.x, b.y, b.z); lc.push(ca, ca, ca, cb, cb, cb); };
+      for (let i = 0; i < N; i++) for (const sd of [-1, 1]) add(P2(i, sd), P2(i + 1, sd), 1, 1);
+      for (let i = 0; i < N; i += 4) add(P2(i, -1), P2(i, 1), shade(i), shade(i));
+      const lg = new THREE.BufferGeometry(); lg.setAttribute("position", new THREE.Float32BufferAttribute(lp, 3)); lg.setAttribute("color", new THREE.Float32BufferAttribute(lc, 3));
+      const ll = new THREE.LineSegments(lg, fadeBehindCore(new THREE.LineBasicMaterial({ color: MAP.lineColor, vertexColors: true, transparent: true, opacity: opa(0.95, w), depthWrite: false }))); ll.userData.part = "accent"; g.add(ll); }
+    return g;
+  },
+};
 // ---- petal cloud: the prism shell made soft. Every straight edge of a polyhedron becomes a puffed,
 // petal-like curve that swells outward between the corners, so the outline turns into a lumpy cloud.
 // The variation changes the shape of those petal edges.
@@ -299,7 +482,7 @@ function puffEdges(out, geo, { R0, puff, mode, q }) {
 }
 
 // ---- wings: two wings wrapping the core, each made of three stacked teardrops (round head, tapering tail)
-// that curve round the shell. The teardrops are filled, mostly opaque, with a crisp outline.
+// that curve round the shell. The teardrops are drawn in engraved lines: outline, lines along, rulings across.
 function teardrop(group, out, { lat0, lon0, len, th, dir, r, curve, q, op }) {
   const nu = 48, nv = 6, pos = [], idx = [];
   const P = (u, v) => { // u: head → tail, v: −1 … 1 across
@@ -307,11 +490,9 @@ function teardrop(group, out, { lat0, lon0, len, th, dir, r, curve, q, op }) {
     const lat = lat0 - curve * u * u + v * h, lon = lon0 + dir * len * u;
     const p = sph(lat, lon, r + 0.03 * Math.sin(Math.PI * u) * (1 - v * v)); return q ? p.applyQuaternion(q) : p;
   };
-  for (let i = 0; i <= nu; i++) for (let j = 0; j <= nv; j++) { const p = P(i / nu, -1 + (2 * j) / nv); pos.push(p.x, p.y, p.z); }
-  for (let i = 0; i < nu; i++) for (let j = 0; j < nv; j++) { const a = i * (nv + 1) + j, b = a + nv + 1; idx.push(a, b, a + 1, b, b + 1, a + 1); }
-  const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx);
-  const m = new THREE.Mesh(g, fadeBehindCore(new THREE.MeshBasicMaterial({ color: MAP.lineColor, transparent: true, opacity: op, side: THREE.DoubleSide, depthWrite: false })));
-  m.renderOrder = 2; m.userData.part = "accent"; group.add(m);
+  // drawn in engraved lines, like the rings and coils: lines running along the teardrop, and rulings across it
+  for (const v of [-0.5, 0, 0.5]) { const along = []; for (let i = 0; i <= nu; i++) along.push(P(i / nu, v)); line(along, out); }
+  for (let i = 2; i < nu; i += 2) { const across = []; for (let j = 0; j <= nv; j++) across.push(P(i / nu, -1 + (2 * j) / nv)); line(across, out); }
   const top = [], bot = []; for (let i = 0; i <= nu; i++) { top.push(P(i / nu, 1)); bot.push(P(i / nu, -1)); }
   line(top.concat(bot.reverse()), out);
 }
@@ -325,13 +506,77 @@ function wingCap(group, { q, w, flip = false }) {
   group.add(segs(out, opa(0.95, w)));
 }
 
+// ---- fern wings (New Zealand): each wing is a fern frond — a slim curved stem lined with paired leaflets
+// that shrink toward the tip, where the stem curls into a koru. Drawn in engraved lines like the teardrop wings.
+// ribbon: a filled strip on the shell along path ([[lat, lon], …], radians), hw = its half-width at each point
+function ribbon(group, out, path, hw, { r, q, op }) {
+  const n = path.length, pos = [], idx = [], left = [], right = [];
+  const P = (lat, lon, lift) => { const p = sph(lat, lon, r + lift); return q ? p.applyQuaternion(q) : p; };
+  for (let i = 0; i < n; i++) {
+    const a = path[Math.max(0, i - 1)], b = path[Math.min(n - 1, i + 1)];
+    let dl = b[0] - a[0], dn = b[1] - a[1]; const L = Math.hypot(dl, dn) || 1; dl /= L; dn /= L;
+    const [lat, lon] = path[i], h = hw[i];
+    for (const v of [-1, 0, 1]) {
+      const p = P(lat + v * h * dn, lon - v * h * dl, v === 0 ? 0.012 * Math.min(1, h / (3 * D)) : 0);
+      pos.push(p.x, p.y, p.z); if (v === -1) right.push(p); if (v === 1) left.push(p);
+    }
+  }
+  // drawn in engraved lines: the outline, a centre vein, and rulings across every other step
+  const mid = []; for (let i = 0; i < n; i++) mid.push(new THREE.Vector3(pos[i * 9 + 3], pos[i * 9 + 4], pos[i * 9 + 5]));
+  line(mid, out);
+  for (let i = 1; i < n - 1; i += 2) line([right[i], mid[i], left[i]], out);
+  line(left.concat(right.slice().reverse()), out);
+}
+function fernWing(group, { q, w, flip = false }) {
+  const out = [], op = 0.25 + 0.75 * w, r = 0.9;
+  const o = { r, op, q: flip ? (q ? q.clone().multiply(quat(0, Math.PI, 0)) : quat(0, Math.PI, 0)) : q };
+  const rib = (u) => [14 * D * Math.sin(Math.PI * u * 0.85) - 4 * D, -72 * D + 132 * D * u];
+  const dir = (u) => { const a = rib(Math.max(0, u - 0.01)), b = rib(Math.min(1, u + 0.01)), L = Math.hypot(b[0] - a[0], b[1] - a[1]); return [(b[0] - a[0]) / L, (b[1] - a[1]) / L]; };
+  // the stem, then the koru: a spiral that keeps going forward and curls in on itself
+  const path = [], hw = [];
+  for (let i = 0; i <= 60; i++) { const u = i / 60; path.push(rib(u)); hw.push((1.9 - 0.8 * u) * D); }
+  const tip = rib(1), [tl, tn] = dir(1), nl = tn, nn = -tl, R0 = 8 * D, C = [tip[0] + nl * R0, tip[1] + nn * R0];
+  for (let i = 1; i <= 50; i++) {
+    const f = (i / 50) * 2.3 * Math.PI, R = R0 * (1 - (0.3 * f) / Math.PI);
+    path.push([C[0] + R * (-nl * Math.cos(f) + tl * Math.sin(f)), C[1] + R * (-nn * Math.cos(f) + tn * Math.sin(f))]);
+    hw.push((1.1 - 0.75 * (i / 50)) * D);
+  }
+  ribbon(group, out, path, hw, o);
+  // paired leaflets angled toward the tip, longest at the base
+  for (let k = 0; k < 9; k++) {
+    const u = 0.07 + k * 0.098, base = rib(u), [dl, dn] = dir(u), len = (27 - 19 * (u / 0.85)) * D;
+    for (const s of [-1, 1]) {
+      const th = s * 52 * D, al = dl * Math.cos(th) - dn * Math.sin(th), an = dl * Math.sin(th) + dn * Math.cos(th);
+      const lp = [], lh = [];
+      for (let j = 0; j <= 16; j++) {
+        const t = 0.04 + 0.96 * (j / 16);
+        lp.push([base[0] + len * (al * t + 0.15 * dl * t * t), base[1] + len * (an * t + 0.15 * dn * t * t)]);
+        lh.push(len * 0.23 * Math.pow(Math.sin(Math.PI * t), 0.8));
+      }
+      ribbon(group, out, lp, lh, { ...o, r: r + 0.004 });
+    }
+  }
+  group.add(segs(out, opa(0.95, w)));
+}
+
 // ---- coil: one solid, weighted line wound round the sphere from pole to pole
 class SphereSpiral extends THREE.Curve {
   constructor(turns, r, off = 0, span = 78) { super(); this.turns = turns; this.r = r; this.off = off; this.span = span; }
   getPoint(t, target = new THREE.Vector3()) { const lat = (-this.span + 2 * this.span * t) * D, lon = this.off + t * this.turns * Math.PI * 2; return target.copy(sph(lat, lon, this.r)); }
 }
-function tube(curve, radius, w) {
-  const m = new THREE.Mesh(new THREE.TubeGeometry(curve, 900, radius, 10, false), fadeBehindCore(new THREE.MeshBasicMaterial({ color: MAP.lineColor, transparent: true, opacity: opa(0.95, w) })));
+// The line tapers to a sharp point at both ends: over the last `taper` of its length it gets steadily
+// skinnier (fast at first, then slower) until it narrows to nothing, instead of stopping with a blunt cut.
+function tube(curve, radius, w, taper = 0.14) {
+  return lineTube(curve, radius, w, { taper, seg: 900 }); // drawn in engraved lines (the solid version below is no longer used)
+  const segs = 900, radial = 10, geo = new THREE.TubeGeometry(curve, segs, radius, radial, false), pos = geo.attributes.position, c = new THREE.Vector3(), p = new THREE.Vector3();
+  for (let i = 0; i <= segs; i++) {
+    const u = i / segs, e = Math.min(1, Math.min(u, 1 - u) / taper), f = 1 - (1 - e) * (1 - e); // 1 along the middle → 0 at the tips
+    if (f >= 1) continue;
+    curve.getPointAt(u, c);
+    for (let j = 0; j <= radial; j++) { const k = i * (radial + 1) + j; p.fromBufferAttribute(pos, k).sub(c).multiplyScalar(f).add(c); pos.setXYZ(k, p.x, p.y, p.z); }
+  }
+  pos.needsUpdate = true;
+  const m = new THREE.Mesh(geo, fadeBehindCore(new THREE.MeshBasicMaterial({ color: MAP.lineColor, transparent: true, opacity: opa(0.95, w) })));
   m.userData.part = "accent"; return m;
 }
 
@@ -354,13 +599,8 @@ const STRUCT = {
     else prism(new THREE.IcosahedronGeometry(1, 1), 0.95, quat(0.3, 0.2, 0.1), out);
     return segs(out, opa(0.85, w));
   },
-  british(T, w, v) { // donut rings
-    const out = [];
-    if (v === "scotland") { donut(T, out, { q: quat(0.5, 0, 0.35), r: 0.08, turns: 60 }); donut(T, out, { q: quat(-0.5, 0, -0.35), r: 0.08, turns: 60 }); }
-    else if (v === "ireland") donut(T, out, { q: quat(0.55, 0, 0.3), r: 0.15, turns: 45, loose: 0.45 });
-    else if (v === "wales") { for (const y of [-0.42, 0, 0.42]) donut(T, out, { y, R: Math.sqrt(0.86 * 0.86 - y * y) + 0.02, r: 0.07, turns: 50 }); }
-    else donut(T, out, { q: quat(0.22, 0, 0.12), r: 0.11, turns: 70 }); // england
-    return segs(out, opa(0.65, w));
+  british(T, w, v) { // one solid ring round the middle; the accent picks how it is built
+    return (RINGS[v] || RINGS.england)(w);
   },
   asia(T, w, v) { // a petal cloud; the petal edges change shape
     const out = [], q = quat(0.35, 0.5, 0.15);
@@ -374,9 +614,10 @@ const STRUCT = {
     puffEdges(out, P[0], { ...P[1], q });
     return segs(out, opa(0.85, w));
   },
-  oceania(T, w, v) { // wings: two caps wrapping the core
-    const g = new THREE.Group(), q = v === "newzealand" ? quat(0, 0, Math.PI / 2) : quat(0.25, 0, -0.55); // Australia: tilted about 30° on the diagonal
-    wingCap(g, { q, w }); wingCap(g, { q, w, flip: true });
+  oceania(T, w, v) { // wings: two wings wrapping the core
+    const g = new THREE.Group();
+    if (v === "newzealand") { const q = quat(0, -1.6, 0).multiply(quat(-0.25, 0, 0.95)); fernWing(g, { q, w }); fernWing(g, { q, w, flip: true }); } // fern fronds, tilted on the opposite diagonal to Australia
+    else { const q = quat(0.25, 0, -0.55); wingCap(g, { q, w }); wingCap(g, { q, w, flip: true }); } // Australia: teardrops, tilted about 30° on the diagonal
     return g;
   },
   atlantic(T, w, v) { // coils: one solid line spiralling round the sphere
@@ -490,9 +731,9 @@ export function buildOrb(take) {
   breathMist(T, group, color);
   sunRays(T, group, color, reach);
   darkSwirl(T, group, color);
-  CORE_R = size;
+  CORE_R = size; CORE_COL = color;
   for (const a of T.accents) group.add(STRUCT[a.family](T, a.w, a.label));
-  CORE_R = null;
+  CORE_R = null; CORE_COL = null;
   return { group, traits: T, legend: legendFor(T), coreColor: color };
 }
 
@@ -513,6 +754,9 @@ export function legendFor(T) {
     { key: "timbre", tier: 1, data: "Timbre", value: timbreWords(T.timbre), visual: T.timbre.enough
         ? "The core's surroundings, edge and shape. Bright voices shine like a sun (rays in the core's colour); dark voices pull in a swirl of their own colour, like water down a drain. Breathy voices have a cloudy edge, clean ones a crisp edge. Raspy voices grow small spikes; smooth ones turn glossy, like polished glass. Each is as strong as it is in the voice, compared with the rest of the archive."
         : "There was too little clear voice in this recording to read its timbre, so the core is left plain." },
+    { key: "vowels", tier: 1, data: "Vowel space", value: T.vowels.pts.length ? `${T.vowels.n} vowel moments` : "Not enough to map",
+      visual: T.vowels.pts.length ? "The soft glowing spots in the core's surface. Every vowel this voice made is one spot, placed where it sits on the vowel chart and wrapped all the way round the core: front vowels like “ee” one way, back vowels like “oo” the other (they meet at the back), closed vowels toward the top and open ones like “ah” toward the bottom. Each voice is stretched to fill the whole core, so the pattern shows the shape of its own vowel space. The spots come in the core's two neighbouring colors on the color wheel: front vowels like “ee” in one and back vowels like “oo” in the other. Where vowels crowd together they overlap into solid patches."
+        : "Too few vowel moments were measured in this recording to map them." },
     { key: "range", tier: 2, data: "Pitch range", value: `${Math.round(T.lo)}–${Math.round(T.hi)} Hz`, visual: "The top and bottom of the core. The top is lighter the higher this voice climbs above its average; the bottom is darker the lower it drops. (The very highest and lowest moments are ignored, so one squeak or croak doesn't count.)" },
   ];
 }
