@@ -1,7 +1,7 @@
 // home.js — the landing page: an endless honeycomb of the archive's voice portraits, all turning,
 // drifting slowly on a diagonal so every voice comes past in time. It's a backdrop only: nothing here
 // is clickable or draggable (the Archive page is where people browse voices), so the focus stays on
-// the intro and the "Add your voice" button.
+// the intro and the "Get Started" button.
 //
 // A browser can only run a handful of live 3D views per page, so this uses ONE shared renderer:
 // every voice is drawn once per frame (up to 30 a second) into its own cell of an offscreen "sheet",

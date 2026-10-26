@@ -972,4 +972,18 @@ body:is([data-phase="countdown"], [data-phase="recording"]) .record-page #status
   .home-block .home-lede { color: #3b3935; text-wrap: pretty; }
   .home-block .home-small { color: #6b675f; }
 }
+/* landing page: "Get Started" sends out a soft ring every few seconds, like a sound wave, to draw the eye;
+   it lifts a little on hover. Still for visitors who ask for reduced motion. */
+.home-btn { position: relative; isolation: isolate; transition: transform .2s ease, box-shadow .2s ease, filter .2s ease; }
+.home-btn::before, .home-btn::after { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; border: 2px solid var(--accent); opacity: 0; pointer-events: none; animation: home-btn-wave 2.8s ease-out infinite; }
+.home-btn::after { animation-delay: .45s; }
+.home-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(116, 143, 252, .35); }
+@keyframes home-btn-wave {
+  0% { opacity: .75; transform: scale(1); }
+  70%, 100% { opacity: 0; transform: scale(1.18, 1.55); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-btn::before, .home-btn::after { animation: none; }
+  .home-btn:hover { transform: none; }
+}
 
