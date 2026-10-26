@@ -159,7 +159,7 @@ function wireHover() {
     const hit = ray.intersectObjects(orbInfo.group.children, true).find((h) => h.object.userData.part);
     if (!hit) return null;
     const part = hit.object.userData.part;
-    return { keys: { core: ["core", "timbre", "range"], accent: ["accent"] }[part] || [part] };
+    return { keys: { core: ["core", "timbre", "vowels", "range"], accent: ["accent"] }[part] || [part] }; // the vowel spots live in the core's surface
   };
   const show = (p, x, y) => {
     if (!p) { tip.hidden = true; canvas.style.cursor = ""; return; }
