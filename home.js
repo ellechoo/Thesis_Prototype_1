@@ -10,7 +10,7 @@
 // is fetched a few at a time and its portrait fades into the field when it arrives.
 import * as THREE from "three";
 import { listTakes, getTake } from "./store.js";
-import { buildOrb } from "./voice-orb.js?v=33";
+import { buildOrb } from "./voice-orb.js?v=34";
 
 const MAX_VOICES = 48;       // the newest ones; plenty to fill the field without a long download
 const DRIFT = [0.016, 0.01]; // pixels per millisecond: right-to-left and bottom-to-top, a slow diagonal
