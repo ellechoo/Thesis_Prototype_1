@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Record · Voiceprint</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300..500&display=swap" />
+  <link rel="stylesheet" href="style.css?v=31" />
+</head>
+<body>
+  <main class="record-page wide">
+    <nav class="tabs">
+      <a href="index.html" class="nav-home">Voiceprint</a>
+      <a href="record.html" class="nav-pill nav-record" aria-current="page">Record</a>
+      <a href="breakdown.html">Breakdown</a>
+      <a href="portrait.html">Portrait</a>
+      <a href="archive.html" class="nav-right nav-pill nav-archive">Archive</a>
+    </nav>
+
+    <div class="rec-grid">
+    <div class="rec-left">
+    <header class="rec-head">
+      <h1 class="wordmark">Voiceprint</h1>
+      <p class="rec-intro">For best results, find a quiet place. Enter your name and tap Start<span class="kbd-hint"> (or press the space bar)</span>. When the countdown ends, read the passage aloud, then tap Done as soon as you finish.</p>
+    </header>
+
+      <section id="session" class="session" hidden>
+        <div class="rec-row">
+          <span class="rec-dot" id="recDot"></span>
+          <span id="timer" class="timer">0:00</span>
+          <span id="activeDot" class="hearing"></span>
+        </div>
+        <div class="meter" aria-hidden="true"><div id="meterFill" class="fill"></div><div id="gateMark" class="gate"></div></div>
+      </section>
+
+    </div>
+
+    <div class="rec-right">
+    <section class="passage-wrap">
+      <div class="passage-box">
+        <p class="passage" id="passage" data-syllables="42">Momo is a small poodle and she is the color of milk chocolate. She has fluffy fur, a good nose for snacks, and she barks at every red truck that passes our house.</p>
+        <div class="countdown" id="countdown" hidden><span id="countNum">3</span></div>
+      </div>
+      <p class="note" id="followNote" hidden></p>
+    </section>
+
+    <section class="start-card" id="startCard">
+      <label for="nameInput" class="field-label">Your name or a nickname</label>
+      <div class="start-row">
+        <input type="text" id="nameInput" maxlength="40" autocomplete="off" placeholder="e.g. Momo's biggest fan" />
+        <div class="btn-stack">
+          <button id="startBtn" class="primary big"><svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="8.5" y="2.5" width="7" height="12" rx="3.5" fill="currentColor"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5M8.5 21.5h7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Start</button>
+        <button id="cancelBtn" class="big cancel-btn" hidden>Cancel</button>
+          <button id="doneBtn" class="primary big" hidden disabled>Done</button>
+        </div>
+      </div>
+      <p class="fine" id="archiveNotice"></p>
+    </section>
+
+    <p id="status" class="status" aria-live="polite"></p>
+
+
+    <section class="review" id="review" hidden>
+      <p class="review-title">How did that sound?</p>
+      <audio id="reviewAudio" controls preload="auto"></audio>
+      <p class="note" id="reviewNote">Listen back if you like. Choosing “Use this recording” adds your name and voice data to the archive. The recording itself is never kept.</p>
+      <div class="controls">
+        <button id="useBtn" class="primary">Use this recording</button>
+        <button id="retryBtn">Try again</button>
+      </div>
+    </section>
+
+    <section class="processing" id="processing" hidden>
+      <div class="spinner" aria-hidden="true"></div>
+      <p class="processing-title">Analyzing your voice…</p>
+      <p class="note" id="processingStep"></p>
+    </section>
+
+
+        <details class="settings-box">
+      <summary>Settings</summary>
+      <div class="settings">
+        <label><input type="checkbox" id="optFilters" checked /> Filter rumble &amp; hiss (80 Hz – 8 kHz)</label>
+        <label><input type="checkbox" id="optBrowserNS" /> Browser noise suppression (cleaner, but alters the voice)</label>
+        <p class="hint">Settings apply to the next recording. The accent check always uses the unfiltered audio.</p>
+      </div>
+    </details>
+    </div>
+    </div>
+  </main>
+  <script type="module" src="nav.js?v=6"></script>
+
+  <script type="module" src="app.js?v=17"></script>
+</body>
+</html>

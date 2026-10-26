@@ -1,10 +1,10 @@
 // breakdown.js — shows everything measured from one saved recording.
 // Opens the recording named by ?id=…, or the most recent one.
 import { getTake, forgetLocalAudio, archiveIsShared } from "./store.js";
-import { currentTakeId } from "./nav.js?v=5";
+import { currentTakeId } from "./nav.js?v=6";
 import { framesToCSV } from "./voice-analyzer.js";
 import { drawVowelChart, pickReference, countVowelFrames } from "./vowel-chart.js";
-import { traits, timbreWords } from "./voice-orb.js?v=30";
+import { traits, timbreWords } from "./voice-orb.js?v=31";
 import { drawPitchTrace, pct, download, slug, formatDate, ACCENT_SECONDS, deviceText } from "./shared.js?v=2";
 
 const SHOW_TOP = 6;

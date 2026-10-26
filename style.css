@@ -816,3 +816,50 @@ body.showing-id .archive-head { display: none; }
 .scale-fill { position: absolute; top: 0; bottom: 0; background: var(--accent); border-radius: 3px; }
 .scale-dot { position: absolute; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: var(--text); box-shadow: 0 0 0 3px var(--bg); }
 .scale-ends { display: flex; justify-content: space-between; margin-top: 8px; font-size: 13px; color: var(--muted); }
+
+/* ---- "Voiceprint" home tab: the first folder tab in the nav, in front of Record ---- */
+.tabs a.nav-home { z-index: 5; }
+@media (max-width: 640px) {
+  /* five tabs when Breakdown and Portrait are open: each a fifth of the bar, with a smaller label to fit */
+  .tabs a.nav-home, .tabs a.nav-home ~ a { flex-basis: calc(20% + 4.8px); }
+  .tabs:not(.collapsed) a.nav-home, .tabs:not(.collapsed) a.nav-home ~ a { font-size: 9.5px; letter-spacing: 0.02em; padding-left: 7px; padding-right: 3px; }
+  .tabs.collapsed a.nav-home, .tabs.collapsed a.nav-home ~ a:not([data-href]) { flex-basis: calc(25% + 4.5px); }
+}
+
+/* ---- Landing page (index.html): an endless honeycomb of turning voice portraits, the pitch on a block in its middle ---- */
+.home-page { --display: "Newsreader", "Iowan Old Style", Georgia, serif; font-size: 16px; line-height: 1.55; }
+.home-field { position: relative; margin: 0; height: clamp(480px, calc(100svh - 72px), 900px); overflow: hidden; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+.home-field.pointing { cursor: pointer; }
+.home-field.dragging { cursor: grabbing; }
+.home-field canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.home-pitch { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; pointer-events: none; padding: 0 max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px)); }
+.home-block { pointer-events: auto; background: var(--bg); padding: 38px clamp(24px, 4vw, 56px) 34px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; max-width: 640px; cursor: default; }
+.home-count { font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin: 0; }
+.home-page h1 { font-family: var(--display); font-weight: 400; letter-spacing: -.02em; text-wrap: balance; }
+.home-pitch h1 { font-size: clamp(44px, 7vw, 78px); line-height: 1; margin: 14px 0 16px; }
+.home-lede { font-size: clamp(16px, 1.6vw, 18px); color: #cfccc6; margin: 0 0 26px; max-width: 28em; text-wrap: balance; }
+.home-btn { display: inline-flex; align-items: center; gap: 10px; padding: 15px 26px; border-radius: 999px; font: 600 17px system-ui, -apple-system, "Segoe UI", sans-serif; text-decoration: none; background: var(--accent); color: var(--accent-text); }
+.home-btn:hover { filter: brightness(1.08); }
+.home-btn:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
+.home-btn svg { width: 18px; height: 18px; }
+.home-small { margin: 16px 0 0; font-size: 14px; color: var(--muted); }
+.home-hint { position: absolute; left: 50%; top: 18px; transform: translateX(-50%); font-size: 13px; color: var(--muted); background: rgba(0, 0, 0, .7); padding: 6px 12px; border-radius: 999px; pointer-events: none; transition: opacity .6s; white-space: nowrap; }
+.home-tip { position: absolute; z-index: 5; pointer-events: none; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; font-size: 14px; line-height: 1.35; white-space: nowrap; transform: translate(-50%, -100%); }
+.home-tip b { display: block; font-weight: 600; }
+.home-tip span { color: var(--muted); }
+.home-below { display: none; }
+/* phones: the gallery stands alone (nothing on top of it) and takes the height the text and tabs leave; the pitch sits underneath */
+@media (max-width: 640px) {
+  .home-page { display: flex; flex-direction: column; min-height: 100svh; }
+  .home-field { flex: 1 1 auto; height: auto; min-height: 44svh; }
+  .home-pitch { display: none; }
+  .home-hint { top: 12px; }
+  .home-below { flex: none; display: flex; flex-direction: column; align-items: flex-start; padding: 18px max(16px, env(safe-area-inset-right, 0px)) calc(76px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+  .home-below .home-count { margin-bottom: 8px; }
+  .home-below h1 { font-size: 36px; line-height: 1.02; margin: 0 0 10px; }
+  .home-below .home-lede { margin: 0 0 16px; font-size: 16px; }
+}
+/* the landing page leaves Record out of the nav (its big button leads there), so phones split the bar into quarters again */
+@media (max-width: 640px) {
+  .tabs.no-record a.nav-home, .tabs.no-record a.nav-home ~ a:not([data-href]), .tabs.no-record:not(.collapsed) a.nav-home ~ a { flex-basis: calc(25% + 4.5px); font-size: 10.5px; letter-spacing: 0.03em; padding-left: 9px; padding-right: 5px; }
+}

@@ -3,7 +3,7 @@
 // greyed out. The current recording is remembered for this browser tab only (sessionStorage),
 // so a new visitor in a fresh tab starts with them locked again. Visiting Record locks them again too.
 const KEY = "currentTakeId";
-const page = location.pathname.split("/").pop() || "index.html";
+const page = location.pathname.split("/").pop() || "index.html"; // index.html is the landing page
 const urlId = new URLSearchParams(location.search).get("id");
 // an ID card (archive.html?id=…) counts too: Breakdown and Portrait open for that person
 const onTakePage = page === "breakdown.html" || page === "portrait.html" || (page === "archive.html" && !!urlId);
@@ -13,7 +13,7 @@ export function setCurrentTakeId(id) { try { sessionStorage.setItem(KEY, id); } 
 if (onTakePage && urlId) setCurrentTakeId(urlId);
 // Going to the Record page or the Archive gallery starts over: Breakdown and Portrait lock (and fold away) again
 // until the next recording, or until a portrait is opened from the archive.
-if (page === "index.html" || (page === "archive.html" && !urlId)) { try { sessionStorage.removeItem(KEY); } catch {} }
+if (page === "record.html" || (page === "archive.html" && !urlId)) { try { sessionStorage.removeItem(KEY); } catch {} }
 
 /** The recording the Breakdown / Portrait pages should show, or null. */
 export function currentTakeId() { return (onTakePage && urlId) || read(); }
