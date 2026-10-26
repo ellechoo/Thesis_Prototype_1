@@ -49,6 +49,7 @@ function showFollowNote(msg) { ui.followNote.hidden = false; ui.followNote.textC
 
 function setPhase(p) {
   phase = p;
+  document.body.dataset.phase = p; // the page's layout follows the phase (see the Record page section in style.css)
   const busy = p !== "idle";
   ui.name.disabled = ui.start.disabled = busy;
   ui.optFilters.disabled = ui.optBrowserNS.disabled = busy;
