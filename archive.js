@@ -4,8 +4,8 @@
 //   Globe: every voice once, spread over a slowly turning sphere; drag to spin it. Back portraits are smaller and fainter.
 // A search box finds a voice by name or nickname (ignoring capitals and accents): choosing one glides to it and zooms in
 // (on the globe, turns it to face you); dragging, Esc or clearing the search zooms back out.
-// Hovering a portrait shows the person's name and spins it faster; clicking zooms into it, then it glides to where the
-// ID card's photo sits while the card forms around it (archive.html?id=…, still on the Archive page). The card's X, Esc, the Archive tab or the browser's back button
+// Hovering a portrait shows the person's name and spins it faster; clicking zooms into it, then opens that voice's
+// Portrait page (portrait.html?id=…), which has their ID card too. archive.html?id=… still shows an ID card on its own. The card's X, Esc, the Archive tab or the browser's back button
 // return to the same view and spot. A hidden list of links lets keyboard and screen-reader users open any card.
 //
 // A browser can only run a handful of live 3D views per page, so ONE shared renderer draws each portrait that's
@@ -178,9 +178,9 @@ function gallery(people) {
     sharp.clear(); scenes[it.p].children[0].rotation.y = spin[it.p]; sharp.render(scenes[it.p], cam);
     return true;
   }
-  function draw(list, t, star, away = 0) {
+  function draw(list, t, star) {
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, view.width, view.height); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const gl = renderer.domElement, fade = dimOthers() * (1 - away), crisp = star && renderSharp(star);
+    const gl = renderer.domElement, fade = dimOthers(), crisp = star && renderSharp(star);
     for (const it of list) {
       if (crisp && it.key === star.key) continue; // drawn last, sharp and full strength
       const k = slots.get(it.p); if (k === undefined) continue;
@@ -335,45 +335,13 @@ function gallery(people) {
   let opening = false;
   function open(it) {
     opening = true; closeResults(); hint.classList.add("gone");
-    const go = () => { remember(); location.href = `archive.html?id=${encodeURIComponent(people[it.p].id)}`; };
+    const go = () => { remember(); location.href = `portrait.html?id=${encodeURIComponent(people[it.p].id)}`; };
     if (still) return go();
     focusOn(it.p, mode === "flat" ? it.key.split(",").map(Number) : null);
-    afterTween = () => setTimeout(() => { if (!startFly(it.p)) go(); }, 160); // a moment on the zoomed-in voice, then to the card
+    afterTween = () => setTimeout(go, 220); // a moment on the zoomed-in voice, then its Portrait page
   }
   let afterTween = null;
 
-  // ---- the hand-off to the ID card: the card is laid out (hidden) in place, the zoomed voice glides to where its photo
-  // sits — shrinking to that size and easing its turn to the photo's angle — while the rest fade out; then the stage
-  // steps aside and the card forms around the photo (see .id-forming in style.css). The card itself is unchanged.
-  let fly = null;
-  function startFly(p) {
-    const take = people[p], card = $("idView"), star = currentStar;
-    if (!take?.frames || !star) return false;
-    remember();
-    try { card.hidden = false; card.classList.add("id-assembling"); renderIdCard(card, take); }
-    catch (err) { console.warn(err); card.hidden = true; card.classList.remove("id-assembling"); return false; }
-    const ph = card.querySelector(".id-photo")?.getBoundingClientRect(), g = grid.getBoundingClientRect();
-    if (!ph || !ph.width) { card.hidden = true; card.classList.remove("id-assembling"); return false; }
-    const TAU = Math.PI * 2;
-    fly = { p, t0: performance.now(), dur: 800,
-      from: { x: star.x, y: star.y, size: star.size },
-      to: { x: ph.left + ph.width / 2 - g.left, y: ph.top + ph.height / 2 - g.top, size: ph.width - 4 }, // inside the photo's 2px frame
-      spin0: spin[p], spin1: Math.round(spin[p] / TAU) * TAU }; // the photo shows the portrait unturned
-    history.pushState({ card: take.id }, "", `archive.html?id=${encodeURIComponent(take.id)}`);
-    document.title = `${take.name} · Voice ID · Voiceprint`;
-    tip.hidden = true; grid.classList.add("flying"); closeResults(); box.blur();
-    return true;
-  }
-  let flown = false;
-  function finishFly() {
-    const card = $("idView");
-    grid.hidden = true; document.body.classList.add("showing-id");
-    card.classList.remove("id-assembling"); card.classList.add("id-forming");
-    flown = true; fly = null;
-  }
-  // from the card: Esc goes back to the gallery (the spot was remembered); so does the browser's back button
-  addEventListener("popstate", () => { if (flown || fly) location.reload(); });
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && flown) location.href = "archive.html"; });
   // back from an ID card with the browser's back button, the page can come back exactly as it was left (zoomed in): reset
   addEventListener("pageshow", (e) => { if (e.persisted) { opening = false; afterTween = null; tween = null; focus = null; fading = null; zoom = 1; hover = null; tip.hidden = true; } });
   function letGo() { if (opening) return; if (focus === null && !tween && zoom === 1) return; fading = focus; focus = null; hover = null; tip.hidden = true; animate({ zoom: 1 }, 600); }
@@ -381,16 +349,14 @@ function gallery(people) {
   // ---- animation; paused while the tab is hidden
   setMode(mode);
   let last = -1e9, lastT = 0;
-  let currentStar = null;
   function frame(t) {
-    if (flown) return; // the card has taken over: stop drawing
     requestAnimationFrame(frame);
     const dt = Math.min(100, t - lastT); lastT = t;
     if (document.hidden) return;
     stepTween(t);
     if (!down && !tween && Math.abs(vx) + Math.abs(vy) > 0.05) { move(vx, vy); vx *= 0.93; vy *= 0.93; if (hover) { hover = null; tip.hidden = true; } }
     else if (!down && !tween && focus === null && !still && mode === "globe") turn(dt * 0.00006, 0);
-    if (!still) for (let p = 0; p < N; p++) if (!fly || p !== fly.p) spin[p] += dt * (hover && hover.p === p ? SPIN_HOVER : SPIN);
+    if (!still) for (let p = 0; p < N; p++) spin[p] += dt * (hover && hover.p === p ? SPIN_HOVER : SPIN);
     placed = items();
     if (focus !== null && !down) { // the found voice keeps its name showing (the copy nearest the middle)
       let best = null, bd = Infinity;
@@ -401,17 +367,8 @@ function gallery(people) {
     let star = null; const who = focus !== null ? focus : (zoom > 1.001 ? fading : null);
     if (who !== null) { let bd = Infinity; for (const it of placed) if (it.p === who && it.z > -0.15) { const d = (it.x - W / 2) ** 2 + (it.y - H / 2) ** 2; if (d < bd) { bd = d; star = it; } } }
     if (zoom <= 1.001 && focus === null) fading = null;
-    currentStar = star;
-    let away = 0;
-    if (fly) { // gliding to the card's photo
-      const k = Math.min(1, (t - fly.t0) / fly.dur), e = ease(k), { from, to } = fly;
-      spin[fly.p] = fly.spin0 + (fly.spin1 - fly.spin0) * e;
-      star = { ...(star || {}), p: fly.p, key: star?.key ?? "fly", x: from.x + (to.x - from.x) * e, y: from.y + (to.y - from.y) * e, size: from.size + (to.size - from.size) * e, z: 1, dim: 1 };
-      away = e; tip.hidden = true;
-      if (k >= 1) { draw(placed, t, star, 1); finishFly(); return; }
-    }
     if (t - last > 33) { renderSheet(placed); last = t; }
-    draw(placed, t, star, away);
+    draw(placed, t, star);
   }
   requestAnimationFrame(frame);
 }
