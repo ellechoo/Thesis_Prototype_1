@@ -79,7 +79,7 @@ function gallery(people) {
     buttons.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.view === m)));
     hint.textContent = coarse ? (m === "globe" ? "Drag to spin the globe · tap a voice to open it" : "Drag to explore · tap a voice to open it")
                               : (m === "globe" ? "Drag to spin the globe · click a voice to open it" : "Drag or swipe to explore · click a voice to open it");
-    hover = null; tip.hidden = true; vx = vy = 0; focus = null; tween = null; zoom = 1; layout();
+    hover = null; tip.hidden = true; vx = vy = 0; focus = null; fading = null; tween = null; zoom = 1; layout();
   }
   buttons.forEach((b) => b.addEventListener("click", () => setMode(b.dataset.view)));
   const coarse = matchMedia("(pointer: coarse)").matches;
@@ -90,6 +90,7 @@ function gallery(people) {
     renderer = new THREE.WebGLRenderer({ canvas: document.createElement("canvas"), antialias: true, alpha: true, premultipliedAlpha: true, preserveDrawingBuffer: true });
     renderer.toneMapping = THREE.NeutralToneMapping; renderer.setPixelRatio(1); renderer.autoClear = false; renderer.setClearColor(0x000000, 0);
   } catch (e) { hint.textContent = "This browser can't draw the 3D portraits. Use the list of voices instead."; grid.querySelector("ul").classList.remove("visually-hidden"); return; }
+  let sharp = null, sharpSize = 0; // a second renderer just for a found voice, drawn at its zoomed-in size so it stays crisp
   const cam = new THREE.PerspectiveCamera(30, 1, 0.1, 60), dd = 1.4 / Math.sin(THREE.MathUtils.degToRad(15)); // same framing as the Portrait page
   cam.position.set(0, dd * 0.22, dd).setLength(dd); cam.lookAt(0, 0, 0);
   const scenes = new Array(N).fill(null), born = new Array(N).fill(0), spin = people.map((_, i) => (i * 2.399) % 6.283);
@@ -124,7 +125,7 @@ function gallery(people) {
   const mod = (a, n) => ((a % n) + n) % n;
   const pts = people.map((_, i) => { const y = 1 - (2 * (i + 0.5)) / N, r = Math.sqrt(1 - y * y), th = i * 2.399963; return new THREE.Vector3(Math.cos(th) * r, y, Math.sin(th) * r); });
   const FOCAL = 3.2;
-  let zoom = 1; // 1 normally; more while a found voice is zoomed in on (scaled about the screen's centre)
+  let zoom = 1, zoomTo = 1; // 1 normally; more while a found voice is zoomed in on (scaled about the screen's centre)
   const tileXY = (i, j) => [i * S + (mod(j, 2) ? S / 2 : 0), j * DY + DY / 2]; // a flat tile's place before dragging and zoom
   function items() {
     const cx = W / 2, cy = H / 2;
@@ -163,14 +164,30 @@ function gallery(people) {
       slots.set(p, k);
     });
   }
-  function draw(list, t) {
+  // while a found voice is zoomed in on, everything else fades back (by how far the zoom has gone)
+  const dimOthers = () => { const span = zoomTo - 1; return span > 0 ? 1 - 0.8 * Math.max(0, Math.min(1, (zoom - 1) / span)) : 1; };
+  function renderSharp(it) {
+    if (!it || !scenes[it.p]) return false;
+    if (!sharp) {
+      try { sharp = new THREE.WebGLRenderer({ canvas: document.createElement("canvas"), antialias: true, alpha: true, premultipliedAlpha: true, preserveDrawingBuffer: true });
+        sharp.toneMapping = THREE.NeutralToneMapping; sharp.setPixelRatio(1); sharp.setClearColor(0x000000, 0); } catch { sharp = false; }
+    }
+    if (!sharp) return false;
+    const want = Math.min(900, Math.round(it.size * dpr / 8) * 8);
+    if (want !== sharpSize) { sharpSize = want; sharp.setSize(want, want, false); }
+    sharp.clear(); scenes[it.p].children[0].rotation.y = spin[it.p]; sharp.render(scenes[it.p], cam);
+    return true;
+  }
+  function draw(list, t, star) {
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, view.width, view.height); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const gl = renderer.domElement;
+    const gl = renderer.domElement, fade = dimOthers(), crisp = star && renderSharp(star);
     for (const it of list) {
+      if (crisp && it.key === star.key) continue; // drawn last, sharp and full strength
       const k = slots.get(it.p); if (k === undefined) continue;
-      ctx.globalAlpha = Math.min(1, (t - born[it.p]) / 600) * it.dim;
+      ctx.globalAlpha = Math.min(1, (t - born[it.p]) / 600) * it.dim * (star ? fade : 1);
       ctx.drawImage(gl, (k % perRow) * CELL, Math.floor(k / perRow) * CELL, CELL, CELL, it.x - it.size / 2, it.y - it.size / 2, it.size, it.size);
     }
+    if (crisp) { ctx.globalAlpha = 1; ctx.drawImage(sharp.domElement, 0, 0, sharpSize, sharpSize, star.x - star.size / 2, star.y - star.size / 2, star.size, star.size); }
     ctx.globalAlpha = 1;
   }
 
@@ -296,7 +313,7 @@ function gallery(people) {
   }
   function focusOn(p) {
     vx = vy = 0; focus = p;
-    const ZOOM = mode === "flat" ? (W < 640 ? 1.7 : 1.9) : 1.5;
+    const ZOOM = mode === "flat" ? (W < 640 ? 1.7 : 1.9) : 1.5; zoomTo = ZOOM;
     if (mode === "flat") { // the copy of that voice nearest the middle of the screen
       const ux = W / 2 - offX, uy = H / 2 - offY, jc = Math.round((uy - DY / 2) / DY), ic = Math.round(ux / S);
       let best = null, bd = Infinity;
@@ -311,7 +328,8 @@ function gallery(people) {
       animate({ q, zoom: ZOOM });
     }
   }
-  function letGo() { if (focus === null && !tween && zoom === 1) return; focus = null; hover = null; tip.hidden = true; animate({ zoom: 1 }, 600); }
+  let fading = null; // the voice that was in focus, kept sharp and bright while the view zooms back out
+  function letGo() { if (focus === null && !tween && zoom === 1) return; fading = focus; focus = null; hover = null; tip.hidden = true; animate({ zoom: 1 }, 600); }
 
   // ---- animation; paused while the tab is hidden
   setMode(mode);
@@ -331,8 +349,11 @@ function gallery(people) {
       if (best) { hover = best; tip.textContent = people[focus].name; tip.hidden = false; }
     }
     placeTip();
+    let star = null; const who = focus !== null ? focus : (zoom > 1.001 ? fading : null);
+    if (who !== null) { let bd = Infinity; for (const it of placed) if (it.p === who && it.z > -0.15) { const d = (it.x - W / 2) ** 2 + (it.y - H / 2) ** 2; if (d < bd) { bd = d; star = it; } } }
+    if (zoom <= 1.001 && focus === null) fading = null;
     if (t - last > 33) { renderSheet(placed); last = t; }
-    draw(placed, t);
+    draw(placed, t, star);
   }
   requestAnimationFrame(frame);
 }
