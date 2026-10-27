@@ -77,7 +77,7 @@ if (renderer) {
     dpr = Math.min(2, devicePixelRatio || 1);
     const W = field.clientWidth, H = field.clientHeight;
     view.width = Math.round(W * dpr); view.height = Math.round(H * dpr);
-    S = W < 640 ? 150 : 182; DY = S * 0.87; SIZE = S * (W < 640 ? 0.84 : 0.8);
+    S = W < 640 ? 140 : 190; DY = S * 0.87; SIZE = S * (W < 640 ? 0.86 : 0.84); // same spacing and size as the Archive's Flat view
     CELL = Math.min(256, Math.round(SIZE * dpr)); PER_ROW = Math.ceil(Math.sqrt(N));
     renderer.setSize(PER_ROW * CELL, Math.ceil(N / PER_ROW) * CELL, false);
   };
