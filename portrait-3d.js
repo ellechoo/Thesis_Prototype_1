@@ -17,8 +17,10 @@ const esc = (x) => String(x ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<
 
 const $ = (id) => document.getElementById(id);
 const VIEW_RADIUS = 1.4;     // how much of the scene fits on screen (the structures reach about 1.3 from the center)
+const VIEW_RADIUS_WIDE = 1.2; // wide screens: the portrait has the right two-thirds of the box, drawn a little bigger
+const WIDE = 900;            // from this width (px) the box splits: popups and button on the left third, portrait on the right
 const SPIN_SPEED = 0.6;      // slow turn (OrbitControls units; 2 = one turn every 30 s)
-const SPIN_RESUME_MS = 4000; // after someone turns it by hand, wait this long before turning again
+const SPIN_RESUME_MS = 700;  // after someone turns it by hand (or the popups close), wait this long before turning again
 const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 let take, orbInfo, renderer, scene, camera, controls, byKey = {}, coreMesh, coreR = 0.58;
 
@@ -100,7 +102,8 @@ function setUpScene() {
   }, { capture: true, passive: false });
   renderer.setAnimationLoop(() => { controls.update(); render(); drawLines(); });
 
-  new ResizeObserver(() => { resize(); }).observe(stage);
+  let wasWide = null;
+  new ResizeObserver(() => { resize(); const w = isWide(); if (wasWide !== null && w !== wasWide) fit(); wasWide = w; }).observe(stage);
   resize();
   fit();
   wireCallouts(pauseSpin);
@@ -115,9 +118,11 @@ function resize() {
   if (callout) layoutCallouts();
   render();
 }
+const wrapEl = () => document.querySelector(".stage-wrap");
+const isWide = () => wrapEl().clientWidth >= WIDE;
 function fit() {
   const vFov = THREE.MathUtils.degToRad(camera.fov) / 2, hFov = Math.atan(Math.tan(vFov) * camera.aspect);
-  const d = VIEW_RADIUS / Math.sin(Math.min(vFov, hFov));
+  const d = (isWide() ? VIEW_RADIUS_WIDE : VIEW_RADIUS) / Math.sin(Math.min(vFov, hFov));
   camera.position.set(0, d * 0.22, d).setLength(d);
   controls.target.set(0, 0, 0);
   controls.update();
@@ -147,9 +152,9 @@ function anchors(key, hit) {
     default: return [c];
   }
 }
-function toScreen(v) {
-  const r = $("stage").getBoundingClientRect(), p = v.clone().project(camera);
-  return [(p.x + 1) / 2 * r.width, (1 - p.y) / 2 * r.height];
+function toScreen(v) { // in the box's coordinates (the portrait's canvas may be only part of the box)
+  const w = wrapEl().getBoundingClientRect(), c = renderer.domElement.getBoundingClientRect(), p = v.clone().project(camera);
+  return [c.left - w.left + (p.x + 1) / 2 * c.width, c.top - w.top + (1 - p.y) / 2 * c.height];
 }
 
 function showCallouts(part, hit) {
@@ -179,13 +184,27 @@ function hideCallouts(now = false) {
   const gone = callout; hideTimer = setTimeout(() => { if (callout === gone) go(); }, 180);
 }
 
-// place the boxes: in a column either side of the portrait (wide screens) or in a stack above / below it (narrow ones)
+// place the boxes: wide screens stack them down the box's left third (under the title, above the button); narrower
+// screens put short labels above / below the portrait
 function layoutCallouts() {
   if (!callout) return;
-  const r = $("stage").getBoundingClientRect(), W = r.width, H = r.height, wide = W >= 760, M = 16, GAP = 10;
+  const r = wrapEl().getBoundingClientRect(), W = r.width, H = r.height, M = 16, GAP = 10;
   const items = callout.boxes.map((b) => ({ b, a: toScreen(anchors(b.key, callout.hit)[0]) }));
   const cx = W / 2, cy = H / 2;
-  if (wide) {
+  if (W >= WIDE) {
+    const P = 26, BW = W / 3 - 2 * P, top = 118, bottom = H - P - 52 - 18; // between the title and the button
+    items.sort((p, q) => p.a[1] - q.a[1]);
+    const measure = () => items.map((it) => { it.b.el.style.width = BW + "px"; return it.b.el.offsetHeight; });
+    const STEPS = ["", "snug", "snug clamp-5", "snug clamp-4", "snug clamp-3", "snug clamp-2"]; // tighter type first; shorten the text only if it still won't fit
+    let hs, total;
+    for (const step of STEPS) {
+      items.forEach((it) => { it.b.el.className = "callout" + (it.b.el.classList.contains("on") ? " on" : "") + (step ? " " + step : ""); });
+      hs = measure(); total = hs.reduce((s, h) => s + h, 0) + GAP * (items.length - 1);
+      if (total <= bottom - top) break;
+    }
+    let y = Math.max(top, Math.min(bottom - total, top + (bottom - top - total) / 2));
+    items.forEach((it, k) => { Object.assign(it.b, { side: "left", x: P, y, w: BW, h: hs[k] }); y += hs[k] + GAP; });
+  } else if (W >= 760) {
     const BW = Math.min(300, (W - 2 * M) * 0.26);
     items.forEach((it) => (it.side = it.a[0] < cx ? "left" : "right"));
     const left = items.filter((i) => i.side === "left"), right = items.filter((i) => i.side === "right");
@@ -210,7 +229,7 @@ function layoutCallouts() {
     let yb = H - M;
     [...bottom].reverse().forEach((it) => { const h = it.b.el.offsetHeight; yb -= h; Object.assign(it.b, { side: "bottom", x: M, y: yb, w: BW, h }); yb -= GAP; });
   }
-  if (wide) callout.boxes.forEach((b) => b.el.classList.remove("compact", "open"));
+  if (W >= 760) callout.boxes.forEach((b) => b.el.classList.remove("compact", "open"));
   for (const b of callout.boxes) { b.el.style.left = b.x + "px"; b.el.style.top = b.y + "px"; }
   drawLines();
 }
@@ -302,7 +321,7 @@ function wireIdCard() {
 
 // ---------------------------------------------------------------- jump down to the breakdown, and back up
 const smooth = still ? "auto" : "smooth";
-$("toBreakdown").addEventListener("click", () => $("breakdown").scrollIntoView({ behavior: smooth, block: "start" }));
+document.querySelectorAll(".to-breakdown").forEach((b) => b.addEventListener("click", () => $("breakdown").scrollIntoView({ behavior: smooth, block: "start" })));
 document.querySelectorAll(".to-portrait").forEach((b) => b.addEventListener("click", () => window.scrollTo({ top: 0, behavior: smooth })));
 
 load();
