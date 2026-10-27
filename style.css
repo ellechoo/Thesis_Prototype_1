@@ -1026,3 +1026,22 @@ html:has(.archive-stage:not([hidden])) { scrollbar-gutter: auto; overflow: hidde
   .stage-search { top: 12px; left: 112px; width: auto; right: 12px; }
 }
 
+/* Archive → ID card hand-off (archive.js): the card is laid out invisibly while the voice glides into the photo's place,
+   then forms around it: the card's background and frame fade in, and its parts slide in one after another.
+   The photo itself appears at once, exactly where the gliding portrait stopped. */
+.id-view.id-assembling .id-card { visibility: hidden; animation: none; }
+.id-view.id-forming .id-card { animation: id-form-card .55s ease both; }
+.id-view.id-forming .id-photo { animation: id-form-frame .55s ease both; }
+.id-view.id-forming :is(.id-top, .id-name, .id-meta, .id-fields, .id-sign, .id-code) { animation: id-form-part .5s ease both; }
+.id-view.id-forming .id-top { animation-delay: .05s; }
+.id-view.id-forming .id-name { animation-delay: .1s; }
+.id-view.id-forming .id-meta { animation-delay: .15s; }
+.id-view.id-forming .id-fields { animation-delay: .2s; }
+.id-view.id-forming .id-sign { animation-delay: .27s; }
+.id-view.id-forming .id-code { animation-delay: .33s; }
+@keyframes id-form-card { from { background-color: transparent; border-color: transparent; } }
+@keyframes id-form-frame { from { border-color: transparent; } }
+@keyframes id-form-part { from { opacity: 0; transform: translateX(-12px); } }
+@media (prefers-reduced-motion: reduce) { .id-view.id-forming :is(.id-card, .id-photo, .id-top, .id-name, .id-meta, .id-fields, .id-sign, .id-code) { animation: none; } }
+.archive-stage :is(.view-switch, .stage-search, .stage-hint) { transition: opacity .3s ease; }
+.archive-stage.flying :is(.view-switch, .stage-search, .stage-hint) { opacity: 0; pointer-events: none; }
