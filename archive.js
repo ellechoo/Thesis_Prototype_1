@@ -313,7 +313,9 @@ function gallery(people) {
   }
   function focusOn(p) {
     vx = vy = 0; focus = p;
-    const ZOOM = mode === "flat" ? (W < 640 ? 1.7 : 1.9) : 1.5; zoomTo = ZOOM;
+    // the globe zooms 1.5×; the flat view zooms by whatever makes the found voice the same size on screen as on the globe
+    const GZOOM = 1.5, globeSize = GSIZE * GZOOM * FOCAL / (FOCAL - 1); // a front-facing globe portrait, zoomed
+    const ZOOM = mode === "flat" ? Math.max(1.5, globeSize / SIZE) : GZOOM; zoomTo = ZOOM;
     if (mode === "flat") { // the copy of that voice nearest the middle of the screen
       const ux = W / 2 - offX, uy = H / 2 - offY, jc = Math.round((uy - DY / 2) / DY), ic = Math.round(ux / S);
       let best = null, bd = Infinity;
