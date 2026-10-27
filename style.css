@@ -1045,3 +1045,11 @@ html:has(.archive-stage:not([hidden])) { scrollbar-gutter: auto; overflow: hidde
 @media (prefers-reduced-motion: reduce) { .id-view.id-forming :is(.id-card, .id-photo, .id-top, .id-name, .id-meta, .id-fields, .id-sign, .id-code) { animation: none; } }
 .archive-stage :is(.view-switch, .stage-search, .stage-hint) { transition: opacity .3s ease; }
 .archive-stage.flying :is(.view-switch, .stage-search, .stage-hint) { opacity: 0; pointer-events: none; }
+/* landing page: the speech-bubble name tag on one portrait at a time (home.js); fades in and out.
+   The text block sits above the tags, so a tag can never cover it. */
+.home-pitch { z-index: 2; }
+.home-name { position: absolute; left: 0; top: 0; z-index: 1; padding: 6px 13px; border-radius: 12px; background: var(--text); color: #0e0e0d; font: 600 14px/1.3 system-ui, -apple-system, "Segoe UI", sans-serif; white-space: nowrap; pointer-events: none; box-shadow: 0 4px 14px rgba(0, 0, 0, .45); opacity: 0; transition: opacity .6s ease; will-change: transform, opacity; }
+.home-name::before { content: ""; position: absolute; left: 16px; top: -9px; width: 16px; height: 11px; background: var(--text); clip-path: polygon(0 100%, 30% 0, 100% 100%); } /* the tail, pointing up at the portrait */
+.home-name.on { opacity: 1; }
+@media (max-width: 640px) { .home-name { font-size: 12.5px; padding: 5px 10px; border-radius: 10px; } }
+
