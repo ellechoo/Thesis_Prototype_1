@@ -303,6 +303,6 @@ function wireIdCard() {
 // ---------------------------------------------------------------- jump down to the breakdown, and back up
 const smooth = still ? "auto" : "smooth";
 $("toBreakdown").addEventListener("click", () => $("breakdown").scrollIntoView({ behavior: smooth, block: "start" }));
-$("toPortrait").addEventListener("click", () => window.scrollTo({ top: 0, behavior: smooth }));
+document.querySelectorAll(".to-portrait").forEach((b) => b.addEventListener("click", () => window.scrollTo({ top: 0, behavior: smooth })));
 
 load();
