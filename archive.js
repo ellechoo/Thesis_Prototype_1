@@ -213,7 +213,7 @@ function gallery(people) {
   });
   view.addEventListener("pointerup", (e) => {
     grid.classList.remove("dragging");
-    if (down && moved < 6) { const h = pick(e.clientX, e.clientY); if (h) { remember(); location.href = `archive.html?id=${encodeURIComponent(people[h.p].id)}`; } }
+    if (down && moved < 6 && !opening) { const h = pick(e.clientX, e.clientY); if (h) open(h); }
     if (still) vx = vy = 0;
     down = null;
   });
@@ -309,16 +309,16 @@ function gallery(people) {
     const k = Math.min(1, (t - tween.t0) / tween.dur), e = ease(k), { from, to } = tween;
     offX = from.offX + (to.offX - from.offX) * e; offY = from.offY + (to.offY - from.offY) * e; zoom = from.zoom + (to.zoom - from.zoom) * e;
     rot.copy(from.q).slerp(to.q, e);
-    if (k >= 1) tween = null;
+    if (k >= 1) { tween = null; if (afterTween) { const f = afterTween; afterTween = null; f(); } }
   }
-  function focusOn(p) {
+  function focusOn(p, tile = null) {
     vx = vy = 0; focus = p;
     // the globe zooms 1.5×; the flat view zooms by whatever makes the found voice the same size on screen as on the globe
     const GZOOM = 1.5, globeSize = GSIZE * GZOOM * FOCAL / (FOCAL - 1); // a front-facing globe portrait, zoomed
     const ZOOM = mode === "flat" ? Math.max(1.5, globeSize / SIZE) : GZOOM; zoomTo = ZOOM;
-    if (mode === "flat") { // the copy of that voice nearest the middle of the screen
+    if (mode === "flat") { // the tile given, or else the copy of that voice nearest the middle of the screen
       const ux = W / 2 - offX, uy = H / 2 - offY, jc = Math.round((uy - DY / 2) / DY), ic = Math.round(ux / S);
-      let best = null, bd = Infinity;
+      let best = tile ? tileXY(tile[0], tile[1]) : null, bd = tile ? -1 : Infinity;
       for (let j = jc - N; j <= jc + N; j++) for (let i = ic - N; i <= ic + N; i++) {
         if (mod(5 * i + 3 * j, N) !== p) continue;
         const [tx, ty] = tileXY(i, j), d = (tx - ux) ** 2 + (ty - uy) ** 2;
@@ -331,7 +331,19 @@ function gallery(people) {
     }
   }
   let fading = null; // the voice that was in focus, kept sharp and bright while the view zooms back out
-  function letGo() { if (focus === null && !tween && zoom === 1) return; fading = focus; focus = null; hover = null; tip.hidden = true; animate({ zoom: 1 }, 600); }
+  // clicking a portrait zooms into that exact one (like a search does), then opens its ID card
+  let opening = false;
+  function open(it) {
+    opening = true; closeResults(); hint.classList.add("gone");
+    const go = () => { remember(); location.href = `archive.html?id=${encodeURIComponent(people[it.p].id)}`; };
+    if (still) return go();
+    focusOn(it.p, mode === "flat" ? it.key.split(",").map(Number) : null);
+    afterTween = () => setTimeout(go, 220); // a moment on the zoomed-in voice before the card opens
+  }
+  let afterTween = null;
+  // back from an ID card with the browser's back button, the page can come back exactly as it was left (zoomed in): reset
+  addEventListener("pageshow", (e) => { if (e.persisted) { opening = false; afterTween = null; tween = null; focus = null; fading = null; zoom = 1; hover = null; tip.hidden = true; } });
+  function letGo() { if (opening) return; if (focus === null && !tween && zoom === 1) return; fading = focus; focus = null; hover = null; tip.hidden = true; animate({ zoom: 1 }, 600); }
 
   // ---- animation; paused while the tab is hidden
   setMode(mode);
