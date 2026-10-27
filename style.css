@@ -999,14 +999,30 @@ body:is([data-phase="countdown"], [data-phase="recording"]) .record-page #status
 .view-switch button:hover { color: var(--text); }
 .view-switch button[aria-pressed="true"] { background: var(--text); color: var(--bg); }
 .view-switch button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.stage-hint { position: absolute; z-index: 3; top: 24px; left: 50%; transform: translateX(-50%); margin: 0; padding: 5px 12px; border-radius: 999px; background: rgba(0, 0, 0, .88); color: var(--muted); font-size: 13px; white-space: nowrap; max-width: calc(100vw - 32px); overflow: hidden; text-overflow: ellipsis; pointer-events: none; transition: opacity .6s; }
+.stage-hint { position: absolute; z-index: 3; top: 66px; left: max(18px, env(safe-area-inset-left, 0px)); margin: 0; padding: 5px 12px; border-radius: 999px; background: rgba(0, 0, 0, .88); color: var(--muted); font-size: 13px; white-space: nowrap; max-width: calc(100vw - 32px); overflow: hidden; text-overflow: ellipsis; pointer-events: none; transition: opacity .6s; }
 .stage-hint.gone { opacity: 0; }
 .stage-tip { position: absolute; z-index: 3; transform: translate(-50%, 0); padding: 5px 12px; border-radius: 999px; background: rgba(0, 0, 0, .8); border: 1px solid var(--line); font-size: 14px; font-weight: 600; white-space: nowrap; pointer-events: none; }
 body.showing-id .archive-stage { display: none; }
 html:has(.archive-stage:not([hidden])) { scrollbar-gutter: auto; overflow: hidden; } /* the stage never scrolls: no space kept for a scrollbar */
 @media (max-width: 640px) {
   .view-switch { top: 12px; left: 12px; }
-  .stage-hint { top: 62px; font-size: 12px; }
+  .stage-hint { top: 58px; left: 12px; font-size: 12px; }
   .stage-tip { font-size: 12px; padding: 4px 9px; }
+}
+/* Archive: find a voice by name (next to the view switch); choosing one glides to it and zooms in */
+.stage-search { position: absolute; z-index: 4; top: 18px; left: calc(max(18px, env(safe-area-inset-left, 0px)) + 104px); width: 270px; }
+.stage-search > svg { position: absolute; left: 14px; top: 50%; width: 17px; height: 17px; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+.stage-search input { width: 100%; height: 44px; padding: 0 16px 0 40px; border: 1px solid var(--line); border-radius: 999px; background: rgba(0, 0, 0, .9); color: var(--text); font: 15px system-ui, -apple-system, "Segoe UI", sans-serif; }
+.stage-search input::placeholder { color: var(--muted); }
+.stage-search input:focus { outline: none; border-color: var(--accent); }
+.stage-search input::-webkit-search-cancel-button { filter: invert(.7); cursor: pointer; }
+.search-results { position: absolute; left: 0; right: 0; top: calc(100% + 6px); margin: 0; padding: 6px; list-style: none; max-height: min(320px, 50vh); overflow: auto; border: 1px solid var(--line); border-radius: 16px; background: var(--panel); box-shadow: 0 12px 30px rgba(0, 0, 0, .5); }
+.search-results li { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 9px 12px; border-radius: 10px; cursor: pointer; }
+.search-results li[aria-selected="true"], .search-results li[role="option"]:hover { background: #2c2b28; }
+.search-results .m-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.search-results .m-when { color: var(--muted); font-size: 13px; white-space: nowrap; }
+.search-results .search-none { color: var(--muted); cursor: default; }
+@media (max-width: 640px) {
+  .stage-search { top: 12px; left: 112px; width: auto; right: 12px; }
 }
 

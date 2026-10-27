@@ -2,6 +2,8 @@
 //   Flat:  an endless honeycomb that runs past the edges of the screen in every direction; drag (or swipe with two
 //          fingers on a trackpad) to explore. With only so many voices, the field repeats them as it goes.
 //   Globe: every voice once, spread over a slowly turning sphere; drag to spin it. Back portraits are smaller and fainter.
+// A search box finds a voice by name or nickname (ignoring capitals and accents): choosing one glides to it and zooms in
+// (on the globe, turns it to face you); dragging, Esc or clearing the search zooms back out.
 // Hovering a portrait shows the person's name and spins it faster; clicking opens their voice ID card
 // (archive.html?id=…), still on the Archive page. The card's X, Esc, the Archive tab or the browser's back button
 // return to the same view and spot. A hidden list of links lets keyboard and screen-reader users open any card.
@@ -42,6 +44,12 @@ function gallery(people) {
     <div class="view-switch" role="group" aria-label="View">
       <button type="button" data-view="flat" aria-label="Flat view" title="Flat view"><svg viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor"><circle cx="5" cy="6" r="2.4"/><circle cx="12" cy="6" r="2.4"/><circle cx="19" cy="6" r="2.4"/><circle cx="8.5" cy="12" r="2.4"/><circle cx="15.5" cy="12" r="2.4"/><circle cx="5" cy="18" r="2.4"/><circle cx="12" cy="18" r="2.4"/><circle cx="19" cy="18" r="2.4"/></g></svg></button><button type="button" data-view="globe" aria-label="Globe view" title="Globe view"><svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3.6 8.5h16.8M3.6 15.5h16.8"/></g></svg></button>
     </div>
+    <div class="stage-search" role="search">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></g></svg>
+      <input type="search" placeholder="Find a voice" aria-label="Find a voice by name" autocomplete="off" spellcheck="false" enterkeyhint="search"
+        role="combobox" aria-autocomplete="list" aria-controls="searchResults" aria-expanded="false" />
+      <ul class="search-results" id="searchResults" role="listbox" aria-label="Matching voices" hidden></ul>
+    </div>
     <p class="stage-hint" aria-hidden="true"></p>
     <span class="stage-tip" aria-hidden="true" hidden></span>
     <ul class="visually-hidden" aria-label="Voices in the archive"></ul>`;
@@ -71,7 +79,7 @@ function gallery(people) {
     buttons.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.view === m)));
     hint.textContent = coarse ? (m === "globe" ? "Drag to spin the globe · tap a voice to open it" : "Drag to explore · tap a voice to open it")
                               : (m === "globe" ? "Drag to spin the globe · click a voice to open it" : "Drag or swipe to explore · click a voice to open it");
-    hover = null; tip.hidden = true; vx = vy = 0; layout();
+    hover = null; tip.hidden = true; vx = vy = 0; focus = null; tween = null; zoom = 1; layout();
   }
   buttons.forEach((b) => b.addEventListener("click", () => setMode(b.dataset.view)));
   const coarse = matchMedia("(pointer: coarse)").matches;
@@ -116,18 +124,26 @@ function gallery(people) {
   const mod = (a, n) => ((a % n) + n) % n;
   const pts = people.map((_, i) => { const y = 1 - (2 * (i + 0.5)) / N, r = Math.sqrt(1 - y * y), th = i * 2.399963; return new THREE.Vector3(Math.cos(th) * r, y, Math.sin(th) * r); });
   const FOCAL = 3.2;
+  let zoom = 1; // 1 normally; more while a found voice is zoomed in on (scaled about the screen's centre)
+  const tileXY = (i, j) => [i * S + (mod(j, 2) ? S / 2 : 0), j * DY + DY / 2]; // a flat tile's place before dragging and zoom
   function items() {
+    const cx = W / 2, cy = H / 2;
     if (mode === "flat") { // the endless honeycomb: tile (i, j) shows voice (5i + 3j) mod N, so neighbours differ
-      const out = [], j0 = Math.floor((-offY - SIZE) / DY), j1 = Math.ceil((H - offY + SIZE) / DY);
+      const out = [], m = SIZE, y0 = cy - cy / zoom - m, y1 = cy + cy / zoom + m, x0 = cx - cx / zoom - m, x1 = cx + cx / zoom + m;
+      const j0 = Math.floor((y0 - offY - DY / 2) / DY), j1 = Math.ceil((y1 - offY - DY / 2) / DY);
       for (let j = j0; j <= j1; j++) {
-        const shift = mod(j, 2) ? S / 2 : 0, i0 = Math.floor((-offX - shift - SIZE) / S), i1 = Math.ceil((W - offX - shift + SIZE) / S);
-        for (let i = i0; i <= i1; i++) out.push({ key: `${i},${j}`, p: mod(5 * i + 3 * j, N), x: i * S + shift + offX, y: j * DY + DY / 2 + offY, size: SIZE, dim: 1, z: 1 });
+        const shift = mod(j, 2) ? S / 2 : 0, i0 = Math.floor((x0 - offX - shift) / S), i1 = Math.ceil((x1 - offX - shift) / S);
+        for (let i = i0; i <= i1; i++) {
+          const [tx, ty] = tileXY(i, j);
+          out.push({ key: `${i},${j}`, p: mod(5 * i + 3 * j, N), x: cx + (tx + offX - cx) * zoom, y: cy + (ty + offY - cy) * zoom, size: SIZE * zoom, dim: 1, z: 1 });
+        }
       }
       return out;
     }
+    const Rz = R * zoom;
     return pts.map((pt, p) => { // the globe, back to front
       const q = pt.clone().applyQuaternion(rot), s = FOCAL / (FOCAL - q.z), front = (q.z + 1) / 2;
-      return { key: `g${p}`, p, x: W / 2 + q.x * R * s, y: H / 2 - q.y * R * s, z: q.z, size: GSIZE * s * (0.55 + 0.45 * front), dim: 0.25 + 0.75 * front ** 1.5 };
+      return { key: `g${p}`, p, x: cx + q.x * Rz * s, y: cy - q.y * Rz * s, z: q.z, size: GSIZE * zoom * s * (0.55 + 0.45 * front), dim: 0.25 + 0.75 * front ** 1.5 };
     }).sort((a, b) => a.z - b.z);
   }
 
@@ -162,17 +178,18 @@ function gallery(people) {
   let down = null, moved = 0, vx = 0, vy = 0, hover = null, placed = [];
   const X = new THREE.Vector3(1, 0, 0), Y = new THREE.Vector3(0, 1, 0), tq = new THREE.Quaternion();
   const turn = (ax, ay) => { tq.setFromAxisAngle(Y, ax); rot.premultiply(tq); tq.setFromAxisAngle(X, ay); rot.premultiply(tq); };
-  const move = (dx, dy) => { if (mode === "flat") { offX += dx; offY += dy; } else turn(dx / R, dy / R); };
+  const move = (dx, dy) => { if (mode === "flat") { offX += dx / zoom; offY += dy / zoom; } else turn(dx / (R * zoom), dy / (R * zoom)); };
   const onStage = (e) => !e.target.closest(".view-switch, .tabs");
   view.addEventListener("pointerdown", (e) => {
     if (!onStage(e)) return;
-    down = { x: e.clientX, y: e.clientY, t: performance.now() }; moved = 0; vx = vy = 0;
+    down = { x: e.clientX, y: e.clientY, t: performance.now() }; moved = 0; vx = vy = 0; closeResults();
     view.setPointerCapture(e.pointerId); grid.classList.add("dragging"); tip.hidden = true; hint.classList.add("gone");
   });
   view.addEventListener("pointermove", (e) => {
     if (down) {
       const dx = e.clientX - down.x, dy = e.clientY - down.y, now = performance.now(), dt = Math.max(1, now - down.t);
       move(dx, dy); moved += Math.abs(dx) + Math.abs(dy); vx = dx / dt * 16; vy = dy / dt * 16; down = { x: e.clientX, y: e.clientY, t: now };
+      if (moved > 6 && (focus !== null || tween)) letGo();
       return;
     }
     if (e.pointerType === "mouse") pick(e.clientX, e.clientY);
@@ -191,6 +208,7 @@ function gallery(people) {
     if (e.ctrlKey) return; // pinch-zoom keeps its usual behaviour
     e.preventDefault();
     const k = looksLikeTrackpad(e) ? 1 : 0.6;
+    if (focus !== null || tween) letGo();
     move(-e.deltaX * k, -e.deltaY * k); vx = vy = 0; hint.classList.add("gone");
     if (hover) { hover = null; tip.hidden = true; }
   }, { passive: false });
@@ -213,6 +231,88 @@ function gallery(people) {
     tip.style.left = it.x + "px"; tip.style.top = (it.y + it.size * (mode === "flat" ? 0.4 : 0.36)) + "px";
   }
 
+  // ---- search: find a voice by name, glide to it and zoom in
+  const box = grid.querySelector(".stage-search input"), results = grid.querySelector(".search-results");
+  const norm = (x) => String(x || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  const names = people.map((t) => norm(t.name));
+  const when = (t) => { try { return t.createdAt ? new Date(t.createdAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : ""; } catch { return ""; } };
+  let matches = [], active = -1, focus = null, tween = null;
+  function closeResults() { results.hidden = true; box.setAttribute("aria-expanded", "false"); box.removeAttribute("aria-activedescendant"); active = -1; }
+  function showResults() {
+    const q = norm(box.value);
+    if (!q) { matches = []; closeResults(); return; }
+    matches = names.map((n, p) => ({ p, at: n.indexOf(q), n })).filter((m) => m.at >= 0)
+      .sort((a, b) => (a.at === 0) - (b.at === 0) ? (b.at === 0) - (a.at === 0) : a.n.localeCompare(b.n)).slice(0, 8);
+    active = matches.length ? 0 : -1;
+    results.innerHTML = "";
+    if (!matches.length) { const li = document.createElement("li"); li.className = "search-none"; li.textContent = `No voice called “${box.value.trim()}”`; results.appendChild(li); }
+    const twins = new Set(matches.map((m) => m.n).filter((n, k, a) => a.indexOf(n) !== k)); // same name twice: show dates to tell them apart
+    matches.forEach((m, k) => {
+      const li = document.createElement("li");
+      li.id = `voiceMatch${k}`; li.setAttribute("role", "option"); li.setAttribute("aria-selected", String(k === active));
+      li.innerHTML = `<span class="m-name"></span><span class="m-when"></span>`;
+      li.querySelector(".m-name").textContent = people[m.p].name;
+      li.querySelector(".m-when").textContent = twins.has(m.n) ? when(people[m.p]) : "";
+      li.addEventListener("pointerdown", (e) => { e.preventDefault(); choose(k); });
+      results.appendChild(li);
+    });
+    results.hidden = false; box.setAttribute("aria-expanded", "true");
+    if (active >= 0) box.setAttribute("aria-activedescendant", `voiceMatch${active}`);
+  }
+  function highlight(k) {
+    active = k; [...results.querySelectorAll('[role="option"]')].forEach((li, n) => li.setAttribute("aria-selected", String(n === k)));
+    if (k >= 0) box.setAttribute("aria-activedescendant", `voiceMatch${k}`);
+  }
+  function choose(k) {
+    const m = matches[k]; if (!m) return;
+    box.value = people[m.p].name; closeResults(); hint.classList.add("gone");
+    if (coarse) box.blur(); // let the phone keyboard go so the voice can be seen
+    focusOn(m.p);
+  }
+  box.addEventListener("input", showResults);
+  box.addEventListener("focus", () => { if (box.value.trim()) showResults(); });
+  box.addEventListener("blur", () => setTimeout(closeResults, 120));
+  box.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowDown" && matches.length) { e.preventDefault(); if (results.hidden) showResults(); highlight((active + 1) % matches.length); }
+    else if (e.key === "ArrowUp" && matches.length) { e.preventDefault(); highlight((active - 1 + matches.length) % matches.length); }
+    else if (e.key === "Enter") { e.preventDefault(); if (matches.length) choose(Math.max(0, active)); }
+    else if (e.key === "Escape") { e.preventDefault(); if (!results.hidden) closeResults(); else { box.value = ""; letGo(); } }
+  });
+  box.addEventListener("search", () => { if (!box.value) letGo(); }); // the box's own clear (×) button
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && e.target !== box && (focus !== null || tween)) letGo(); });
+
+  const ease = (x) => (x < 0.5 ? 4 * x * x * x : 1 - (-2 * x + 2) ** 3 / 2);
+  function animate(to, dur = 1000) {
+    const from = { offX, offY, zoom, q: rot.clone() };
+    if (still) { dur = 1; }
+    tween = { from, to: { offX: to.offX ?? offX, offY: to.offY ?? offY, zoom: to.zoom ?? zoom, q: to.q || rot.clone() }, t0: performance.now(), dur };
+  }
+  function stepTween(t) {
+    if (!tween) return;
+    const k = Math.min(1, (t - tween.t0) / tween.dur), e = ease(k), { from, to } = tween;
+    offX = from.offX + (to.offX - from.offX) * e; offY = from.offY + (to.offY - from.offY) * e; zoom = from.zoom + (to.zoom - from.zoom) * e;
+    rot.copy(from.q).slerp(to.q, e);
+    if (k >= 1) tween = null;
+  }
+  function focusOn(p) {
+    vx = vy = 0; focus = p;
+    const ZOOM = mode === "flat" ? (W < 640 ? 1.7 : 1.9) : 1.5;
+    if (mode === "flat") { // the copy of that voice nearest the middle of the screen
+      const ux = W / 2 - offX, uy = H / 2 - offY, jc = Math.round((uy - DY / 2) / DY), ic = Math.round(ux / S);
+      let best = null, bd = Infinity;
+      for (let j = jc - N; j <= jc + N; j++) for (let i = ic - N; i <= ic + N; i++) {
+        if (mod(5 * i + 3 * j, N) !== p) continue;
+        const [tx, ty] = tileXY(i, j), d = (tx - ux) ** 2 + (ty - uy) ** 2;
+        if (d < bd) { bd = d; best = [tx, ty]; }
+      }
+      if (best) animate({ offX: W / 2 - best[0], offY: H / 2 - best[1], zoom: ZOOM });
+    } else { // turn the globe so that voice faces the viewer
+      const q = new THREE.Quaternion().setFromUnitVectors(pts[p].clone().normalize(), new THREE.Vector3(0, 0, 1));
+      animate({ q, zoom: ZOOM });
+    }
+  }
+  function letGo() { if (focus === null && !tween && zoom === 1) return; focus = null; hover = null; tip.hidden = true; animate({ zoom: 1 }, 600); }
+
   // ---- animation; paused while the tab is hidden
   setMode(mode);
   let last = -1e9, lastT = 0;
@@ -220,10 +320,16 @@ function gallery(people) {
     requestAnimationFrame(frame);
     const dt = Math.min(100, t - lastT); lastT = t;
     if (document.hidden) return;
-    if (!down && Math.abs(vx) + Math.abs(vy) > 0.05) { move(vx, vy); vx *= 0.93; vy *= 0.93; if (hover) { hover = null; tip.hidden = true; } }
-    else if (!down && !still && mode === "globe") turn(dt * 0.00006, 0);
+    stepTween(t);
+    if (!down && !tween && Math.abs(vx) + Math.abs(vy) > 0.05) { move(vx, vy); vx *= 0.93; vy *= 0.93; if (hover) { hover = null; tip.hidden = true; } }
+    else if (!down && !tween && focus === null && !still && mode === "globe") turn(dt * 0.00006, 0);
     if (!still) for (let p = 0; p < N; p++) spin[p] += dt * (hover && hover.p === p ? SPIN_HOVER : SPIN);
     placed = items();
+    if (focus !== null && !down) { // the found voice keeps its name showing (the copy nearest the middle)
+      let best = null, bd = Infinity;
+      for (const it of placed) if (it.p === focus && it.z > -0.15) { const d = (it.x - W / 2) ** 2 + (it.y - H / 2) ** 2; if (d < bd) { bd = d; best = it; } }
+      if (best) { hover = best; tip.textContent = people[focus].name; tip.hidden = false; }
+    }
     placeTip();
     if (t - last > 33) { renderSheet(placed); last = t; }
     draw(placed, t);
