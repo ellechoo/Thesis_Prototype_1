@@ -1103,3 +1103,21 @@ html:has(.archive-stage:not([hidden])) { scrollbar-gutter: auto; overflow: hidde
   .jump-btn { border-radius: 16px; min-height: 48px; font-size: 14px; }
 }
 
+/* Portrait page, wide screens: the box splits. The portrait has the right two-thirds; the left third holds the title,
+   the popup boxes (stacked, with lines across to the portrait) and the "See full breakdown" button. */
+.jump-btn.in-box { display: none; }
+@media (min-width: 900px) {
+  .explore .stage-wrap { height: calc(100svh - 70px - var(--side)); }
+  .explore .stage-wrap .stage { position: absolute; top: 0; bottom: 0; right: 0; left: 33.333%; width: auto; height: auto; }
+  .explore .callouts, .explore .callout-lines { position: absolute; inset: 0; }
+  .jump-btn.in-box { display: flex; position: absolute; z-index: 3; left: 26px; bottom: 26px; width: calc(33.333% - 52px); }
+  .jump-row.below-box { display: none; }
+  .explore .portrait-head { left: 26px; top: 26px; max-width: calc(33.333% - 52px); }
+  .callout.snug { padding: 10px 12px 11px; }
+  .callout.snug .co-text { font-size: 12.5px; line-height: 1.4; }
+  .callout[class*="clamp-"] .co-text { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
+  .callout.clamp-5 .co-text { -webkit-line-clamp: 5; } .callout.clamp-4 .co-text { -webkit-line-clamp: 4; }
+  .callout.clamp-3 .co-text { -webkit-line-clamp: 3; } .callout.clamp-2 .co-text { -webkit-line-clamp: 2; }
+  .explore .stage-wrap { background: #000; } /* one surface: no seam between the popup side and the portrait */
+  .explore .stage-wrap .stage { border-radius: 0; }
+}

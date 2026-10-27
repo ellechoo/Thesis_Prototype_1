@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300..500&display=swap" crossorigin="anonymous" /> <!-- crossorigin: lets the ID card download include this font -->
-  <link rel="stylesheet" href="style.css?v=63" />
+  <link rel="stylesheet" href="style.css?v=65" />
 </head>
 <body>
   <main class="wide">
@@ -36,14 +36,15 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><circle cx="8.5" cy="11" r="2.4"/><path d="M5 16.2c.7-1.6 2-2.4 3.5-2.4s2.8.8 3.5 2.4M14.5 10h4.5M14.5 13.5h3.5" stroke-linecap="round"/></g></svg>
             ID card
           </button>
-          <div class="stage" id="stage">
-            <svg class="callout-lines" id="calloutLines" aria-hidden="true"></svg>
-            <div class="callouts" id="callouts" aria-live="polite"></div>
-          </div>
+          <div class="stage" id="stage"></div>
+          <svg class="callout-lines" id="calloutLines" aria-hidden="true"></svg>
+          <div class="callouts" id="callouts" aria-live="polite"></div>
+          <!-- wide screens: the left third of the box holds the popups and this button; phones use the one below the box -->
+          <button type="button" class="jump-btn in-box to-breakdown">See full breakdown <span aria-hidden="true">↓</span></button>
         </div>
       </div>
 
-      <p class="jump-row"><button type="button" class="jump-btn" id="toBreakdown">See full breakdown <span aria-hidden="true">↓</span></button></p>
+      <p class="jump-row below-box"><button type="button" class="jump-btn to-breakdown" id="toBreakdown">See full breakdown <span aria-hidden="true">↓</span></button></p>
 
       <!-- the voice in numbers (what used to be the Breakdown page) -->
       <p class="jump-row jump-up" id="breakdown"><button type="button" class="jump-btn to-portrait" id="toPortrait"><span aria-hidden="true">↑</span> Back to the portrait</button></p>
@@ -194,6 +195,6 @@
   } }
   </script>
   <script type="module" src="nav.js?v=8"></script> <!-- first, so the tabs start in the right state before the page script loads -->
-  <script type="module" src="portrait-3d.js?v=44"></script>
+  <script type="module" src="portrait-3d.js?v=46"></script>
 </body>
 </html>
