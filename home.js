@@ -8,6 +8,8 @@
 // and the honeycomb copies those cells onto a flat canvas, as many times as it needs.
 // The list arrives without the detailed frames (store.js keeps it quick), so each voice's full data
 // is fetched a few at a time and its portrait fades into the field when it arrives.
+// One portrait at a time wears a small speech-bubble name tag, so it's clear each one belongs to someone: as one tag
+// fades out the next fades in on another portrait that's fully on screen and well clear of the text.
 import * as THREE from "three";
 import { listTakes, getTake } from "./store.js?v=2";
 import { buildOrb } from "./voice-orb.js?v=34";
@@ -99,9 +101,11 @@ if (renderer) {
 
   // ---- the endless honeycomb, drifting: tile (i, j) shows voice (5i + 3j) mod N, so neighbours differ
   const mod = (a, n) => ((a % n) + n) % n;
+  let tiles = []; // where each tile is this frame (for the name tags)
   const draw = (t) => {
     const W = field.clientWidth, H = field.clientHeight;
     const offX = still ? 0 : -t * DRIFT[0], offY = still ? 0 : -t * DRIFT[1];
+    tiles = [];
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = "#000"; ctx.fillRect(0, 0, view.width, view.height);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.globalCompositeOperation = "screen";
     const j0 = Math.floor((-offY - SIZE) / DY), j1 = Math.ceil((H - offY + SIZE) / DY);
@@ -110,6 +114,7 @@ if (renderer) {
       const i0 = Math.floor((-offX - shift - SIZE) / S), i1 = Math.ceil((W - offX - shift + SIZE) / S);
       for (let i = i0; i <= i1; i++) {
         const p = mod(5 * i + 3 * j, N);
+        tiles.push({ i, j, p, x: i * S + shift + offX, y: j * DY + DY / 2 + offY });
         if (!scenes[p]) continue;
         ctx.globalAlpha = Math.min(1, (t - born[p]) / 600); // new arrivals fade in
         ctx.drawImage(gl, (p % PER_ROW) * CELL, Math.floor(p / PER_ROW) * CELL, CELL, CELL, i * S + shift + offX - SIZE / 2, j * DY + DY / 2 + offY - SIZE / 2, SIZE, SIZE);
@@ -117,6 +122,53 @@ if (renderer) {
     }
     ctx.globalAlpha = 1; ctx.globalCompositeOperation = "source-over";
   };
+
+  // ---- name tags: one portrait at a time, back to back. Two tags take turns, so one can fade out while the next fades in.
+  // A tag goes only on a portrait fully on screen and well clear of the text block (and its tail) and the nav tabs,
+  // with margin for the drift while it shows; the tags also sit beneath the text block, so they can never cover it.
+  const tags = [0, 1].map(() => { const el = document.createElement("div"); el.className = "home-name"; el.setAttribute("aria-hidden", "true"); field.appendChild(el); return { el, on: null }; });
+  const SHOW = 3000;   // how long each name is up (ms); the next one starts as it fades
+  const OFF = 0.2;     // the tag's height on its portrait: over its lower part (share of the portrait's size below its centre)
+  let turn = 0, lastP = -1, nextAt = 2000;
+  const keepClear = (bpad) => { // the text block (desktop) and the nav tabs, in the field's coordinates, padded
+    const f = field.getBoundingClientRect(), out = [];
+    for (const [sel, pad, tail] of [[".home-block", bpad, 60], [".tabs", 20, 0]]) {
+      for (const el of document.querySelectorAll(sel)) {
+        const b = el.getBoundingClientRect(); if (!b.width || !b.height) continue;
+        out.push([b.left - f.left - pad, b.top - f.top - pad, b.right - f.left + pad, b.bottom - f.top + pad + tail]);
+      }
+    }
+    return out;
+  };
+  function nextTag(t) {
+    const W = field.clientWidth, H = field.clientHeight, m = 10, half = SIZE / 2;
+    const busy = new Set(tags.filter((g) => g.on).map((g) => `${g.on.i},${g.on.j}`));
+    const fits = (clear) => tiles.filter(({ i, j, p, x, y }) => {
+      if (!scenes[p] || t - born[p] < 800 || p === lastP || busy.has(`${i},${j}`)) return false;
+      const box = [x - half, y - half, x + half, y + half];
+      if (box[0] < m || box[1] < m || box[2] > W - m || box[3] > H - m) return false; // fully on screen
+      return !clear.some((c) => box[0] < c[2] && box[2] > c[0] && box[1] < c[3] && box[3] > c[1]);
+    });
+    // well clear of the text block if possible; on smaller screens, where the block fills most of the view, a closer (but
+    // still clear) margin. If nothing fits even then, no tag shows until a portrait drifts into a clear spot.
+    let ok = [];
+    for (const pad of [70, 36]) { ok = fits(keepClear(pad)); if (ok.length) break; }
+    if (!ok.length) { nextAt = t + 400; return; }
+    const pick = ok[Math.floor(Math.random() * ok.length)], g = tags[turn]; turn = 1 - turn;
+    g.on = { i: pick.i, j: pick.j, t0: t }; lastP = pick.p;
+    g.el.textContent = people[pick.p].name; g.el.classList.add("on");
+    nextAt = t + SHOW; // the next tag fades in just as this one starts to fade out
+  }
+  function placeTags(t) {
+    if (t >= nextAt) nextTag(t);
+    for (const g of tags) {
+      if (!g.on) continue;
+      const it = tiles.find((q) => q.i === g.on.i && q.j === g.on.j);
+      if (it) g.el.style.transform = `translate(${it.x}px, ${it.y + SIZE * OFF}px) translate(-50%, 0)`;
+      if (t - g.on.t0 > SHOW && g.el.classList.contains("on")) g.el.classList.remove("on");
+      if (t - g.on.t0 > SHOW + 600) g.on = null;
+    }
+  }
 
   // ---- animation: the sheet at up to 30 frames a second, the drift every frame; paused while hidden
   let visible = true, last = -1e9;
@@ -126,6 +178,7 @@ if (renderer) {
     if (!visible || document.hidden) return;
     if (t - last > 33) { renderSheet(t); last = t; }
     draw(t);
+    placeTags(t);
   };
   requestAnimationFrame(frame);
 }
