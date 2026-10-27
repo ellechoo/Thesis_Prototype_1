@@ -1,48 +1,23 @@
-// breakdown.js — shows everything measured from one saved recording.
-// Opens the recording named by ?id=…, or the most recent one.
-import { getTake, forgetLocalAudio, archiveIsShared } from "./store.js?v=2";
-import { currentTakeId } from "./nav.js?v=8";
-import { framesToCSV } from "./voice-analyzer.js";
+// breakdown.js — everything measured from one recording, shown under the portrait on the Portrait page
+// (it used to be its own Breakdown page). portrait-3d.js loads the recording and calls renderBreakdown(take).
+// Downloads are off for now.
+import { forgetLocalAudio, archiveIsShared } from "./store.js?v=2";
 import { drawVowelChart, pickReference, countVowelFrames } from "./vowel-chart.js";
 import { traits, timbreWords } from "./voice-orb.js?v=34";
-import { drawPitchTrace, pct, download, slug, formatDate, ACCENT_SECONDS, deviceText } from "./shared.js?v=2";
+import { drawPitchTrace, pct, ACCENT_SECONDS, deviceText } from "./shared.js?v=2";
 
 const SHOW_TOP = 6;
 const $ = (id) => document.getElementById(id);
 let take = null, showAll = false;
 
-async function load() {
-  const id = currentTakeId(); // from the link, or the recording made / opened earlier in this tab
-  if (!id) return showEmpty(null);
-  try {
-    take = await getTake(id);
-  } catch (e) {
-    return showEmpty(`Couldn't open saved recordings in this browser: ${e.message}`);
-  }
-  if (!take) return showEmpty(id
-    ? (archiveIsShared ? "That recording isn't in the archive." : "That recording isn't saved in this browser. Recordings are kept on the device they were made on.")
-    : null);
+/** Fill in the data sections for this recording. */
+export function renderBreakdown(t) {
+  take = t;
   if (!take.frames) take.frames = [];
-  render();
-}
-
-function showEmpty(msg) {
-  $("empty").hidden = false;
-  if (msg) $("emptyText").textContent = msg;
-}
-
-function render() {
-  $("content").hidden = false;
-  document.title = `${take.name}'s voice`;
-  $("title").textContent = `${take.name}'s voice`;
-  $("subtitle").textContent = `${formatDate(take.createdAt)} · ${take.seconds.toFixed(1)} s` +
-    (take.source === "microphone" ? "" : ` · from ${take.source}`);
-
   const dev = deviceText(take);
   $("deviceNote").hidden = !dev;
   if (dev) $("deviceNote").textContent = `Recorded on: ${dev}`;
 
-  $("portraitLink").href = `portrait.html?id=${encodeURIComponent(take.id)}`;
   showSaveNotice();
   setUpAudio();
 
@@ -83,7 +58,6 @@ function setUpAudio() {
       (archiveIsShared && take.sharedToArchive ? " in the archive." : ".");
   } else {
     player.hidden = true;
-    $("wavBtn").hidden = true;
     note.textContent = "The recording itself isn't kept, only the data from it.";
   }
 }
@@ -187,30 +161,6 @@ function renderRhythm() {
   }
 }
 
-// ---------- downloads ----------
-const fileBase = () => `${slug(take.name)}-${take.createdAt.slice(0, 19).replace(/[:T]/g, "-")}`;
-$("jsonBtn").addEventListener("click", () => {
-  const { frames, wav, summary, rhythm, accent, preview, sharedToArchive, ...meta } = take;
-  const ref = pickReference(frames, $("refSelect").value);
-  const data = {
-    meta,
-    summary: {
-      ...summary,
-      vowelFrames: countVowelFrames(frames),
-      vowelReference: ref ? { source: "Peterson & Barney (1952)", voice: ref === "m" ? "lower" : "higher" } : null,
-    },
-    rhythm, accent, frames,
-  };
-  download(new Blob([JSON.stringify(data)], { type: "application/json" }), `${fileBase()}.json`);
-});
-$("csvBtn").addEventListener("click", () => download(new Blob([framesToCSV(take.frames)], { type: "text/csv" }), `${fileBase()}.csv`));
-$("wavBtn").addEventListener("click", () => {
-  try {
-    if (wavBlob) download(wavBlob, `${fileBase()}.wav`);
-  } catch (e) { alert(`Couldn't download the recording: ${e.message}`); }
-});
-
-load();
 
 // ---------- hover explanations for each measurement ----------
 // Every stat card has a data-tip. Hover, tab to it, or tap it on a phone (tap elsewhere to close) to show a small popup.

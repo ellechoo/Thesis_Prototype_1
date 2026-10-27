@@ -820,9 +820,8 @@ body.showing-id .archive-head { display: none; }
 /* ---- "Voiceprint" home tab: the first folder tab in the nav, in front of Record ---- */
 .tabs a.nav-home { z-index: 5; }
 @media (max-width: 640px) {
-  /* five tabs when Breakdown and Portrait are open: each a fifth of the bar, with a smaller label to fit */
-  .tabs a.nav-home, .tabs a.nav-home ~ a { flex-basis: calc(20% + 4.8px); }
-  .tabs:not(.collapsed) a.nav-home, .tabs:not(.collapsed) a.nav-home ~ a { font-size: 9.5px; letter-spacing: 0.02em; padding-left: 7px; padding-right: 3px; }
+  /* four tabs at most (Voiceprint, Record, Portrait, Archive): each a quarter of the bar */
+  .tabs a.nav-home, .tabs a.nav-home ~ a { flex-basis: calc(25% + 4.5px); }
   .tabs.collapsed a.nav-home, .tabs.collapsed a.nav-home ~ a:not([data-href]) { flex-basis: calc(25% + 4.5px); }
 }
 
@@ -1027,25 +1026,7 @@ html:has(.archive-stage:not([hidden])) { scrollbar-gutter: auto; overflow: hidde
   .stage-search { top: 12px; left: 112px; width: auto; right: 12px; }
 }
 
-/* Archive → ID card hand-off (archive.js): the card is laid out invisibly while the voice glides into the photo's place,
-   then forms around it: the card's background and frame fade in, and its parts slide in one after another.
-   The photo itself appears at once, exactly where the gliding portrait stopped. */
-.id-view.id-assembling .id-card { visibility: hidden; animation: none; }
-.id-view.id-forming .id-card { animation: id-form-card .55s ease both; }
-.id-view.id-forming .id-photo { animation: id-form-frame .55s ease both; }
-.id-view.id-forming :is(.id-top, .id-name, .id-meta, .id-fields, .id-sign, .id-code) { animation: id-form-part .5s ease both; }
-.id-view.id-forming .id-top { animation-delay: .05s; }
-.id-view.id-forming .id-name { animation-delay: .1s; }
-.id-view.id-forming .id-meta { animation-delay: .15s; }
-.id-view.id-forming .id-fields { animation-delay: .2s; }
-.id-view.id-forming .id-sign { animation-delay: .27s; }
-.id-view.id-forming .id-code { animation-delay: .33s; }
-@keyframes id-form-card { from { background-color: transparent; border-color: transparent; } }
-@keyframes id-form-frame { from { border-color: transparent; } }
-@keyframes id-form-part { from { opacity: 0; transform: translateX(-12px); } }
-@media (prefers-reduced-motion: reduce) { .id-view.id-forming :is(.id-card, .id-photo, .id-top, .id-name, .id-meta, .id-fields, .id-sign, .id-code) { animation: none; } }
 .archive-stage :is(.view-switch, .stage-search, .stage-hint) { transition: opacity .3s ease; }
-.archive-stage.flying :is(.view-switch, .stage-search, .stage-hint) { opacity: 0; pointer-events: none; }
 /* landing page: the speech-bubble name tag on one portrait at a time (home.js); fades in and out.
    The text block sits above the tags, so a tag can never cover it. */
 .home-pitch { z-index: 2; }
@@ -1053,4 +1034,44 @@ html:has(.archive-stage:not([hidden])) { scrollbar-gutter: auto; overflow: hidde
 .home-name::before { content: ""; position: absolute; left: 50%; top: -9px; transform: translateX(-50%); width: 18px; height: 11px; background: var(--text); clip-path: polygon(0 100%, 50% 0, 100% 100%); } /* the tail, from the middle, pointing up at the portrait's centre */
 .home-name.on { opacity: 1; }
 @media (max-width: 640px) { .home-name { font-size: 12.5px; padding: 5px 10px; border-radius: 10px; } }
+/* ---- Portrait page: the ID card button, one popup box per feature (with a line to it), and the data below ---- */
+.idcard-btn { position: absolute; z-index: 3; top: 14px; right: calc(max(0px, (100cqw - 1400px) / 2) + 12px); display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 999px; border: 1px solid var(--line); background: rgba(0, 0, 0, .85); color: var(--text); font: 600 14px system-ui, -apple-system, "Segoe UI", sans-serif; cursor: pointer; }
+.idcard-btn svg { width: 20px; height: 20px; }
+.idcard-btn:hover { border-color: var(--text); }
+.idcard-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.callouts, .callout-lines { position: absolute; inset: 0; pointer-events: none; }
+.callout-lines { width: 100%; height: 100%; overflow: visible; z-index: 2; }
+.callout-lines line { stroke: var(--text); stroke-width: 1.25; opacity: .75; }
+.callout-lines circle { fill: var(--text); }
+.callouts { z-index: 3; }
+.callout { position: absolute; padding: 12px 14px 13px; border-radius: 12px; background: rgba(18, 18, 17, .94); border: 1px solid #3d3a35; box-shadow: 0 8px 24px rgba(0, 0, 0, .5); opacity: 0; transform: translateY(4px); transition: opacity .18s ease, transform .18s ease; }
+.callout.on { opacity: 1; transform: none; }
+.callout .co-title { margin: 0 0 5px; font-size: 13px; color: var(--muted); }
+.callout .co-title b { color: var(--text); font-weight: 600; font-size: 14px; }
+.callout .co-text { margin: 0; font-size: 13px; line-height: 1.45; color: #cfccc6; }
+.id-dialog { width: min(980px, calc(100vw - 32px)); max-height: calc(100svh - 32px); padding: 0; border: 0; background: transparent; color: var(--text); overflow: visible; }
+.id-dialog::backdrop { background: rgba(0, 0, 0, .78); }
+.id-dialog .id-view { margin: 0; max-width: none; }
+.id-dialog-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 16px; }
+.id-dialog-actions button { border-radius: 999px; padding: 10px 20px; }
+.listen { max-width: 1280px; margin: 72px auto 0; display: grid; gap: 8px; } /* starts below the nav tabs, so the first screen is just the portrait */
+.listen audio { width: min(100%, 520px); }
+.listen .note:empty, .listen [hidden] { display: none; }
+.portrait-data { max-width: 1280px; margin: 0 auto; padding-top: 28px; }
+@media (max-width: 640px) {
+  .idcard-btn { top: 40px; right: 12px; padding: 7px 12px; font-size: 13px; }
+  .callout { padding: 10px 12px 11px; }
+  .callout .co-text { font-size: 12px; }
+  .callout .co-title, .callout .co-title b { font-size: 12.5px; }
+  .id-dialog { width: min(420px, calc(100vw - 24px)); }
+}
+@media (prefers-reduced-motion: reduce) { .callout { transition: none; } }
+/* narrow screens: each box is a short label until tapped */
+.callout.compact { pointer-events: auto; cursor: pointer; padding: 8px 12px; }
+.callout.compact .co-title { margin: 0; display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+.callout.compact .co-title::after { content: "+"; color: var(--muted); font-weight: 600; }
+.callout.compact.open .co-title::after { content: "−"; }
+.callout.compact .co-text { display: none; }
+.callout.compact.open .co-text { display: block; margin-top: 6px; }
+.callout.compact .co-title b { margin-right: auto; }
 

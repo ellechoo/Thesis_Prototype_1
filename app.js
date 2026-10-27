@@ -1,4 +1,4 @@
-// app.js — the Record page: name → countdown → read the passage → analyze → save → breakdown page.
+// app.js — the Record page: name → countdown → read the passage → analyze → save → portrait page.
 import { VoiceAnalyzer } from "./voice-analyzer.js";
 import { startRecording, resampleTo, encodeWav } from "./recorder.js";
 import { computeRhythm } from "./rhythm.js";
@@ -265,7 +265,7 @@ document.addEventListener("keydown", (e) => {
   else if (phase === "countdown") { e.preventDefault(); cancelSession(); }
 });
 
-// ---------- analyze, save, go to the breakdown ----------
+// ---------- analyze, save, go to the portrait ----------
 function step(msg) { ui.step.textContent = msg; }
 
 // Measures everything (rhythm, accent, …) without saving. Returns the finished take.
@@ -295,7 +295,7 @@ async function prepareTake({ frames, samples, samplesRate, sampleRate, noiseFloo
   return take;
 }
 
-// Saves the take (to the archive when it's set up) and opens its breakdown.
+// Saves the take (to the archive when it's set up) and opens its portrait.
 async function saveAndOpen(take) {
   try {
     step(archiveIsShared ? "Adding to the archive…" : "Saving…");
@@ -305,7 +305,7 @@ async function saveAndOpen(take) {
         ? `Couldn't add this to the shared archive (${saved.error}). It's saved on this device only.`
         : "");
     } catch {}
-    location.href = `breakdown.html?id=${encodeURIComponent(take.id)}`;
+    location.href = `portrait.html?id=${encodeURIComponent(take.id)}`;
   } catch (e) {
     setPhase("idle");
     setStatus(`Couldn't save the recording: ${e.message}`, true);
