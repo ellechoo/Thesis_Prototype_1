@@ -40,7 +40,7 @@ function gallery(people) {
   grid.innerHTML = `
     <canvas class="stage-canvas" aria-hidden="true"></canvas>
     <div class="view-switch" role="group" aria-label="View">
-      <button type="button" data-view="flat">Flat</button><button type="button" data-view="globe">Globe</button>
+      <button type="button" data-view="flat" aria-label="Flat view" title="Flat view"><svg viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor"><circle cx="5" cy="6" r="2.4"/><circle cx="12" cy="6" r="2.4"/><circle cx="19" cy="6" r="2.4"/><circle cx="8.5" cy="12" r="2.4"/><circle cx="15.5" cy="12" r="2.4"/><circle cx="5" cy="18" r="2.4"/><circle cx="12" cy="18" r="2.4"/><circle cx="19" cy="18" r="2.4"/></g></svg></button><button type="button" data-view="globe" aria-label="Globe view" title="Globe view"><svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3.6 8.5h16.8M3.6 15.5h16.8"/></g></svg></button>
     </div>
     <p class="stage-hint" aria-hidden="true"></p>
     <span class="stage-tip" aria-hidden="true" hidden></span>
