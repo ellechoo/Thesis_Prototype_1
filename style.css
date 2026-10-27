@@ -1035,7 +1035,7 @@ html:has(.archive-stage:not([hidden])) { scrollbar-gutter: auto; overflow: hidde
 .home-name.on { opacity: 1; }
 @media (max-width: 640px) { .home-name { font-size: 12.5px; padding: 5px 10px; border-radius: 10px; } }
 /* ---- Portrait page: the ID card button, one popup box per feature (with a line to it), and the data below ---- */
-.idcard-btn { position: absolute; z-index: 3; top: 14px; right: calc(max(0px, (100cqw - 1400px) / 2) + 12px); display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 999px; border: 1px solid var(--line); background: rgba(0, 0, 0, .85); color: var(--text); font: 600 14px system-ui, -apple-system, "Segoe UI", sans-serif; cursor: pointer; }
+.idcard-btn { position: absolute; z-index: 3; top: 14px; right: 14px; display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 999px; border: 1px solid var(--line); background: rgba(0, 0, 0, .85); color: var(--text); font: 600 14px system-ui, -apple-system, "Segoe UI", sans-serif; cursor: pointer; }
 .idcard-btn svg { width: 20px; height: 20px; }
 .idcard-btn:hover { border-color: var(--text); }
 .idcard-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -1054,7 +1054,7 @@ html:has(.archive-stage:not([hidden])) { scrollbar-gutter: auto; overflow: hidde
 .id-dialog .id-view { margin: 0; max-width: none; }
 .id-dialog-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 16px; }
 .id-dialog-actions button { border-radius: 999px; padding: 10px 20px; }
-.listen { max-width: 1280px; margin: 72px auto 0; display: grid; gap: 8px; } /* starts below the nav tabs, so the first screen is just the portrait */
+.listen { max-width: 1280px; margin: 28px auto 0; display: grid; gap: 8px; }
 .listen audio { width: min(100%, 520px); }
 .listen .note:empty, .listen [hidden] { display: none; }
 .portrait-data { max-width: 1280px; margin: 0 auto; padding-top: 28px; }
@@ -1074,4 +1074,19 @@ html:has(.archive-stage:not([hidden])) { scrollbar-gutter: auto; overflow: hidde
 .callout.compact .co-text { display: none; }
 .callout.compact.open .co-text { display: block; margin-top: 6px; }
 .callout.compact .co-title b { margin-right: auto; }
+/* the portrait sits in a clearly outlined box, shorter than the screen: scrolling (or dragging) inside it turns the
+   portrait, outside it moves the page, and the edge shows where one stops and the other starts */
+.explore .stage-wrap { width: auto; max-width: 1400px; margin: 12px auto 0; height: min(74svh, 820px); min-height: 360px; border: 1px solid #3d3a35; border-radius: 22px; overflow: hidden; background: #050505; }
+.explore .stage-wrap .stage { border-radius: inherit; }
+.explore .portrait-head { top: 18px; left: 22px; }
+.scroll-cue { max-width: 1400px; margin: 12px auto 0; text-align: center; color: var(--muted); font-size: 13px; }
+.scroll-cue span { display: inline-block; margin-left: 4px; animation: cue-bob 1.8s ease-in-out infinite; }
+@keyframes cue-bob { 50% { transform: translateY(3px); } }
+@media (max-width: 640px) {
+  .explore .stage-wrap { height: 62svh; min-height: 320px; border-radius: 16px; margin-top: 8px; }
+  .explore .portrait-head { top: 14px; left: 16px; }
+  .idcard-btn { top: 12px; right: 12px; }
+  .scroll-cue { font-size: 12px; padding: 0 8px; }
+}
+@media (prefers-reduced-motion: reduce) { .scroll-cue span { animation: none; } }
 
