@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300..500&display=swap" crossorigin="anonymous" /> <!-- crossorigin: lets the ID card download include this font -->
-  <link rel="stylesheet" href="style.css?v=61" />
+  <link rel="stylesheet" href="style.css?v=63" />
 </head>
 <body>
   <main class="wide">
@@ -46,7 +46,7 @@
       <p class="jump-row"><button type="button" class="jump-btn" id="toBreakdown">See full breakdown <span aria-hidden="true">↓</span></button></p>
 
       <!-- the voice in numbers (what used to be the Breakdown page) -->
-      <p class="jump-row jump-up" id="breakdown"><button type="button" class="jump-btn quiet" id="toPortrait"><span aria-hidden="true">↑</span> Back to the portrait</button></p>
+      <p class="jump-row jump-up" id="breakdown"><button type="button" class="jump-btn to-portrait" id="toPortrait"><span aria-hidden="true">↑</span> Back to the portrait</button></p>
       <section class="listen" id="listen">
         <p class="note device-note" id="deviceNote" hidden></p>
         <p class="status error" id="saveNotice" hidden></p>
@@ -174,6 +174,7 @@
           </details>
         </section>
       </div>
+      <p class="jump-row jump-foot"><button type="button" class="jump-btn to-portrait"><span aria-hidden="true">↑</span> Back to the portrait</button></p>
     </div>
 
     <dialog class="id-dialog" id="idDialog" aria-label="Voice ID card">
@@ -193,6 +194,6 @@
   } }
   </script>
   <script type="module" src="nav.js?v=8"></script> <!-- first, so the tabs start in the right state before the page script loads -->
-  <script type="module" src="portrait-3d.js?v=43"></script>
+  <script type="module" src="portrait-3d.js?v=44"></script>
 </body>
 </html>

@@ -1084,13 +1084,22 @@ html:has(.archive-stage:not([hidden])) { scrollbar-gutter: auto; overflow: hidde
   .explore .portrait-head { top: 14px; left: 16px; }
   .idcard-btn { top: 12px; right: 12px; }
 }
-/* "See full breakdown" under the portrait (scrolls down to it), and "Back to the portrait" at the breakdown's top */
-.jump-row { max-width: 1400px; margin: 14px auto 0; display: flex; justify-content: center; }
-.jump-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 999px; border: 1px solid var(--accent); background: transparent; color: var(--accent); font: 600 14px system-ui, -apple-system, "Segoe UI", sans-serif; cursor: pointer; }
-.jump-btn:hover { background: var(--accent); color: var(--accent-text); }
-.jump-btn:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
-.jump-btn.quiet { border-color: var(--line); color: var(--muted); padding: 7px 16px; font-size: 13px; }
-.jump-btn.quiet:hover { background: transparent; border-color: var(--text); color: var(--text); }
-.jump-up { margin-top: 112px; justify-content: flex-start; max-width: 1280px; scroll-margin-top: 16px; } /* starts below the first screen */
+/* Portrait page layout: the box's top gap matches its side gaps, and it reaches down to just above "See full breakdown".
+   --side is the gap either side of the box, up to the usual page padding (very wide screens add centring space at the
+   sides, which the top doesn't copy, so the box stays tall). */
+#content { --side: min(33px, calc((100cqw - min(1360px, 100cqw - 40px)) / 2)); }
+.explore .stage-wrap { margin-top: calc(var(--side) - 4px); height: calc(100svh - 136px - var(--side)); }
+/* the jump buttons: the same width and look as the portrait's box */
+.jump-row { max-width: 1360px; margin: 12px auto 0; }
+.jump-btn { display: flex; width: 100%; align-items: center; justify-content: center; gap: 10px; min-height: 52px; padding: 12px 20px; border: 1px solid #3d3a35; border-radius: 22px; background: #050505; color: var(--text); font: 600 15px system-ui, -apple-system, "Segoe UI", sans-serif; cursor: pointer; transition: border-color .15s ease, background-color .15s ease; }
+.jump-btn:hover { border-color: var(--muted); background: #0d0d0c; }
+.jump-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.jump-btn span { color: var(--muted); }
+.jump-up { margin-top: 112px; scroll-margin-top: var(--side, 20px); } /* starts below the first screen */
 .jump-up + .listen { margin-top: 16px; }
+.jump-foot { margin-top: 40px; margin-bottom: 12px; }
+@media (max-width: 640px) {
+  .explore .stage-wrap { height: calc(100svh - 132px - var(--side)); }
+  .jump-btn { border-radius: 16px; min-height: 48px; font-size: 14px; }
+}
 
