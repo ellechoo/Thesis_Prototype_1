@@ -245,7 +245,7 @@ function gallery(people) {
   function placeTip() {
     if (!hover) return;
     const it = placed.find((q) => q.key === hover.key); if (!it) return;
-    tip.style.left = it.x + "px"; tip.style.top = (it.y + it.size * (mode === "flat" ? 0.4 : 0.36)) + "px";
+    tip.style.left = it.x + "px"; tip.style.top = (it.y + it.size * 0.2) + "px"; // over the portrait's lower part, like the landing page
   }
 
   // ---- search: find a voice by name, glide to it and zoom in
