@@ -184,8 +184,15 @@ function wireCallouts() {
     const f = whatsAt(e.clientX, e.clientY, pick(e.clientX, e.clientY));
     if (e.pointerType !== "mouse") { hovered = null; if (f) { hoverHit = keepHit(f); hoverAng = f.ang; } pinned = f ? f.key : null; pinnedHit = f ? { hit: hoverHit, ang: f.ang } : null; setShown(); }
     else if (f) { pinned = f.key; pinnedHit = { hit: hoverHit, ang: hoverAng }; setShown(); }
+    else if (!isWide() && pinned) { pinned = pinnedHit = null; setShown(); } // narrower screens: a click on an empty part of the portrait closes the box
   });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && shownKey) { pinned = hovered = null; setShown(); } });
+  // narrower screens: a tap or click anywhere outside the box closes it (the portrait itself is handled above: a tap on
+  // another part opens that one instead, and dragging to turn it leaves the box open)
+  document.addEventListener("click", (e) => {
+    if (isWide() || !pinned || e.target.closest?.("#featureSheet, .hotspot, .orb-canvas")) return;
+    pinned = hovered = pinnedHit = null; setShown();
+  });
 }
 
 // ---------------------------------------------------------------- everything that shapes the portrait: the list (wide screens), the box (narrower)
