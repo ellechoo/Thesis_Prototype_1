@@ -334,7 +334,7 @@ function placeHotspots() {
 // An item opens downward; only if it would run out of room does the list move up (and then scroll, if it still doesn't fit).
 function placeList() {
   const list = $("featureList"), inner = list?.firstElementChild; if (!inner || !list.clientHeight) return;
-  const H = list.clientHeight, closed = [...inner.children].reduce((s, el) => {
+  const lcs = getComputedStyle(list), H = list.clientHeight - parseFloat(lcs.paddingTop) - parseFloat(lcs.paddingBottom), closed = [...inner.children].reduce((s, el) => {
     const cs = getComputedStyle(el), m = parseFloat(cs.marginTop) + parseFloat(cs.marginBottom);
     return s + m + (el.classList.contains("feat") ? el.querySelector(".feat-head").offsetHeight + parseFloat(cs.borderTopWidth) + parseFloat(cs.borderBottomWidth) : el.offsetHeight);
   }, 0);
