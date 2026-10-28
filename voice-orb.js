@@ -53,7 +53,9 @@ export const MAP = {
     // raspy ↔ smooth: any lean away from the exact middle shows (only a voice within `from` of the middle stays plain).
     //   raspy → small pyramids rise from every face, the tips reaching the normal outline; height for the raspiest voice,
     //   and even a slight lean gets `min` of it. smooth → polished glass, its strength likewise starting at `min`.
-    spikes: { height: 0.22, from: 0.02, min: 0.18 },
+    // height: for the raspiest voice, as a share of the base sphere (0.75: the dips between spikes sink to about 57% of the
+    //   outline); curve > 1 keeps slight leans subtle and saves the drama for the raspiest voices.
+    spikes: { height: 0.75, curve: 1.8, from: 0.02, min: 0.18 },
     glass: { from: 0.02, min: 0.3 },
   },
   // VOWELS → soft glowing spots in the core's own surface (painted into it, so on a spiky core they ride up
@@ -170,8 +172,8 @@ function timbreOf(take, frames) {
 }
 // raspy → spiky: a sphere of 320 small faces with a short pyramid rising from each (like a sea urchin).
 // Normals blend from round to flat as the spikes grow, so they catch the light like hard little points.
-function spikyCore(R, amt) {
-  const base = new THREE.IcosahedronGeometry(1, 2).toNonIndexed(), p = base.attributes.position, out = [], h = MAP.timbre.spikes.height * amt;
+function spikyCore(R, amt, h) {
+  const base = new THREE.IcosahedronGeometry(1, 2).toNonIndexed(), p = base.attributes.position, out = [];
   for (let i = 0; i < p.count; i += 3) {
     const t = [0, 1, 2].map((k) => new THREE.Vector3().fromBufferAttribute(p, i + k).normalize().multiplyScalar(R));
     const apex = t[0].clone().add(t[1]).add(t[2]).normalize().multiplyScalar(R * (1 + h));
@@ -248,9 +250,9 @@ function glassLook(rnd) {
 function core(T) {
   const C = MAP.core, TM = MAP.timbre, tb = T.timbre;
   const SP = TM.spikes, GL = TM.glass;
-  const spiky = tb.raspy >= SP.from ? SP.min + (1 - SP.min) * Math.min(1, tb.raspy) : 0, spikeH = spiky ? SP.height * spiky : 0; // (a slight lean: small spikes)
+  const spiky = tb.raspy >= SP.from ? SP.min + (1 - SP.min) * Math.min(1, tb.raspy) : 0, spikeH = spiky ? SP.height * Math.pow(spiky, SP.curve) : 0; // (a slight lean: small spikes; the raspiest: long, deep ones)
   // every core has the same outline: spiky cores sit a little smaller so their tips reach it
-  const geo = spikeH ? spikyCore(C.radius / (1 + spikeH), spiky) : new THREE.SphereGeometry(C.radius, 160, 120);
+  const geo = spikeH ? spikyCore(C.radius / (1 + spikeH), spiky, spikeH) : new THREE.SphereGeometry(C.radius, 160, 120);
   const cMain = voiceColor(T.pitch, T.note), R = MAP.range;
   // the top/bottom: same hue, lighter or darker by how many semitones the highest/lowest pitch sits from the average
   const shift = (hz) => { const h = {}; cMain.getHSL(h); const st = 12 * Math.log2(hz / T.pitch); return new THREE.Color().setHSL(h.h, h.s, Math.max(R.minLight, Math.min(R.maxLight, h.l + R.perSemitone * st))); };
