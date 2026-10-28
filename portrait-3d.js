@@ -12,9 +12,9 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { getTake, archiveIsShared } from "./store.js?v=2";
 import { currentTakeId } from "./nav.js?v=8";
 import { formatDate, slug, download } from "./shared.js?v=2";
-import { buildOrb, MAP } from "./voice-orb.js?v=37";
-import { renderIdCard } from "./id-card.js?v=41";
-import { renderBreakdown } from "./breakdown.js?v=30";
+import { buildOrb, MAP } from "./voice-orb.js?v=38";
+import { renderIdCard } from "./id-card.js?v=42";
+import { renderBreakdown } from "./breakdown.js?v=31";
 const esc = (x) => String(x ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 const $ = (id) => document.getElementById(id);
@@ -209,7 +209,7 @@ let sunMesh = null, swirlMesh = null, accentPts = [], vowelSpots = [], vImg = nu
 
 const cap = (t) => t[0].toUpperCase() + t.slice(1);
 // a timbre dial in words, using the same cut-off as the portrait (anything this close to the middle draws nothing)
-function dial(v, pos, neg) { const a = Math.abs(v); if (a < MAP.timbre.from) return "In the middle"; return cap((a >= 0.75 ? "very " : a >= 0.4 ? "" : "slightly ") + (v > 0 ? pos : neg)); }
+function dial(v, pos, neg, from = MAP.timbre.from) { const a = Math.abs(v); if (a < from) return "In the middle"; return cap((a >= 0.75 ? "very " : a >= 0.4 ? "" : "slightly ") + (v > 0 ? pos : neg)); }
 
 // each item: a short line on what it shows, plus a small picture (color swatches with their hex codes, a scale with this
 // voice's place on it, or the accent shares). The full detail is in the breakdown below the portrait.
@@ -221,7 +221,7 @@ const scale = (v, pos, neg) => `<div class="fv-scale" role="img" aria-label="${e
 function buildFeatures() {
   const T = orbInfo.traits, tb = T.timbre, ok = tb.enough, F = MAP.timbre.from, u = coreMesh?.material?.uniforms || {};
   const none = "Too little clear voice to read this, so the core is left plain.";
-  const has = { sun: ok && tb.bright >= F, swirl: ok && -tb.bright >= F, spikes: ok && tb.raspy >= MAP.timbre.spikes.from, gloss: ok && tb.raspy <= -F, vowels: T.vowels.pts.length > 0 };
+  const has = { sun: ok && tb.bright >= F, swirl: ok && -tb.bright >= F, spikes: ok && tb.raspy >= MAP.timbre.spikes.from, gloss: ok && tb.raspy <= -MAP.timbre.glass.from, vowels: T.vowels.pts.length > 0 };
   const shares = T.hasAccent ? `<div class="fv-bars">${T.accents.slice(0, 3).map((a) => `<div class="fv-bar"><span>${esc(a.name)}</span><span class="fv-bar-track"><i style="width:${Math.round(a.w * 100)}%"></i></span><span class="fv-num">${Math.round(a.w * 100)}%</span></div>`).join("")}</div>` : "";
   feats = [
     { key: "accent", name: "Accent", value: byKey.accent?.value || "", spot: true,
@@ -239,7 +239,7 @@ function buildFeatures() {
     { key: "breathy", name: "Breathy ↔ clean", value: ok ? dial(tb.breathy, "breathy", "clean") : "Not measured", lines: ok, spot: ok,
       text: !ok ? none : Math.abs(tb.breathy) < F ? "Near the middle, so the core's edge fades softly." : tb.breathy > 0 ? "Breathy voices get a soft, cloudy edge." : "Clean voices get a crisp, sharp edge.",
       visual: ok ? scale(tb.breathy, "Breathy", "Clean") : "" },
-    { key: "raspy", name: "Raspy ↔ smooth", value: ok ? dial(tb.raspy, "raspy", "smooth") : "Not measured", lines: ok, spot: has.spikes || has.gloss,
+    { key: "raspy", name: "Raspy ↔ smooth", value: ok ? dial(tb.raspy, "raspy", "smooth", MAP.timbre.spikes.from) : "Not measured", lines: ok, spot: has.spikes || has.gloss,
       text: !ok ? none : has.spikes ? "Raspy voices grow small spikes all over the core." : has.gloss ? "Smooth voices look like polished glass." : "Near the middle, so the surface is plain.",
       visual: ok ? scale(tb.raspy, "Raspy", "Smooth") : "" },
   ];
