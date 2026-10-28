@@ -1140,6 +1140,7 @@ html:has(.archive-stage:not([hidden])) { scrollbar-gutter: auto; overflow: hidde
 .spots-btn.off { color: var(--muted); }
 .hotspots[hidden] { display: none; }
 @media (max-width: 640px) { .spots-btn { top: 62px; width: 40px; height: 40px; } }
+@media (max-width: 899.98px) { .explore .portrait-head .sub { font-size: 11.5px; } } /* phones: the recording date a touch smaller */
 @media (min-width: 900px) { .hotspots, .spots-btn { display: none; } }
 @media (prefers-reduced-motion: reduce) { .hotspot span::after { animation: none; transform: scale(2.2); opacity: .35; } .hotspot.seen span::after { opacity: 0; } .explore .stage-wrap { transition: none; } }
 @keyframes sheet-in { from { opacity: 0; transform: translateY(8px); } }
