@@ -1035,20 +1035,10 @@ html:has(.archive-stage:not([hidden])) { scrollbar-gutter: auto; overflow: hidde
 .home-name.on { opacity: 1; }
 @media (max-width: 640px) { .home-name { font-size: 12.5px; padding: 5px 10px; border-radius: 10px; } }
 /* ---- Portrait page: the ID card button, one popup box per feature (with a line to it), and the data below ---- */
-.idcard-btn { position: absolute; z-index: 3; top: 14px; right: 14px; display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 999px; border: 1px solid var(--line); background: rgba(0, 0, 0, .85); color: var(--text); font: 600 14px system-ui, -apple-system, "Segoe UI", sans-serif; cursor: pointer; }
-.idcard-btn svg { width: 20px; height: 20px; }
-.idcard-btn:hover { border-color: var(--text); }
-.idcard-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.callouts, .callout-lines { position: absolute; inset: 0; pointer-events: none; }
+.callout-lines { position: absolute; inset: 0; pointer-events: none; }
 .callout-lines { width: 100%; height: 100%; overflow: visible; z-index: 2; }
 .callout-lines line { stroke: var(--text); stroke-width: 1.25; opacity: .75; }
 .callout-lines circle { fill: var(--text); }
-.callouts { z-index: 3; }
-.callout { position: absolute; padding: 12px 14px 13px; border-radius: 12px; background: rgba(18, 18, 17, .94); border: 1px solid #3d3a35; box-shadow: 0 8px 24px rgba(0, 0, 0, .5); opacity: 0; transform: translateY(4px); transition: opacity .18s ease, transform .18s ease; }
-.callout.on { opacity: 1; transform: none; }
-.callout .co-title { margin: 0 0 5px; font-size: 13px; color: var(--muted); }
-.callout .co-title b { color: var(--text); font-weight: 600; font-size: 14px; }
-.callout .co-text { margin: 0; font-size: 13px; line-height: 1.45; color: #cfccc6; }
 .id-dialog { width: min(980px, calc(100vw - 32px)); max-height: calc(100svh - 32px); padding: 0; border: 0; background: transparent; color: var(--text); overflow: visible; }
 .id-dialog::backdrop { background: rgba(0, 0, 0, .78); }
 .id-dialog .id-view { margin: 0; max-width: none; }
@@ -1059,21 +1049,8 @@ html:has(.archive-stage:not([hidden])) { scrollbar-gutter: auto; overflow: hidde
 .listen .note:empty, .listen [hidden] { display: none; }
 .portrait-data { max-width: 1280px; margin: 0 auto; padding-top: 28px; }
 @media (max-width: 640px) {
-  .idcard-btn { top: 40px; right: 12px; padding: 7px 12px; font-size: 13px; }
-  .callout { padding: 10px 12px 11px; }
-  .callout .co-text { font-size: 12px; }
-  .callout .co-title, .callout .co-title b { font-size: 12.5px; }
   .id-dialog { width: min(420px, calc(100vw - 24px)); }
 }
-@media (prefers-reduced-motion: reduce) { .callout { transition: none; } }
-/* narrow screens: each box is a short label until tapped */
-.callout.compact { pointer-events: auto; cursor: pointer; padding: 8px 12px; }
-.callout.compact .co-title { margin: 0; display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
-.callout.compact .co-title::after { content: "+"; color: var(--muted); font-weight: 600; }
-.callout.compact.open .co-title::after { content: "−"; }
-.callout.compact .co-text { display: none; }
-.callout.compact.open .co-text { display: block; margin-top: 6px; }
-.callout.compact .co-title b { margin-right: auto; }
 /* the portrait sits in a clearly outlined box, shorter than the screen: scrolling (or dragging) inside it turns the
    portrait, outside it moves the page, and the edge shows where one stops and the other starts */
 .explore .stage-wrap { width: auto; max-width: 1400px; margin: 12px auto 0; height: calc(100svh - 150px); min-height: 360px; border: 1px solid #3d3a35; border-radius: 22px; overflow: hidden; background: #050505; }
@@ -1082,7 +1059,6 @@ html:has(.archive-stage:not([hidden])) { scrollbar-gutter: auto; overflow: hidde
 @media (max-width: 640px) {
   .explore .stage-wrap { height: calc(100svh - 148px); min-height: 320px; border-radius: 16px; margin-top: 8px; }
   .explore .portrait-head { top: 14px; left: 16px; }
-  .idcard-btn { top: 12px; right: 12px; }
 }
 /* Portrait page layout: the box's top gap matches its side gaps, and it reaches down to just above "See full breakdown".
    --side is the gap either side of the box, up to the usual page padding (very wide screens add centring space at the
@@ -1103,38 +1079,69 @@ html:has(.archive-stage:not([hidden])) { scrollbar-gutter: auto; overflow: hidde
   .jump-btn { border-radius: 16px; min-height: 48px; font-size: 14px; }
 }
 
+/* Portrait page: the download button (top right) saves the voice's ID card as a picture */
+.download-btn { position: absolute; z-index: 3; top: 14px; right: 14px; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border-radius: 50%; border: 1px solid var(--line); background: rgba(0, 0, 0, .85); color: var(--text); cursor: pointer; transition: border-color .15s ease, background-color .15s ease; }
+.download-btn svg { width: 21px; height: 21px; }
+.download-btn:hover { border-color: var(--text); }
+.download-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.download-btn.busy { cursor: progress; }
+.download-btn.busy svg { animation: dl-nudge .9s ease-in-out infinite; } /* the arrow bobs while the picture is made */
+@keyframes dl-nudge { 50% { transform: translateY(3px); } }
+@media (max-width: 640px) { .download-btn { top: 12px; right: 12px; width: 40px; height: 40px; } }
+@media (prefers-reduced-motion: reduce) { .download-btn.busy svg { animation: none; opacity: .5; } }
+.id-offscreen { position: fixed; left: -10000px; top: 0; width: min(980px, calc(100vw - 32px)); pointer-events: none; } /* where the card is drawn for the download */
+.id-offscreen .id-view { margin: 0; max-width: none; }
+.id-offscreen .id-card { animation: none; }
+
+/* everything that shapes the portrait: one box per item (the list on wide screens; the box at the bottom on narrower ones) */
+.feat { margin-bottom: 8px; border: 1px solid #2a2824; border-radius: 14px; background: #0a0a09; transition: border-color .2s ease, background-color .2s ease; }
+.feat:last-child { margin-bottom: 0; }
+.feat.open { border-color: #46423c; background: #0f0f0e; }
+.feat-head { display: flex; width: 100%; align-items: baseline; gap: 12px; padding: 12px 14px; margin: 0; border: 0; border-radius: inherit; background: none; color: #d9d7d2; font: 500 14.5px system-ui, -apple-system, "Segoe UI", sans-serif; text-align: left; cursor: pointer; }
+.feat-head:hover:not(:disabled) .feat-name, .feat.open .feat-name { color: #fff; }
+.feat-head:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.feat-val { margin-left: auto; color: var(--muted); font-size: 13px; font-weight: 400; text-align: right; }
+.feat-chev { flex: none; align-self: center; width: 7px; height: 7px; margin: 0 3px 3px 2px; border-right: 1.5px solid var(--muted); border-bottom: 1.5px solid var(--muted); transform: rotate(45deg); transition: transform .25s ease; }
+.feat.open .feat-chev { transform: translate(0, 3px) rotate(-135deg); border-color: var(--text); }
+.feat-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .28s ease; }
+.feat.open .feat-body { grid-template-rows: 1fr; }
+.feat-body > div { overflow: hidden; }
+.feat-body p { margin: 0 14px 10px; font-size: 13px; line-height: 1.5; color: #cfccc6; }
+.feat-body p:first-child { color: var(--muted); }
+.feat-body p:last-child { margin-bottom: 14px; }
+.feat-group { margin: 18px 2px 8px; font: 600 11px system-ui, -apple-system, "Segoe UI", sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.feat-group:first-child { margin-top: 0; }
+
+/* narrower screens: the open item's box sits at the bottom of the portrait, with a × to put it away */
+.feature-sheet { position: absolute; z-index: 3; left: 12px; right: 12px; bottom: 12px; pointer-events: none; }
+.feature-sheet > * { pointer-events: auto; }
+.feature-sheet .feat { background: rgba(10, 10, 9, .94); box-shadow: 0 10px 30px rgba(0, 0, 0, .55); animation: sheet-in .22s ease; }
+.feature-sheet .feat-body > div { max-height: min(26svh, 220px); overflow-y: auto; overscroll-behavior: contain; }
+.sheet-row { display: flex; align-items: center; }
+.sheet-row .feat-head { flex: 1; min-width: 0; padding-right: 6px; }
+.sheet-close { flex: none; width: 40px; height: 40px; margin-right: 4px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--muted); font: 400 22px/1 system-ui, sans-serif; cursor: pointer; }
+.sheet-close:hover:not(:disabled) { color: var(--text); }
+.sheet-close:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; }
+.sheet-hint { margin: 0; text-align: center; font-size: 12.5px; color: var(--muted); pointer-events: none; }
+@keyframes sheet-in { from { opacity: 0; transform: translateY(8px); } }
+
 /* Portrait page, wide screens: the box splits. The portrait has the right two-thirds; the left third (behind a thin
    dividing line) holds the title, the list of everything that shapes the portrait (each opens to its explanation, with
-   lines across to where it shows) and the "See full breakdown" button. Phones keep the portrait full width. */
+   lines across to where it shows) and the "See full breakdown" button. Narrower screens keep the portrait full width. */
 .jump-btn.in-box { display: none; }
-.side-panel { display: contents; } /* phones: no box of its own, so the title sits over the portrait as before */
+.side-panel { display: contents; } /* narrower screens: no box of its own, so the title sits over the portrait as before */
 .feature-list { display: none; }
 @media (min-width: 900px) {
   .explore .stage-wrap { height: calc(100svh - 70px - var(--side)); background: #000; }
   .explore .stage-wrap .stage { position: absolute; top: 0; bottom: 0; right: 0; left: 33.333%; width: auto; height: auto; border-radius: 0; }
   .explore .callout-lines { position: absolute; inset: 0; z-index: 4; }
-  .jump-row.below-box { display: none; }
+  .jump-row.below-box, .feature-sheet { display: none; }
   .side-panel { position: absolute; z-index: 3; top: 0; bottom: 0; left: 0; width: 33.333%; box-sizing: border-box; display: flex; flex-direction: column; gap: 18px; padding: 26px; border-right: 1px solid #3d3a35; }
-  .explore .side-panel .portrait-head { position: static; max-width: none; }
+  .explore .side-panel .portrait-head { position: static; max-width: none; padding-top: 12px; }
+  .explore .side-panel .portrait-head h1 { font-size: 38px; }
   .side-panel .jump-btn.in-box { display: flex; position: static; width: 100%; flex: none; }
   .feature-list { display: block; flex: 1; min-height: 0; overflow-y: auto; margin: 0 -10px; padding: 0 10px; scrollbar-width: thin; scrollbar-color: #3d3a35 transparent;
     -webkit-mask-image: linear-gradient(transparent, #000 10px, #000 calc(100% - 14px), transparent); mask-image: linear-gradient(transparent, #000 10px, #000 calc(100% - 14px), transparent); } /* soft edges, so it shows when there's more to scroll */
-  .feat-inner { transition: margin-top .28s ease; }
-  .explore .side-panel .portrait-head h1 { font-size: 38px; }
-  .feat-group { margin: 18px 0 2px; font: 600 11px system-ui, -apple-system, "Segoe UI", sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-  .feat-group:first-child { margin-top: 0; }
-  .feat { border-bottom: 1px solid #23221f; }
-  .feat-head { display: flex; width: 100%; align-items: baseline; gap: 12px; padding: 12px 2px; margin: 0; border: 0; border-radius: 0; background: none; color: #d9d7d2; font: 500 14.5px system-ui, -apple-system, "Segoe UI", sans-serif; text-align: left; cursor: pointer; }
-  .feat-head:hover .feat-name, .feat.open .feat-name { color: #fff; }
-  .feat-head:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 6px; }
-  .feat-val { margin-left: auto; color: var(--muted); font-size: 13px; font-weight: 400; text-align: right; }
-  .feat-chev { flex: none; align-self: center; width: 7px; height: 7px; margin: 0 3px 3px 2px; border-right: 1.5px solid var(--muted); border-bottom: 1.5px solid var(--muted); transform: rotate(45deg); transition: transform .25s ease; }
-  .feat.open .feat-chev { transform: translate(0, 3px) rotate(-135deg); border-color: var(--text); }
-  .feat-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .28s ease; }
-  .feat.open .feat-body { grid-template-rows: 1fr; }
-  .feat-body > div { overflow: hidden; }
-  .feat-body p { margin: 0 2px 10px; font-size: 13px; line-height: 1.5; color: #cfccc6; }
-  .feat-body p:first-child { color: var(--muted); }
-  .feat-body p:last-child { margin-bottom: 14px; }
+  .feat-inner { display: flex; flex-direction: column; transition: margin-top .28s ease; } /* (flex: margins between boxes add up, as placeList counts them) */
 }
-@media (prefers-reduced-motion: reduce) { .feat-body, .feat-chev, .feat-inner { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .feat, .feat-body, .feat-chev, .feat-inner { transition: none; } .feature-sheet .feat { animation: none; } }
