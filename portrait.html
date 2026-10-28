@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300..500&display=swap" crossorigin="anonymous" /> <!-- crossorigin: lets the ID card download include this font -->
-  <link rel="stylesheet" href="style.css?v=67" />
+  <link rel="stylesheet" href="style.css?v=68" />
 </head>
 <body>
   <main class="wide">
@@ -38,13 +38,13 @@
             <div class="feature-list" id="featureList" role="region" aria-label="What shapes this portrait"></div>
             <button type="button" class="jump-btn in-box to-breakdown">See full breakdown <span aria-hidden="true">↓</span></button>
           </div>
-          <button type="button" class="idcard-btn" id="idCardBtn" aria-haspopup="dialog">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><circle cx="8.5" cy="11" r="2.4"/><path d="M5 16.2c.7-1.6 2-2.4 3.5-2.4s2.8.8 3.5 2.4M14.5 10h4.5M14.5 13.5h3.5" stroke-linecap="round"/></g></svg>
-            ID card
+          <button type="button" class="download-btn" id="downloadBtn" aria-label="Download this voice's ID card (PNG)" title="Download ID card">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10.5l5 5 5-5M5 19.5h14"/></g></svg>
           </button>
           <div class="stage" id="stage"></div>
           <svg class="callout-lines" id="calloutLines" aria-hidden="true"></svg>
-          <div class="callouts" id="callouts" aria-live="polite"></div>
+          <!-- narrower screens: the box for whichever part of the portrait was tapped (or hovered), at the bottom -->
+          <div class="feature-sheet" id="featureSheet" aria-live="polite"></div>
         </div>
       </div>
 
@@ -182,13 +182,6 @@
       <p class="jump-row jump-foot"><button type="button" class="jump-btn to-portrait"><span aria-hidden="true">↑</span> Back to the portrait</button></p>
     </div>
 
-    <dialog class="id-dialog" id="idDialog" aria-label="Voice ID card">
-      <section class="id-view" id="idView"></section>
-      <div class="id-dialog-actions">
-        <button type="button" class="primary" id="idDownload">Download ID card (PNG)</button>
-        <button type="button" id="idClose">Close</button>
-      </div>
-    </dialog>
     <div class="tip" id="tip" role="tooltip" hidden></div>
   </main>
 
@@ -199,6 +192,6 @@
   } }
   </script>
   <script type="module" src="nav.js?v=8"></script> <!-- first, so the tabs start in the right state before the page script loads -->
-  <script type="module" src="portrait-3d.js?v=51"></script>
+  <script type="module" src="portrait-3d.js?v=52"></script>
 </body>
 </html>

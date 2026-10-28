@@ -2,8 +2,9 @@
 // measured from the recording (breakdown.js; this used to be the separate Breakdown page).
 // The portrait turns slowly on its own; drag (or swipe with two fingers on a trackpad) to turn it yourself; pinch or the
 // mouse wheel zoom. Wide screens: the box's left third lists everything that shapes the portrait; opening one (or hovering
-// that part of the portrait) shows its explanation, with lines across to where it shows. Phones: tap a part for its popups.
-// The ID card button (top right) opens this voice's ID card, which can be downloaded as a picture.
+// that part of the portrait) shows its explanation, with lines across to where it shows. Narrower screens: tap (or hover)
+// a part and the same kind of box shows at the bottom of the portrait, with its lines.
+// The download button (top right) saves this voice's ID card as a picture.
 // (People who ask their device for reduced motion get no automatic turning.)
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
@@ -111,14 +112,13 @@ function setUpScene() {
   let wasWide = null;
   new ResizeObserver(() => {
     resize(); const w = isWide();
-    if (wasWide !== null && w !== wasWide) { fit(); hideCallouts(true); hovered = null; setShown(); } // switching layouts: start clean
+    if (wasWide !== null && w !== wasWide) { fit(); hovered = null; shownKey = undefined; setShown(); } // switching layouts: start clean
     wasWide = w;
   }).observe(stage);
   resize();
   fit();
-  resumeSpin = pauseSpin;
   setUpFeatures();
-  wireCallouts(pauseSpin);
+  wireCallouts();
 }
 
 function resize() {
@@ -127,7 +127,6 @@ function resize() {
   renderer.setSize(r.width, r.height, false);
   camera.aspect = r.width / r.height;
   camera.updateProjectionMatrix();
-  if (callout) layoutCallouts();
   render();
 }
 const wrapEl = () => document.querySelector(".stage-wrap");
@@ -142,118 +141,19 @@ function fit() {
 }
 function render() { renderer.render(scene, camera); }
 
-// ---------------------------------------------------------------- hover / tap: one box per feature, pointing at it
-// Hovering the core shows four boxes (its note & pitch colour, timbre, vowel spots and pitch range), hovering the white
-// structure shows the accent's box. Each box sits to one side of the portrait with a line to the spot it describes; the
-// lines follow the portrait as it turns, and the portrait stops turning while they're up. On narrow screens the boxes are
-// short labels (feature and value) above and below the portrait; tapping one opens its explanation.
-const FEATURES = { core: ["core", "timbre", "vowels", "range"], accent: ["accent"] };
-let callout = null; // { part, hit (world point or null), boxes: [{ key, el, side }] }
-
-function anchors(key, hit) {
-  const c = new THREE.Vector3(0, 0, 0), q = camera.quaternion;
-  const right = new THREE.Vector3(1, 0, 0).applyQuaternion(q), up = new THREE.Vector3(0, 1, 0).applyQuaternion(q);
-  const toCam = camera.position.clone().sub(controls.target).normalize();
-  const onCore = (x, y) => right.clone().multiplyScalar(x).add(up.clone().multiplyScalar(y)).add(toCam.clone().multiplyScalar(Math.sqrt(Math.max(0, 1 - x * x - y * y)))).multiplyScalar(coreR);
-  switch (key) {
-    case "core": return [c];                                                       // the glowing colour: its middle
-    case "range": return [up.clone().multiplyScalar(coreR * 0.82), up.clone().multiplyScalar(-coreR * 0.82)]; // its top and bottom
-    case "timbre": return [right.clone().multiplyScalar(coreR * 1.02).add(up.clone().multiplyScalar(coreR * 0.2))]; // its edge
-    case "vowels": return [callout?.part === "core" && hit ? hit.clone() : onCore(-0.42, 0.3)];      // a spot on its surface
-    case "accent": return [hit ? hit.clone() : right.clone().multiplyScalar(1.05)];                  // the structure
-    default: return [c];
-  }
-}
 function toScreen(v) { // in the box's coordinates (the portrait's canvas may be only part of the box)
   const w = wrapEl().getBoundingClientRect(), c = renderer.domElement.getBoundingClientRect(), p = v.clone().project(camera);
   return [c.left - w.left + (p.x + 1) / 2 * c.width, c.top - w.top + (1 - p.y) / 2 * c.height];
 }
-
-function showCallouts(part, hit) {
-  if (callout && callout.part === part) { callout.hit = hit; return; } // same boxes; only the pointed-at spot moves
-  hideCallouts(true);
-  const box = $("callouts");
-  callout = { part, hit, boxes: [] };
-  for (const key of FEATURES[part] || []) {
-    const item = byKey[key]; if (!item) continue;
-    const el = document.createElement("div");
-    el.className = "callout";
-    el.innerHTML = `<p class="co-title"><span>${esc(item.data)}</span> <b>${esc(item.value)}</b></p><p class="co-text">${esc(item.visual)}</p>`;
-    el.addEventListener("click", () => { if (!el.classList.contains("compact")) return; el.classList.toggle("open"); layoutCallouts(); });
-    box.appendChild(el);
-    callout.boxes.push({ key, el });
-  }
-  layoutCallouts();
-  requestAnimationFrame(() => callout?.boxes.forEach((b) => b.el.classList.add("on")));
-  spinTarget = SPIN_SPEED * SPIN_SLOW;
-}
-let hideTimer = null;
-function hideCallouts(now = false) {
-  clearTimeout(hideTimer);
-  const go = () => { $("callouts").innerHTML = ""; $("calloutLines").innerHTML = ""; callout = null; };
-  if (now || !callout) return go();
-  callout.boxes.forEach((b) => b.el.classList.remove("on"));
-  const gone = callout; hideTimer = setTimeout(() => { if (callout === gone) go(); }, 180);
-}
-
-// place the boxes (narrower screens only; wide ones use the list): from 760px a column either side of the portrait,
-// below that short labels above / below it
-function layoutCallouts() {
-  if (!callout) return;
-  const r = wrapEl().getBoundingClientRect(), W = r.width, H = r.height, M = 16, GAP = 10;
-  const items = callout.boxes.map((b) => ({ b, a: toScreen(anchors(b.key, callout.hit)[0]) }));
-  const cx = W / 2, cy = H / 2;
-  if (W >= 760) {
-    const BW = Math.min(300, (W - 2 * M) * 0.26);
-    items.forEach((it) => (it.side = it.a[0] < cx ? "left" : "right"));
-    const left = items.filter((i) => i.side === "left"), right = items.filter((i) => i.side === "right");
-    while (Math.abs(left.length - right.length) > 1) { // balance the two columns
-      const [from, to] = left.length > right.length ? [left, right] : [right, left];
-      from.sort((p, q) => Math.abs(p.a[0] - cx) - Math.abs(q.a[0] - cx)); const moved = from.shift(); moved.side = to === left ? "left" : "right"; to.push(moved);
-    }
-    for (const [col, side] of [[left, "left"], [right, "right"]]) {
-      col.sort((p, q) => p.a[1] - q.a[1]);
-      col.forEach((it) => { it.b.el.style.width = BW + "px"; });
-      const hs = col.map((it) => it.b.el.offsetHeight), total = hs.reduce((s, h) => s + h, 0) + GAP * Math.max(0, col.length - 1);
-      const mid = col.length ? col.reduce((s, it) => s + it.a[1], 0) / col.length : cy;
-      let y = Math.max(110, Math.min(H - M - total, mid - total / 2));
-      col.forEach((it, k) => { it.b.side = side; it.b.x = side === "left" ? M : W - M - BW; it.b.y = y; it.b.w = BW; it.b.h = hs[k]; y += hs[k] + GAP; });
-    }
-  } else {
-    const BW = W - 2 * M;
-    const top = items.filter((i) => i.a[1] < cy).sort((p, q) => p.a[1] - q.a[1]), bottom = items.filter((i) => i.a[1] >= cy).sort((p, q) => p.a[1] - q.a[1]);
-    items.forEach((it) => { it.b.el.style.width = BW + "px"; it.b.el.classList.add("compact"); });
-    let y = 96;
-    top.forEach((it) => { const h = it.b.el.offsetHeight; Object.assign(it.b, { side: "top", x: M, y, w: BW, h }); y += h + GAP; });
-    let yb = H - M;
-    [...bottom].reverse().forEach((it) => { const h = it.b.el.offsetHeight; yb -= h; Object.assign(it.b, { side: "bottom", x: M, y: yb, w: BW, h }); yb -= GAP; });
-  }
-  if (W >= 760) callout.boxes.forEach((b) => b.el.classList.remove("compact", "open"));
-  for (const b of callout.boxes) { b.el.style.left = b.x + "px"; b.el.style.top = b.y + "px"; }
-  drawLines();
-}
-// the lines from each box to the spot(s) it describes, redrawn every frame so they follow the turning portrait
+// the lines from the open item to the spot(s) it describes, redrawn every frame so they follow the turning portrait
 function drawLines() {
   const svg = $("calloutLines");
   if (shownKey) return drawFeatureLines(svg);
-  if (!callout) { if (svg.firstChild) svg.innerHTML = ""; return; }
-  let out = "";
-  for (const b of callout.boxes) {
-    if (b.x == null) continue;
-    for (const v of anchors(b.key, callout.hit)) {
-      const [ax, ay] = toScreen(v);
-      let sx, sy;
-      if (b.side === "left") { sx = b.x + b.w; sy = Math.max(b.y + 14, Math.min(b.y + b.h - 14, ay)); }
-      else if (b.side === "right") { sx = b.x; sy = Math.max(b.y + 14, Math.min(b.y + b.h - 14, ay)); }
-      else if (b.side === "top") { sy = b.y + b.h; sx = Math.max(b.x + 20, Math.min(b.x + b.w - 20, ax)); }
-      else { sy = b.y; sx = Math.max(b.x + 20, Math.min(b.x + b.w - 20, ax)); }
-      out += `<line x1="${sx.toFixed(1)}" y1="${sy.toFixed(1)}" x2="${ax.toFixed(1)}" y2="${ay.toFixed(1)}"/><circle cx="${ax.toFixed(1)}" cy="${ay.toFixed(1)}" r="3.5"/>`;
-    }
-  }
-  svg.innerHTML = out;
+  if (svg.firstChild) svg.innerHTML = "";
 }
 
-function wireCallouts(pauseSpin) {
+// hover (mouse) or tap: open the item for whatever part of the portrait is there
+function wireCallouts() {
   const canvas = renderer.domElement, ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
   ray.params.Points.threshold = 0.05;
   ray.params.Line.threshold = 0.025;
@@ -265,47 +165,37 @@ function wireCallouts(pauseSpin) {
     return hit ? { part: hit.object.userData.part, point: hit.point.clone() } : null;
   };
   let queued = null, down = null;
-  const resumeLater = () => { spinTarget = SPIN_SPEED; }; // back up to its usual speed
   canvas.addEventListener("pointermove", (e) => {
     if (e.pointerType !== "mouse" || e.buttons) return;
     queued = [e.clientX, e.clientY];
     requestAnimationFrame(() => {
       if (!queued) return; const [x, y] = queued; queued = null;
-      if (isWide()) { const f = whatsAt(x, y, pick(x, y)); hoverFeature(f); canvas.style.cursor = f ? "help" : ""; return; }
-      const h = pick(x, y);
-      if (h) { clearTimeout(hideTimer); showCallouts(h.part, h.point); canvas.style.cursor = "help"; }
-      else if (callout) { hideCallouts(); resumeLater(); canvas.style.cursor = ""; }
+      const f = whatsAt(x, y, pick(x, y)); hoverFeature(f); canvas.style.cursor = f ? "help" : "";
     });
   });
-  canvas.addEventListener("pointerleave", (e) => { // (moving onto one of the boxes keeps them up)
-    queued = null; if (hovered) { hovered = null; setShown(); }
-    if (callout && !e.relatedTarget?.closest?.(".callout")) { hideCallouts(); resumeLater(); }
-  });
-  $("callouts").addEventListener("pointerleave", (e) => { if (callout && e.relatedTarget !== canvas) { hideCallouts(); resumeLater(); } });
-  canvas.addEventListener("pointerdown", (e) => { down = [e.clientX, e.clientY]; if (e.pointerType !== "mouse" && callout) { hideCallouts(); } });
-  canvas.addEventListener("pointerup", (e) => { // a tap (not a drag) on touch screens
+  canvas.addEventListener("pointerleave", () => { queued = null; if (hovered) { hovered = null; setShown(); } });
+  canvas.addEventListener("pointerdown", (e) => { down = [e.clientX, e.clientY]; });
+  canvas.addEventListener("pointerup", (e) => { // a click or tap (not a drag) keeps that part's item open; a tap on nothing closes it
     if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > (e.pointerType === "mouse" ? 4 : 8)) return;
-    if (isWide()) { const f = whatsAt(e.clientX, e.clientY, pick(e.clientX, e.clientY)); if (f) { hovered = e.pointerType === "mouse" ? hovered : null; pinned = f.key; setShown(); } return; } // a click keeps it open
-    if (e.pointerType === "mouse") return;
-    const h = pick(e.clientX, e.clientY);
-    if (h) showCallouts(h.part, h.point); else { hideCallouts(); resumeLater(); }
+    const f = whatsAt(e.clientX, e.clientY, pick(e.clientX, e.clientY));
+    if (e.pointerType !== "mouse") { hovered = null; if (f) { hoverHit = keepHit(f); hoverAng = f.ang; } pinned = f ? f.key : null; pinnedHit = f ? { hit: hoverHit, ang: f.ang } : null; setShown(); }
+    else if (f) { pinned = f.key; pinnedHit = { hit: hoverHit, ang: hoverAng }; setShown(); }
+    const box = f && $("featureSheet")?.querySelector(".feat"); // tapping the same part again opens its box back up
+    if (box && !box.classList.contains("open")) { box.classList.add("open"); box.querySelector(".feat-head").setAttribute("aria-expanded", "true"); }
   });
-  document.addEventListener("keydown", (e) => {
-    if (e.key !== "Escape") return;
-    if (callout) { hideCallouts(); resumeLater(); }
-    if (shownKey) { pinned = hovered = null; setShown(); }
-  });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && shownKey) { pinned = hovered = null; setShown(); } });
 }
 
-// ---------------------------------------------------------------- wide screens: the list of everything that shapes the portrait
+// ---------------------------------------------------------------- everything that shapes the portrait: the list (wide screens), the box (narrower)
 // The box's left third lists each thing that shapes the portrait (accent; note, pitch & range; vowel space; and the three
 // timbre scales). Each opens to its explanation, with a line (or lines) across to where it shows on the portrait. It works
 // the other way round too: hovering a part of the portrait opens its item. A click (in the list or on the portrait) keeps
 // an item open; hovering something else shows that one until the pointer moves away. The portrait keeps turning while
 // an item is open (its lines follow, moving to another spot when theirs turns away), slowing down (never stopping)
 // while the pointer is on it.
-const LEFTWARD = Math.PI * 0.86; // where the lines aim when there's a choice: the upper left, toward the list
-let feats = [], pinned = null, hovered = null, hoverHit = null, hoverAng = null, shownKey = null, picks = {}, resumeSpin = () => {};
+// where the lines aim when there's a choice: wide screens, the upper left (toward the list); narrower ones, down (toward the box)
+const aim = () => (isWide() ? Math.PI * 0.86 : -Math.PI / 2);
+let feats = [], pinned = null, pinnedHit = null, hovered = null, hoverHit = null, hoverAng = null, shownKey = null, picks = {};
 let sunMesh = null, swirlMesh = null, accentPts = [], vowelSpots = [], vImg = null, vTilt = null, vTiltT = null;
 
 const cap = (t) => t[0].toUpperCase() + t.slice(1);
@@ -372,46 +262,68 @@ function setUpFeatures() {
     for (const a of vowelSpots) for (const b of vowelSpots) if (a.front === b.front && a.dir.dot(b.dir) > 0.94) a.crowd++;
   }
   // the list
-  list.innerHTML = '<div class="feat-inner">' + feats.map((f) => f.group ? `<p class="feat-group">${esc(f.group)}</p>` : `
-    <div class="feat" data-key="${f.key}">
-      <button type="button" class="feat-head" aria-expanded="false" aria-controls="feat-${f.key}">
-        <span class="feat-name">${esc(f.name)}</span><span class="feat-val">${esc(f.value)}</span><span class="feat-chev" aria-hidden="true"></span>
-      </button>
-      <div class="feat-body" id="feat-${f.key}" role="region"><div><p>${esc(f.measure)}</p><p>${esc(f.look)}</p></div></div>
-    </div>`).join("") + "</div>";
+  list.innerHTML = '<div class="feat-inner">' + feats.map((f) => f.group ? `<p class="feat-group">${esc(f.group)}</p>` : featBox(f, "list")).join("") + "</div>";
   list.querySelectorAll(".feat-head").forEach((b) => b.addEventListener("click", () => {
     const k = b.parentElement.dataset.key;
-    pinned = shownKey === k ? null : k; hovered = null; setShown();
+    pinned = shownKey === k ? null : k; pinnedHit = null; hovered = null; setShown();
   }));
   list.addEventListener("scroll", drawLines, { passive: true });
   new ResizeObserver(placeList).observe(list);
   placeList();
+  renderSheet();
 }
 // The list sits midway between the title and the button (as much room above it as below, with everything closed).
 // An item opens downward; only if it would run out of room does the list move up (and then scroll, if it still doesn't fit).
 function placeList() {
   const list = $("featureList"), inner = list?.firstElementChild; if (!inner || !list.clientHeight) return;
-  const H = list.clientHeight, closed = [...inner.children].reduce((s, el) => s + (el.classList.contains("feat") ? el.querySelector(".feat-head").offsetHeight + 1 : el.offsetHeight + parseFloat(getComputedStyle(el).marginTop) + parseFloat(getComputedStyle(el).marginBottom)), 0);
+  const H = list.clientHeight, closed = [...inner.children].reduce((s, el) => {
+    const cs = getComputedStyle(el), m = parseFloat(cs.marginTop) + parseFloat(cs.marginBottom);
+    return s + m + (el.classList.contains("feat") ? el.querySelector(".feat-head").offsetHeight + parseFloat(cs.borderTopWidth) + parseFloat(cs.borderBottomWidth) : el.offsetHeight);
+  }, 0);
   const open = inner.querySelector(".feat.open .feat-body > div")?.scrollHeight || 0;
   inner.style.marginTop = Math.max(0, Math.min((H - closed) / 2, H - closed - open)) + "px";
 }
 
+// one item's box: its name and value (a button that opens and closes it) over its explanation. The list holds one per
+// item; on narrower screens the box at the bottom of the portrait holds the open one, with a × to put it away.
+function featBox(f, where, open = false) {
+  const id = `feat-${where}-${f.key}`, head = `<button type="button" class="feat-head" aria-expanded="${open}" aria-controls="${id}">
+        <span class="feat-name">${esc(f.name)}</span><span class="feat-val">${esc(f.value)}</span><span class="feat-chev" aria-hidden="true"></span>
+      </button>`;
+  return `<div class="feat${open ? " open" : ""}" data-key="${f.key}">
+      ${where === "sheet" ? `<div class="sheet-row">${head}<button type="button" class="sheet-close" aria-label="Close">×</button></div>` : head}
+      <div class="feat-body" id="${id}" role="region"><div><p>${esc(f.measure)}</p><p>${esc(f.look)}</p></div></div>
+    </div>`;
+}
+function renderSheet() { // narrower screens: the open item's box at the bottom of the portrait (or a hint when none is open)
+  const sheet = $("featureSheet"); if (!sheet) return;
+  const f = !isWide() && feats.find((x) => x.key === shownKey);
+  if (!f) { sheet.innerHTML = `<p class="sheet-hint">${matchMedia("(hover: hover)").matches ? "Hover over" : "Tap"} a part of the portrait to see what it shows</p>`; return; }
+  sheet.innerHTML = featBox(f, "sheet", true);
+  const box = sheet.firstElementChild;
+  box.querySelector(".feat-head").addEventListener("click", () => { const on = box.classList.toggle("open"); box.querySelector(".feat-head").setAttribute("aria-expanded", on); });
+  box.querySelector(".sheet-close").addEventListener("click", () => { pinned = hovered = null; setShown(); });
+}
+const keepHit = (f) => f.hit && (f.core ? { local: coreMesh.worldToLocal(f.hit.clone()) } : f.hit); // (a spot on the core is kept in the core's own frame: it keeps turning)
+
 function hoverFeature(f) {
   if (!f) { if (hovered) { hovered = null; setShown(); } return; }
-  hoverHit = f.hit && (f.core ? { local: coreMesh.worldToLocal(f.hit.clone()) } : f.hit); hoverAng = f.ang; // (a spot on the core is kept in the core's own frame: it keeps turning)
+  hoverHit = keepHit(f); hoverAng = f.ang;
   if (hovered !== f.key) { hovered = f.key; setShown(); }
 }
 function setShown() {
   const k = hovered ?? pinned;
+  if (!hovered && pinnedHit && k === pinned) { hoverHit = pinnedHit.hit; hoverAng = pinnedHit.ang; } // a clicked spot stays pointed at
   if (k !== shownKey) {
     shownKey = k;
-    if (k) pickFor(k, hovered ? hoverAng : null);
+    if (k) pickFor(k, hovered || pinnedHit ? hoverAng : null);
+    renderSheet();
     document.querySelectorAll("#featureList .feat").forEach((el) => {
       const on = el.dataset.key === k; el.classList.toggle("open", on); el.querySelector(".feat-head").setAttribute("aria-expanded", on);
     });
     if (k) { const el = document.querySelector(`#featureList .feat[data-key="${k}"]`); setTimeout(() => { if (shownKey === k) el?.scrollIntoView({ block: "nearest", behavior: still ? "auto" : "smooth" }); }, 300); }
   }
-  spinTarget = hovered ? SPIN_SPEED * SPIN_SLOW : SPIN_SPEED; // slower while the pointer is on it, never stopped
+  spinTarget = hovered || (shownKey && !isWide()) ? SPIN_SPEED * SPIN_SLOW : SPIN_SPEED; // slower while the pointer is on it (or its box covers it), never stopped
   placeList();
   drawLines();
 }
@@ -431,7 +343,7 @@ const nearestTurn = (want, have) => want + Math.round((have - want) / (2 * Math.
 
 // choose what each item's lines aim at, from what's in view now (pref: the screen angle to aim near, when hovering)
 function pickFor(key, pref) {
-  const ang = pref ?? LEFTWARD, B = basis(), c = coreOnScreen();
+  const ang = pref ?? aim(), B = basis(), c = coreOnScreen(), wide = isWide();
   if (key === "bright" && sunMesh) { // the long ray nearest that angle
     const u = sunMesh.material.uniforms, n = u.n.value;
     picks.ray = 2 * Math.round(((ang - u.turn.value) / (2 * Math.PI) * n + u.off.value) / 2);
@@ -440,13 +352,14 @@ function pickFor(key, pref) {
     const u = swirlMesh.material.uniforms, W = MAP.timbre.swirl, rr = 1 + (W.reach[0] + (W.reach[1] - W.reach[0]) * u.amt.value) * 0.35;
     picks.arm = Math.round(((ang + W.twist * Math.log(rr) - u.turn.value) * W.arms - Math.PI / 2) / (2 * Math.PI)); picks.armR = rr;
   }
-  if (key === "accent") { // on each layer of the structure: a point facing the viewer, clear of the core, as near the list as possible
+  if (key === "accent") { // on each layer of the structure: a point facing the viewer, clear of the core, as near the list (or box) as possible
     picks.accent = accentPts.map((pts) => {
       let best = null, bx = Infinity;
       for (const p of pts) {
         if (p.dot(B.toCam) < 0.05) continue;
         const [x, y] = toScreen(p); if (Math.hypot(x - c.x, y - c.y) < c.r * 1.05) continue;
-        if (x < bx) { bx = x; best = p; }
+        const score = wide ? x : -y;
+        if (score < bx) { bx = score; best = p; }
       }
       return best;
     }).filter(Boolean);
@@ -465,7 +378,8 @@ function pickFor(key, pref) {
 function anchorsFor(key) {
   const B = basis(), R = MAP.core.radius, u = coreMesh?.material?.uniforms, f = feats.find((x) => x.key === key);
   if (f && f.lines === false) return [];
-  const hit0 = hovered === key ? hoverHit : null, hit = hit0?.local ? coreMesh.localToWorld(hit0.local.clone()) : hit0, hang = hovered === key ? hoverAng : null;
+  const mine = hovered === key || (!hovered && pinnedHit && pinned === key);
+  const hit0 = mine ? hoverHit : null, hit = hit0?.local ? coreMesh.localToWorld(hit0.local.clone()) : hit0, hang = mine ? hoverAng : null;
   switch (key) {
     case "color": return [new THREE.Vector3(), B.up.clone().multiplyScalar(coreR * 0.8), B.up.clone().multiplyScalar(-coreR * 0.8)]; // its middle, top and bottom
     case "accent": // (as the portrait turns, a point that goes round the back is swapped for one in view)
@@ -477,7 +391,7 @@ function anchorsFor(key) {
       { const spot = (d) => coreMesh.localToWorld(d.clone().multiplyScalar(coreR * 0.98));
         if (!picks.vowels || picks.vowels.length < 2 || picks.vowels.some((d) => spot(d).normalize().dot(B.toCam) < 0.3)) pickFor("vowels", null);
         return (picks.vowels || []).map(spot); }
-    case "breathy": return [around(hang ?? LEFTWARD + 0.25, R * 0.97, B)];                                     // the edge
+    case "breathy": return [around(hang ?? aim() + (isWide() ? 0.25 : 0.5), R * 0.97, B)];                                     // the edge
     case "raspy":
       if (u?.gloss.value > 0) return [onSurface(u.gw1.value.x, u.gw1.value.y, B), onSurface(u.gw2.value.x, u.gw2.value.y, B)]; // the highlight and the glint
       return [hit || onSurface(-0.5, -0.35, B)];                                                                  // the spikes (or the plain surface)
@@ -527,43 +441,43 @@ function vowelWeight(p) { // how strongly the vowel spots cover this point of th
 
 // lines from the open item's heading, across the dividing line, to each spot it describes
 function drawFeatureLines(svg) {
-  const el = document.querySelector(`#featureList .feat[data-key="${shownKey}"] .feat-head`), list = $("featureList");
-  const pts = anchorsFor(shownKey);
+  const wide = isWide(), pts = anchorsFor(shownKey);
+  const el = wide ? document.querySelector(`#featureList .feat[data-key="${shownKey}"] .feat-head`) : $("featureSheet")?.querySelector(".feat");
   if (!el || !pts.length || !el.offsetParent) { svg.innerHTML = ""; return; }
-  const w = wrapEl().getBoundingClientRect(), r = el.getBoundingClientRect(), lr = list.getBoundingClientRect();
-  const sx = r.right - w.left + 10, sy = Math.max(lr.top + 8, Math.min(lr.bottom - 8, r.top + r.height / 2)) - w.top;
+  const w = wrapEl().getBoundingClientRect(), r = el.getBoundingClientRect();
+  let sx, sy;
+  if (wide) { const lr = $("featureList").getBoundingClientRect(); sx = r.right - w.left + 10; sy = Math.max(lr.top + 8, Math.min(lr.bottom - 8, r.top + r.height / 2)) - w.top; }
+  else { // from the box's top edge, below the spots
+    const mx = pts.reduce((s, v) => s + toScreen(v)[0], 0) / pts.length;
+    sx = Math.max(r.left - w.left + 28, Math.min(r.right - w.left - 28, mx)); sy = r.top - w.top - 6;
+  }
   let out = `<circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="2.5"/>`;
   for (const v of pts) { const [ax, ay] = toScreen(v); out += `<line x1="${sx.toFixed(1)}" y1="${sy.toFixed(1)}" x2="${ax.toFixed(1)}" y2="${ay.toFixed(1)}"/><circle cx="${ax.toFixed(1)}" cy="${ay.toFixed(1)}" r="3.5"/>`; }
   svg.innerHTML = out;
 }
 
-// ---------------------------------------------------------------- the ID card (top right), with a picture download
+// ---------------------------------------------------------------- download (top right): this voice's ID card, as a picture
+// The card is drawn off screen (at the size it has on this screen) and saved as a PNG.
 function wireIdCard() {
-  const dlg = $("idDialog"), view = $("idView"), btn = $("idDownload");
-  let made = false;
-  $("idCardBtn").addEventListener("click", () => {
-    if (!made) {
-      renderIdCard(view, take); made = true;
-      // the card's own × closes the dialog here (on the Archive it goes back to the gallery)
-      view.querySelector(".id-close")?.addEventListener("click", (e) => { e.preventDefault(); dlg.close(); });
-    }
-    if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
-  });
-  $("idClose").addEventListener("click", () => dlg.close());
-  dlg.addEventListener("click", (e) => { if (e.target === dlg) dlg.close(); }); // a click on the dimmed backdrop
+  const btn = $("downloadBtn");
   btn.addEventListener("click", async () => {
-    const card = view.querySelector(".id-card"); if (!card) return;
-    const label = btn.textContent; btn.disabled = true; btn.textContent = "Preparing…";
+    if (btn.classList.contains("busy")) return;
+    btn.classList.add("busy"); btn.setAttribute("aria-busy", "true");
+    const holder = document.createElement("div");
+    holder.className = "id-offscreen"; holder.setAttribute("aria-hidden", "true");
+    holder.innerHTML = '<section class="id-view"></section>'; document.body.appendChild(holder);
     try {
+      renderIdCard(holder.firstElementChild, take);
+      const card = holder.querySelector(".id-card");
+      await Promise.all([...card.querySelectorAll("img")].map((im) => im.decode().catch(() => {})));
       const { toPng } = await import("https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/+esm");
       const url = await toPng(card, { pixelRatio: 2, backgroundColor: "#000000", filter: (n) => !n.classList?.contains("id-close") });
       download(await (await fetch(url)).blob(), `${slug(take.name)}-voice-id.png`);
-      btn.textContent = label;
     } catch (e) {
       console.warn("Couldn't make the picture:", e);
-      btn.textContent = "Couldn't make the picture, try again";
+      btn.title = "Couldn't make the picture. Try again.";
     }
-    btn.disabled = false;
+    holder.remove(); btn.classList.remove("busy"); btn.removeAttribute("aria-busy");
   });
 }
 
