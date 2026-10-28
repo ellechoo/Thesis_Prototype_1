@@ -20,7 +20,7 @@ import { renderIdCard } from "./id-card.js?v=39";
 
 const $ = (id) => document.getElementById(id);
 const still = matchMedia("(prefers-reduced-motion: reduce)").matches; // then nothing turns or glides on its own
-const SPIN = 0.00025, SPIN_HOVER = 0.00075; // radians per millisecond
+const SPIN = -0.00025, SPIN_HOVER = -0.00075; // radians per millisecond; negative: the structure turns to the left (the core, the other way)
 const VIEW_KEY = "archiveView", SPOT = "archiveSpot";
 const store = { get: (k, s = localStorage) => { try { return s.getItem(k); } catch { return null; } }, set: (k, v, s = localStorage) => { try { s.setItem(k, v); } catch {} } };
 

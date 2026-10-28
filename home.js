@@ -94,7 +94,7 @@ if (renderer) {
       if (!scenes[k]) continue;
       const x = (k % PER_ROW) * CELL, y = (rows - 1 - Math.floor(k / PER_ROW)) * CELL;
       renderer.setViewport(x, y, CELL, CELL); renderer.setScissor(x, y, CELL, CELL); renderer.clearDepth();
-      scenes[k].children[0].rotation.y = still ? phase[k] : phase[k] + t * 0.00025;
+      scenes[k].children[0].rotation.y = still ? phase[k] : phase[k] - t * 0.00025; // turning to the left (the core turns the other way)
       renderer.render(scenes[k], cam);
     }
   };
