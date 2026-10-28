@@ -338,12 +338,14 @@ function gallery(people) {
     const go = () => { remember(); location.href = `portrait.html?id=${encodeURIComponent(people[it.p].id)}`; };
     if (still) return go();
     focusOn(it.p, mode === "flat" ? it.key.split(",").map(Number) : null);
-    afterTween = () => setTimeout(go, 220); // a moment on the zoomed-in voice, then its Portrait page
+    // a moment on the zoomed-in voice, then the stage fades to black (still zooming in a little) and its Portrait page
+    // fades in from black, carrying on the zoom (see "arriving" in portrait-3d.js)
+    afterTween = () => setTimeout(() => { try { sessionStorage.setItem("arriveFrom", "archive"); } catch {} document.body.classList.add("leaving"); setTimeout(go, 280); }, 120);
   }
   let afterTween = null;
 
   // back from an ID card with the browser's back button, the page can come back exactly as it was left (zoomed in): reset
-  addEventListener("pageshow", (e) => { if (e.persisted) { opening = false; afterTween = null; tween = null; focus = null; fading = null; zoom = 1; hover = null; tip.hidden = true; } });
+  addEventListener("pageshow", (e) => { if (e.persisted) { document.body.classList.remove("leaving"); opening = false; afterTween = null; tween = null; focus = null; fading = null; zoom = 1; hover = null; tip.hidden = true; } });
   function letGo() { if (opening) return; if (focus === null && !tween && zoom === 1) return; fading = focus; focus = null; hover = null; tip.hidden = true; animate({ zoom: 1 }, 600); }
 
   // ---- animation; paused while the tab is hidden
