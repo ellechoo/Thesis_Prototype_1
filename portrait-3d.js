@@ -127,6 +127,11 @@ function resize() {
   if (!r.width || !r.height) return;
   renderer.setSize(r.width, r.height, false);
   camera.aspect = r.width / r.height;
+  // narrower screens: the name and date sit over the top of the portrait's box, so the portrait is centred in the space
+  // below them (shifted down by half their height) rather than in the whole box, so it looks evenly placed
+  const head = document.querySelector(".portrait-head")?.getBoundingClientRect();
+  const shift = !isWide() && head ? Math.max(0, head.bottom - r.top) / 2 : 0;
+  if (shift) camera.setViewOffset(r.width, r.height, 0, -shift, r.width, r.height); else camera.clearViewOffset();
   camera.updateProjectionMatrix();
   render();
 }
