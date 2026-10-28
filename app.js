@@ -2,6 +2,7 @@
 import { VoiceAnalyzer } from "./voice-analyzer.js";
 import { startRecording, resampleTo, encodeWav } from "./recorder.js";
 import { computeRhythm } from "./rhythm.js";
+import { checkTake, roomIsNoisy } from "./quality.js?v=1";
 import { makePassageTracker, canFollowWords } from "./progress.js?v=8";
 import { saveTake, newId, archiveIsShared } from "./store.js?v=2";
 import {
@@ -20,7 +21,7 @@ const ui = {
   session: $("session"), recDot: $("recDot"), timer: $("timer"), done: $("doneBtn"), cancel: $("cancelBtn"),
   meterFill: $("meterFill"), gateMark: $("gateMark"), active: $("activeDot"),
   processing: $("processing"), step: $("processingStep"),
-  review: $("review"), reviewAudio: $("reviewAudio"), reviewNote: $("reviewNote"), use: $("useBtn"), retry: $("retryBtn"),
+  review: $("review"), reviewAudio: $("reviewAudio"), reviewNote: $("reviewNote"), use: $("useBtn"), retry: $("retryBtn"), reviewWarn: $("reviewWarn"),
   optFilters: $("optFilters"), optBrowserNS: $("optBrowserNS"), archiveNotice: $("archiveNotice"),
 };
 
@@ -103,6 +104,8 @@ async function startSession() {
     await countdown(gone);
     await quiet;
     if (gone()) return;
+    // a very loud room: say so (gently) before they read, so they can move somewhere quieter if they like
+    if (roomIsNoisy(va.noiseFloor)) setStatus("It's quite noisy where you are. That's okay, but a quieter spot gives a more accurate portrait.");
     rec = await startRecording(va.ctx, va.source);
     va.clear();
     va.resetClock();
@@ -186,7 +189,14 @@ async function finishRecording() {
     setStatus("That was too short. Tap Start and read the passage.", true);
     return;
   }
-  review({ ...info, samples, samplesRate: sampleRate, source: "microphone", name: getName() || "Anonymous" });
+  // a quick check for recordings that clearly won't work (see quality.js): only one with no voice at all is stopped here
+  const check = checkTake({ frames: info.frames, seconds: samples.length / sampleRate, noiseFloor: info.noiseFloor });
+  if (check.block) {
+    setPhase("idle");
+    setStatus(`${check.issues[0].title}. ${check.issues[0].text}`, true);
+    return;
+  }
+  review({ ...info, samples, samplesRate: sampleRate, source: "microphone", name: getName() || "Anonymous" }, check.issues);
 }
 
 // ---------- review: use this recording, or try again ----------
@@ -194,15 +204,25 @@ async function finishRecording() {
 // Nothing is saved (and nothing reaches the archive) unless they choose "Use this recording".
 let pending = null;
 
-function review(info) {
+// If the check found something, it's listed above the player (what we noticed, and what usually helps); the person can
+// still use the recording ("Use it anyway"), but trying again becomes the main button.
+function review(info, issues = []) {
   const prepared = prepareTake(info);
   prepared.catch(() => {});
   const url = URL.createObjectURL(encodeWav(info.samples, info.samplesRate));
   ui.reviewAudio.src = url;
   pending = { prepared, url };
+  const warn = issues.length > 0;
+  ui.reviewWarn.hidden = !warn;
+  ui.reviewWarn.innerHTML = warn ? `<p class="warn-title">This recording might not work well</p><ul>${issues.map((i) => `<li><b>${i.title}.</b> ${i.text}</li>`).join("")}</ul>` : "";
+  ui.use.textContent = warn ? "Use it anyway" : "Use this recording";
+  ui.use.classList.toggle("primary", !warn);
+  ui.retry.classList.toggle("primary", warn);
+  ui.retry.textContent = warn ? "Record again" : "Try again";
+  ui.reviewNote.textContent = `Listen back if you like. Choosing “${ui.use.textContent}” adds your name and voice data to the archive. The recording itself is never kept.`;
   setPhase("review");
   setStatus("");
-  ui.use.focus();
+  (warn ? ui.retry : ui.use).focus();
 }
 
 ui.use.addEventListener("click", async () => {

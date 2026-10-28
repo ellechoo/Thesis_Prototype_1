@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300..500&display=swap" />
-  <link rel="stylesheet" href="style.css?v=65" />
+  <link rel="stylesheet" href="style.css?v=82" />
 </head>
 <body data-phase="idle">
   <main class="record-page wide">
@@ -82,6 +82,7 @@
 
     <section class="review" id="review" hidden>
       <p class="review-title">How did that sound?</p>
+      <div class="review-warn" id="reviewWarn" role="status" hidden></div>
       <audio id="reviewAudio" controls preload="auto"></audio>
       <p class="note" id="reviewNote">Listen back if you like. Choosing “Use this recording” adds your name and voice data to the archive. The recording itself is never kept.</p>
       <div class="controls">
@@ -110,6 +111,6 @@
   </main>
   <script type="module" src="nav.js?v=8"></script>
 
-  <script type="module" src="app.js?v=21"></script>
+  <script type="module" src="app.js?v=22"></script>
 </body>
 </html>

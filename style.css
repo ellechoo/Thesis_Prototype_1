@@ -280,6 +280,12 @@ audio { width: 100%; }
 .review-title { margin: 0; font-size: 18px; font-weight: 600; }
 .review audio { width: 100%; }
 .review .note { margin: 0; }
+/* the gentle warning when a recording clearly might not work (see quality.js) */
+.review-warn { padding: 12px 14px; border-radius: 10px; border: 1px solid #6b5a2e; background: rgba(240, 190, 80, .08); }
+.review-warn .warn-title { margin: 0 0 6px; font-weight: 600; color: #f1d08a; }
+.review-warn ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.review-warn li { font-size: 14px; line-height: 1.45; color: var(--text); }
+.review-warn b { font-weight: 600; }
 
 /* ================= RECORD PAGE (Voiceprint landing) =================
    One quiet column. The passage is the hero: it's what the visitor actually performs, so it is
