@@ -224,7 +224,6 @@ function buildFeatures() {
     { key: "vowels", name: "Vowel space", value: has.vowels ? `${T.vowels.n} vowel moments` : "Not enough to map", lines: has.vowels, spot: has.vowels,
       measure: "How this voice shapes its vowels: how open the mouth is and where the tongue sits, measured from the sound alone (the same points as the vowel chart in the breakdown).",
       look: byKey.vowels?.visual || "" },
-    { group: "Timbre" },
     { key: "bright", name: "Bright ↔ dark", value: ok ? dial(tb.bright, "bright", "dark") : "Not measured", lines: has.sun || has.swirl, spot: has.sun || has.swirl,
       measure: "Where the sound's energy sits, in the low or the high frequencies, compared with everyone in the archive. More energy up high sounds brighter.",
       look: !ok ? none : has.sun ? "Bright voices shine like a sun: small rays in the core's own color, set a little apart from it and slowly turning clockwise. The brighter the voice, the longer and wider the rays."
@@ -272,9 +271,12 @@ function setUpFeatures() {
   }
   // the list
   list.innerHTML = '<div class="feat-inner">' + feats.map((f) => f.group ? `<p class="feat-group">${esc(f.group)}</p>` : featBox(f, "list")).join("") + "</div>";
-  list.querySelectorAll(".feat-head").forEach((b) => b.addEventListener("click", () => {
-    const k = b.parentElement.dataset.key;
-    pinned = shownKey === k ? null : k; pinnedHit = null; hovered = null; setShown();
+  // a click on a closed item's heading opens it; a click anywhere on an open box closes it
+  list.querySelectorAll(".feat").forEach((box) => box.addEventListener("click", (e) => {
+    const k = box.dataset.key, isOpen = box.classList.contains("open");
+    if (!isOpen && !e.target.closest(".feat-head")) return;
+    if (isOpen && getSelection()?.toString()) return; // (selecting text in it doesn't close it)
+    pinned = isOpen ? null : k; pinnedHit = null; hovered = null; setShown();
   }));
   list.addEventListener("scroll", drawLines, { passive: true });
   new ResizeObserver(placeList).observe(list);
