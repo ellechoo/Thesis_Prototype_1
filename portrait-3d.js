@@ -18,7 +18,7 @@ import { renderBreakdown } from "./breakdown.js?v=28";
 const esc = (x) => String(x ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 const $ = (id) => document.getElementById(id);
-const VIEW_RADIUS = 1.4;     // how much of the scene fits on screen (the structures reach about 1.3 from the center)
+const VIEW_RADIUS = 1.25;    // how much of the scene fits on screen (the structures reach about 1.3 from the center; a little is allowed past the edge on phones, so the portrait starts bigger)
 const VIEW_RADIUS_WIDE = 1.2; // wide screens: the portrait has the right two-thirds of the box, drawn a little bigger
 const WIDE = 900;            // from this width (px) the box splits: popups and button on the left third, portrait on the right
 const SPIN_SPEED = -0.6;     // slow turn (OrbitControls units; 2 = one turn every 30 s). Negative: the structure turns to the left (the core, the other way)
