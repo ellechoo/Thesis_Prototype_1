@@ -1090,6 +1090,7 @@ html:has(.archive-stage:not([hidden])) { scrollbar-gutter: auto; overflow: hidde
 .feat { margin-bottom: 8px; border: 1px solid #2a2824; border-radius: 14px; background: #0a0a09; transition: border-color .2s ease, background-color .2s ease; }
 .feat:last-child { margin-bottom: 0; }
 .feat.open { border-color: #46423c; background: #0f0f0e; }
+@media (min-width: 900px) { #featureList .feat.open { cursor: pointer; } } /* (a click anywhere on it closes it) */
 .feat-head { display: flex; width: 100%; align-items: baseline; gap: 12px; padding: 12px 14px; margin: 0; border: 0; border-radius: inherit; background: none; color: #d9d7d2; font: 500 14.5px system-ui, -apple-system, "Segoe UI", sans-serif; text-align: left; cursor: pointer; }
 .feat-head:hover:not(:disabled) .feat-name, .feat.open .feat-name { color: #fff; }
 .feat-head:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
