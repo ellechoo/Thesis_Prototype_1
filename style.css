@@ -1130,7 +1130,17 @@ html:has(.archive-stage:not([hidden])) { scrollbar-gutter: auto; overflow: hidde
 .hotspot.seen span { background: transparent; box-shadow: inset 0 0 0 2.5px #fff, inset 0 0 0 3.5px rgba(0, 0, 0, .55), 0 0 0 1.5px rgba(0, 0, 0, .55); transform: none; }
 .hotspot.seen span::after { animation: none; opacity: 0; }
 .hotspot:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; }
-@media (min-width: 900px) { .hotspots { display: none; } }
+/* the eye button, under the download button: shows / hides the points */
+.spots-btn { position: absolute; z-index: 3; top: 68px; right: 14px; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border-radius: 50%; border: 1px solid var(--line); background: rgba(0, 0, 0, .85); color: var(--text); cursor: pointer; transition: border-color .15s ease, color .15s ease; }
+.spots-btn svg { width: 21px; height: 21px; }
+.spots-btn:hover { border-color: var(--text); }
+.spots-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.spots-btn .eye-off, .spots-btn.off .eye-on { display: none; }
+.spots-btn.off .eye-off { display: block; }
+.spots-btn.off { color: var(--muted); }
+.hotspots[hidden] { display: none; }
+@media (max-width: 640px) { .spots-btn { top: 72px; width: 40px; height: 40px; } }
+@media (min-width: 900px) { .hotspots, .spots-btn { display: none; } }
 @media (prefers-reduced-motion: reduce) { .hotspot span::after { animation: none; transform: scale(2.2); opacity: .35; } .hotspot.seen span::after { opacity: 0; } .explore .stage-wrap { transition: none; } }
 @keyframes sheet-in { from { opacity: 0; transform: translateY(8px); } }
 

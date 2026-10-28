@@ -171,13 +171,13 @@ function wireCallouts() {
     queued = [e.clientX, e.clientY];
     requestAnimationFrame(() => {
       if (!queued) return; const [x, y] = queued; queued = null;
-      const f = whatsAt(x, y, pick(x, y)); hoverFeature(f); canvas.style.cursor = f ? "help" : "";
+      const f = tapsOn() ? whatsAt(x, y, pick(x, y)) : null; hoverFeature(f); canvas.style.cursor = f ? "help" : "";
     });
   });
   canvas.addEventListener("pointerleave", () => { queued = null; if (hovered) { hovered = null; setShown(); } });
   canvas.addEventListener("pointerdown", (e) => { down = [e.clientX, e.clientY]; });
   canvas.addEventListener("pointerup", (e) => { // a click or tap (not a drag) keeps that part's item open; a tap on nothing closes it
-    if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > (e.pointerType === "mouse" ? 4 : 8)) return;
+    if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > (e.pointerType === "mouse" ? 4 : 8) || !tapsOn()) return;
     const f = whatsAt(e.clientX, e.clientY, pick(e.clientX, e.clientY));
     if (e.pointerType !== "mouse") { hovered = null; if (f) { hoverHit = keepHit(f); hoverAng = f.ang; } pinned = f ? f.key : null; pinnedHit = f ? { hit: hoverHit, ang: f.ang } : null; setShown(); }
     else if (f) { pinned = f.key; pinnedHit = { hit: hoverHit, ang: hoverAng }; setShown(); }
@@ -281,10 +281,20 @@ function setUpFeatures() {
     });
   }
   for (const k of ["accent", "vowels", "bright"]) pickFor(k, null);
+  // the eye button (narrower screens): hides the points, and with them tapping the portrait for its boxes, so it can be
+  // looked at on its own; any open box closes. Pressing it again brings them back.
+  $("spotsBtn")?.addEventListener("click", (e) => {
+    spotsOn = !spotsOn;
+    const b = e.currentTarget; b.setAttribute("aria-pressed", spotsOn); b.title = spotsOn ? "Hide the points" : "Show the points";
+    b.classList.toggle("off", !spotsOn); $("hotspots").hidden = !spotsOn;
+    pinned = hovered = pinnedHit = null; setShown();
+  });
 }
+let spotsOn = true;
+const tapsOn = () => isWide() || spotsOn; // (narrower screens with the points hidden: the portrait is only for looking at)
 // each point sits on its part, following it as the portrait turns (the open one's point gives way to its lines)
 function placeHotspots() {
-  const spots = $("hotspots"); if (!spots || isWide()) return;
+  const spots = $("hotspots"); if (!spots || isWide() || !spotsOn) return;
   const w = wrapEl().getBoundingClientRect(), c = renderer.domElement.getBoundingClientRect(), top = c.top - w.top, box = $("featureSheet")?.firstElementChild;
   const bottom = box ? box.getBoundingClientRect().top - w.top - 10 : top + c.height; // (none behind the open box)
   for (const b of spots.children) {
