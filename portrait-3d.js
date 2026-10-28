@@ -1,7 +1,8 @@
 // portrait-3d.js — the Portrait page: one voice as a 3D portrait (built in voice-orb.js), and under it everything
 // measured from the recording (breakdown.js; this used to be the separate Breakdown page).
 // The portrait turns slowly on its own; drag (or swipe with two fingers on a trackpad) to turn it yourself; pinch or the
-// mouse wheel zoom. Hover (or tap) a part to see what it shows: one box per feature, each with a line pointing to it.
+// mouse wheel zoom. Wide screens: the box's left third lists everything that shapes the portrait; opening one (or hovering
+// that part of the portrait) shows its explanation, with lines across to where it shows. Phones: tap a part for its popups.
 // The ID card button (top right) opens this voice's ID card, which can be downloaded as a picture.
 // (People who ask their device for reduced motion get no automatic turning.)
 import * as THREE from "three";
@@ -10,7 +11,7 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { getTake, archiveIsShared } from "./store.js?v=2";
 import { currentTakeId } from "./nav.js?v=8";
 import { formatDate, slug, download } from "./shared.js?v=2";
-import { buildOrb } from "./voice-orb.js?v=34";
+import { buildOrb, MAP } from "./voice-orb.js?v=34";
 import { renderIdCard } from "./id-card.js?v=38";
 import { renderBreakdown } from "./breakdown.js?v=27";
 const esc = (x) => String(x ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -74,9 +75,9 @@ function setUpScene() {
   controls.autoRotate = !still;
   controls.autoRotateSpeed = SPIN_SPEED;
   let resume = null;
-  const pauseSpin = () => { controls.autoRotate = false; clearTimeout(resume); if (!still) resume = setTimeout(() => { if (!callout) controls.autoRotate = true; }, SPIN_RESUME_MS); };
+  const pauseSpin = () => { controls.autoRotate = false; clearTimeout(resume); if (!still) resume = setTimeout(() => { if (!callout && !shownKey) controls.autoRotate = true; }, SPIN_RESUME_MS); };
   controls.addEventListener("start", () => { controls.autoRotate = false; clearTimeout(resume); });
-  controls.addEventListener("end", pauseSpin);
+  controls.addEventListener("end", () => { pauseSpin(); if (shownKey && !hovered) pickFor(shownKey, null); }); // re-aim the lines at what's now in view
 
   // Two-finger swipe on a trackpad turns it (instead of zooming). A pinch (sent as a wheel event with
   // ctrlKey) and a real mouse wheel still zoom, handled by OrbitControls as before.
@@ -103,9 +104,15 @@ function setUpScene() {
   renderer.setAnimationLoop(() => { controls.update(); render(); drawLines(); });
 
   let wasWide = null;
-  new ResizeObserver(() => { resize(); const w = isWide(); if (wasWide !== null && w !== wasWide) fit(); wasWide = w; }).observe(stage);
+  new ResizeObserver(() => {
+    resize(); const w = isWide();
+    if (wasWide !== null && w !== wasWide) { fit(); hideCallouts(true); hovered = null; setShown(); } // switching layouts: start clean
+    wasWide = w;
+  }).observe(stage);
   resize();
   fit();
+  resumeSpin = pauseSpin;
+  setUpFeatures();
   wireCallouts(pauseSpin);
 }
 
@@ -184,27 +191,14 @@ function hideCallouts(now = false) {
   const gone = callout; hideTimer = setTimeout(() => { if (callout === gone) go(); }, 180);
 }
 
-// place the boxes: wide screens stack them down the box's left third (under the title, above the button); narrower
-// screens put short labels above / below the portrait
+// place the boxes (narrower screens only; wide ones use the list): from 760px a column either side of the portrait,
+// below that short labels above / below it
 function layoutCallouts() {
   if (!callout) return;
   const r = wrapEl().getBoundingClientRect(), W = r.width, H = r.height, M = 16, GAP = 10;
   const items = callout.boxes.map((b) => ({ b, a: toScreen(anchors(b.key, callout.hit)[0]) }));
   const cx = W / 2, cy = H / 2;
-  if (W >= WIDE) {
-    const P = 26, BW = W / 3 - 2 * P, top = 118, bottom = H - P - 52 - 18; // between the title and the button
-    items.sort((p, q) => p.a[1] - q.a[1]);
-    const measure = () => items.map((it) => { it.b.el.style.width = BW + "px"; return it.b.el.offsetHeight; });
-    const STEPS = ["", "snug", "snug clamp-5", "snug clamp-4", "snug clamp-3", "snug clamp-2"]; // tighter type first; shorten the text only if it still won't fit
-    let hs, total;
-    for (const step of STEPS) {
-      items.forEach((it) => { it.b.el.className = "callout" + (it.b.el.classList.contains("on") ? " on" : "") + (step ? " " + step : ""); });
-      hs = measure(); total = hs.reduce((s, h) => s + h, 0) + GAP * (items.length - 1);
-      if (total <= bottom - top) break;
-    }
-    let y = Math.max(top, Math.min(bottom - total, top + (bottom - top - total) / 2));
-    items.forEach((it, k) => { Object.assign(it.b, { side: "left", x: P, y, w: BW, h: hs[k] }); y += hs[k] + GAP; });
-  } else if (W >= 760) {
+  if (W >= 760) {
     const BW = Math.min(300, (W - 2 * M) * 0.26);
     items.forEach((it) => (it.side = it.a[0] < cx ? "left" : "right"));
     const left = items.filter((i) => i.side === "left"), right = items.filter((i) => i.side === "right");
@@ -236,6 +230,7 @@ function layoutCallouts() {
 // the lines from each box to the spot(s) it describes, redrawn every frame so they follow the turning portrait
 function drawLines() {
   const svg = $("calloutLines");
+  if (shownKey) return drawFeatureLines(svg);
   if (!callout) { if (svg.firstChild) svg.innerHTML = ""; return; }
   let out = "";
   for (const b of callout.boxes) {
@@ -271,22 +266,251 @@ function wireCallouts(pauseSpin) {
     queued = [e.clientX, e.clientY];
     requestAnimationFrame(() => {
       if (!queued) return; const [x, y] = queued; queued = null;
+      if (isWide()) { const f = whatsAt(x, y, pick(x, y)); hoverFeature(f); canvas.style.cursor = f ? "help" : ""; return; }
       const h = pick(x, y);
       if (h) { clearTimeout(hideTimer); showCallouts(h.part, h.point); canvas.style.cursor = "help"; }
       else if (callout) { hideCallouts(); resumeLater(); canvas.style.cursor = ""; }
     });
   });
   canvas.addEventListener("pointerleave", (e) => { // (moving onto one of the boxes keeps them up)
+    queued = null; if (hovered) { hovered = null; setShown(); }
     if (callout && !e.relatedTarget?.closest?.(".callout")) { hideCallouts(); resumeLater(); }
   });
   $("callouts").addEventListener("pointerleave", (e) => { if (callout && e.relatedTarget !== canvas) { hideCallouts(); resumeLater(); } });
   canvas.addEventListener("pointerdown", (e) => { down = [e.clientX, e.clientY]; if (e.pointerType !== "mouse" && callout) { hideCallouts(); } });
   canvas.addEventListener("pointerup", (e) => { // a tap (not a drag) on touch screens
-    if (e.pointerType === "mouse" || !down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 8) return;
+    if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > (e.pointerType === "mouse" ? 4 : 8)) return;
+    if (isWide()) { const f = whatsAt(e.clientX, e.clientY, pick(e.clientX, e.clientY)); if (f) { hovered = e.pointerType === "mouse" ? hovered : null; pinned = f.key; setShown(); } return; } // a click keeps it open
+    if (e.pointerType === "mouse") return;
     const h = pick(e.clientX, e.clientY);
     if (h) showCallouts(h.part, h.point); else { hideCallouts(); resumeLater(); }
   });
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && callout) { hideCallouts(); resumeLater(); } });
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    if (callout) { hideCallouts(); resumeLater(); }
+    if (shownKey) { pinned = hovered = null; setShown(); }
+  });
+}
+
+// ---------------------------------------------------------------- wide screens: the list of everything that shapes the portrait
+// The box's left third lists each thing that shapes the portrait (accent; note, pitch & range; vowel space; and the three
+// timbre scales). Each opens to its explanation, with a line (or lines) across to where it shows on the portrait. It works
+// the other way round too: hovering a part of the portrait opens its item. A click (in the list or on the portrait) keeps
+// an item open; hovering something else shows that one until the pointer moves away. The portrait stops turning while
+// an item is open, and starts again shortly after it closes.
+const LEFTWARD = Math.PI * 0.86; // where the lines aim when there's a choice: the upper left, toward the list
+let feats = [], pinned = null, hovered = null, hoverHit = null, hoverAng = null, shownKey = null, picks = {}, resumeSpin = () => {};
+let sunMesh = null, swirlMesh = null, accentPts = [], vowelSpots = [], vImg = null, vTilt = null, vTiltT = null;
+
+const cap = (t) => t[0].toUpperCase() + t.slice(1);
+// a timbre dial in words, using the same cut-off as the portrait (anything this close to the middle draws nothing)
+function dial(v, pos, neg) { const a = Math.abs(v); if (a < MAP.timbre.from) return "In the middle"; return cap((a >= 0.75 ? "very " : a >= 0.4 ? "" : "slightly ") + (v > 0 ? pos : neg)); }
+
+function buildFeatures() {
+  const T = orbInfo.traits, tb = T.timbre, ok = tb.enough, F = MAP.timbre.from, none = "There was too little clear voice in this recording to read this, so the core is left plain.";
+  const has = { sun: ok && tb.bright >= F, swirl: ok && -tb.bright >= F, spikes: ok && tb.raspy >= MAP.timbre.spikes.from, gloss: ok && tb.raspy <= -F, vowels: T.vowels.pts.length > 0 };
+  feats = [
+    { key: "accent", name: "Accent", value: byKey.accent?.value || "",
+      measure: "Which of 16 broad accent groups this voice sounds closest to, according to an accent-recognition model. Mixed accents get a share of several.",
+      look: byKey.accent?.visual || "" },
+    { key: "color", name: "Note, pitch & range", value: `${T.note} · ${Math.round(T.pitch)} Hz`,
+      measure: `How high or low this voice sits (its typical pitch, ${Math.round(T.pitch)} Hz), the musical note closest to it (${T.note}), and its range: how far it climbs above that and drops below it (${Math.round(T.lo)}–${Math.round(T.hi)} Hz).`,
+      look: `Together they make the color of the glowing core. The note picks the hue: the 12 notes go round the color wheel (C red, D yellow, A violet, B pink, in any octave). The pitch picks how deep or pale it is: lower voices are richer, higher voices lighter. The range shades the top and bottom: the top is lighter the higher this voice climbs, the bottom darker the lower it drops (the very highest and lowest moments are ignored, so one squeak or croak doesn't count).` },
+    { key: "vowels", name: "Vowel space", value: has.vowels ? `${T.vowels.n} vowel moments` : "Not enough to map", lines: has.vowels,
+      measure: "How this voice shapes its vowels: how open the mouth is and where the tongue sits, measured from the sound alone (the same points as the vowel chart in the breakdown).",
+      look: byKey.vowels?.visual || "" },
+    { group: "Timbre" },
+    { key: "bright", name: "Bright ↔ dark", value: ok ? dial(tb.bright, "bright", "dark") : "Not measured", lines: has.sun || has.swirl,
+      measure: "Where the sound's energy sits, in the low or the high frequencies, compared with everyone in the archive. More energy up high sounds brighter.",
+      look: !ok ? none : has.sun ? "Bright voices shine like a sun: small rays in the core's own color, set a little apart from it and slowly turning clockwise. The brighter the voice, the longer and wider the rays."
+        : has.swirl ? "Dark voices pull in a swirl of their own color, like water down a drain: arms curling in towards the core, slowly turning anticlockwise. The darker the voice, the further out and thicker they reach."
+        : "This voice sits near the middle, so it has neither: bright voices get sun rays round the core, dark ones a swirl curling into it." },
+    { key: "breathy", name: "Breathy ↔ clean", value: ok ? dial(tb.breathy, "breathy", "clean") : "Not measured", lines: ok,
+      measure: "How much air and noise is mixed into the tone, compared with everyone in the archive.",
+      look: !ok ? none : Math.abs(tb.breathy) < F ? "The edge of the core. This voice is in the middle, so its edge fades softly: neither crisp (clean voices) nor cloudy (breathy ones)."
+        : tb.breathy > 0 ? "The edge of the core. Breathy voices fade out into a soft, cloudy edge, with a mist of the core's color drifting just outside it. The breathier the voice, the wider and cloudier the edge. (Clean voices have a crisp one.)"
+        : "The edge of the core. Clean voices have a crisp, sharp edge; the cleaner the voice, the crisper. (Breathy voices fade out into a soft, cloudy edge with a mist just outside it.)" },
+    { key: "raspy", name: "Raspy ↔ smooth", value: ok ? dial(tb.raspy, "raspy", "smooth") : "Not measured", lines: ok,
+      measure: "How much the pitch wobbles from one moment to the next (jitter), compared with everyone in the archive.",
+      look: !ok ? none : has.spikes ? "Raspy voices grow small spikes all over the core, like a sea urchin. The raspier the voice, the taller the spikes."
+        : has.gloss ? "Smooth voices turn glossy, like polished glass: a crisp oval highlight, a small glint and a bright rim. The smoother the voice, the glossier. The highlights sit a little differently for every voice."
+        : "This voice is in the middle, so the surface is plain: raspy voices grow small spikes, smooth ones turn glossy like polished glass." },
+  ];
+}
+
+function setUpFeatures() {
+  const list = $("featureList"); if (!list) return;
+  buildFeatures();
+  const g = orbInfo.group.children;
+  sunMesh = g.find((o) => o.userData.screenOnly && o.material?.uniforms?.n) || null;
+  swirlMesh = g.find((o) => o.userData.screenOnly && o.material?.uniforms?.turn && !o.material.uniforms.n) || null;
+  // the structures (one layer per accent): a sample of their points, to aim the accent's lines at
+  orbInfo.group.updateMatrixWorld(true);
+  accentPts = g.filter((o) => o !== coreMesh && !o.userData.screenOnly).map((layer) => {
+    const out = [];
+    layer.traverse((o) => { const pos = o.geometry?.attributes?.position; if (!pos) return; const step = Math.max(1, Math.floor(pos.count / 400));
+      for (let i = 0; i < pos.count; i += step) out.push(new THREE.Vector3().fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld)); });
+    return out;
+  }).filter((a) => a.length);
+  // the vowel spots: where each sits on the core (the same placement as voice-orb.js), and how crowded its neighbourhood is
+  const u = coreMesh?.material?.uniforms;
+  if (u?.vMap?.value) {
+    const cv = u.vMap.value.image; vImg = cv.getContext("2d").getImageData(0, 0, cv.width, cv.height);
+    vTilt = u.vTilt.value; vTiltT = vTilt.clone().transpose();
+    const V = MAP.vowels, vw = orbInfo.traits.vowels, D = Math.PI / 180, at = (v, [lo, hi]) => Math.max(0, Math.min(1, (v - lo) / (hi - lo)));
+    vowelSpots = vw.pts.map(([l1, l2]) => {
+      const lat = (0.5 - at(l1, vw.f1)) * 2 * V.lat * D, lon = (90 + (at(l2, vw.f2) - 0.5) * 360) * D;
+      const dir = new THREE.Vector3(Math.cos(lat) * Math.cos(lon), Math.sin(lat), Math.cos(lat) * Math.sin(lon)).applyMatrix3(vTiltT).normalize();
+      return { dir, front: at(l2, vw.f2) > 0.5, crowd: 0 };
+    });
+    for (const a of vowelSpots) for (const b of vowelSpots) if (a.front === b.front && a.dir.dot(b.dir) > 0.94) a.crowd++;
+  }
+  // the list
+  list.innerHTML = feats.map((f) => f.group ? `<p class="feat-group">${esc(f.group)}</p>` : `
+    <div class="feat" data-key="${f.key}">
+      <button type="button" class="feat-head" aria-expanded="false" aria-controls="feat-${f.key}">
+        <span class="feat-name">${esc(f.name)}</span><span class="feat-val">${esc(f.value)}</span><span class="feat-chev" aria-hidden="true"></span>
+      </button>
+      <div class="feat-body" id="feat-${f.key}" role="region"><div><p>${esc(f.measure)}</p><p>${esc(f.look)}</p></div></div>
+    </div>`).join("");
+  list.querySelectorAll(".feat-head").forEach((b) => b.addEventListener("click", () => {
+    const k = b.parentElement.dataset.key;
+    pinned = shownKey === k ? null : k; hovered = null; setShown();
+  }));
+  list.addEventListener("scroll", drawLines, { passive: true });
+}
+
+function hoverFeature(f) {
+  if (!f) { if (hovered) { hovered = null; setShown(); } return; }
+  hoverHit = f.hit; hoverAng = f.ang;
+  if (hovered !== f.key) { hovered = f.key; setShown(); }
+}
+function setShown() {
+  const k = hovered ?? pinned;
+  if (k !== shownKey) {
+    shownKey = k;
+    if (k) pickFor(k, hovered ? hoverAng : null);
+    document.querySelectorAll("#featureList .feat").forEach((el) => {
+      const on = el.dataset.key === k; el.classList.toggle("open", on); el.querySelector(".feat-head").setAttribute("aria-expanded", on);
+    });
+    if (k) { const el = document.querySelector(`#featureList .feat[data-key="${k}"]`); setTimeout(() => { if (shownKey === k) el?.scrollIntoView({ block: "nearest", behavior: still ? "auto" : "smooth" }); }, 300); }
+  }
+  if (k) controls.autoRotate = false; else resumeSpin();
+  drawLines();
+}
+
+// the camera's own directions (right, up, toward the viewer) and the core's place and size on screen
+function basis() {
+  const q = camera.quaternion;
+  return { right: new THREE.Vector3(1, 0, 0).applyQuaternion(q), up: new THREE.Vector3(0, 1, 0).applyQuaternion(q), toCam: camera.position.clone().sub(controls.target).normalize() };
+}
+function coreOnScreen() {
+  const [x, y] = toScreen(new THREE.Vector3()), [x2, y2] = toScreen(basis().right.multiplyScalar(MAP.core.radius));
+  return { x, y, r: Math.hypot(x2 - x, y2 - y) };
+}
+const around = (ang, rad, B = basis()) => B.right.clone().multiplyScalar(Math.cos(ang) * rad).add(B.up.clone().multiplyScalar(Math.sin(ang) * rad)); // a point in the screen's plane, round the centre
+const onSurface = (x, y, B = basis()) => B.right.clone().multiplyScalar(x).add(B.up.clone().multiplyScalar(y)).add(B.toCam.clone().multiplyScalar(Math.sqrt(Math.max(0, 1 - x * x - y * y)))).multiplyScalar(coreR);
+const nearestTurn = (want, have) => want + Math.round((have - want) / (2 * Math.PI)) * 2 * Math.PI; // `have`, shifted by whole turns to sit nearest `want`
+
+// choose what each item's lines aim at, from what's in view now (pref: the screen angle to aim near, when hovering)
+function pickFor(key, pref) {
+  const ang = pref ?? LEFTWARD, B = basis(), c = coreOnScreen();
+  if (key === "bright" && sunMesh) { // the long ray nearest that angle
+    const u = sunMesh.material.uniforms, n = u.n.value;
+    picks.ray = 2 * Math.round(((ang - u.turn.value) / (2 * Math.PI) * n + u.off.value) / 2);
+  }
+  if (key === "bright" && swirlMesh) { // the swirl arm nearest that angle
+    const u = swirlMesh.material.uniforms, W = MAP.timbre.swirl, rr = 1 + (W.reach[0] + (W.reach[1] - W.reach[0]) * u.amt.value) * 0.35;
+    picks.arm = Math.round(((ang + W.twist * Math.log(rr) - u.turn.value) * W.arms - Math.PI / 2) / (2 * Math.PI)); picks.armR = rr;
+  }
+  if (key === "accent") { // on each layer of the structure: a point facing the viewer, clear of the core, as near the list as possible
+    picks.accent = accentPts.map((pts) => {
+      let best = null, bx = Infinity;
+      for (const p of pts) {
+        if (p.dot(B.toCam) < 0.05) continue;
+        const [x, y] = toScreen(p); if (Math.hypot(x - c.x, y - c.y) < c.r * 1.05) continue;
+        if (x < bx) { bx = x; best = p; }
+      }
+      return best;
+    }).filter(Boolean);
+  }
+  if (key === "vowels" && vowelSpots.length) { // the most crowded front ("ee") and back ("oo") spots facing the viewer
+    const toCamLocal = coreMesh.worldToLocal(camera.position.clone()).normalize();
+    picks.vowels = [true, false].map((front) => {
+      let best = null, bs = 0;
+      for (const s of vowelSpots) { if (s.front !== front) continue; const f = s.dir.dot(toCamLocal); if (f < 0.45) continue; const sc = s.crowd * f * f; if (sc > bs) { bs = sc; best = s; } }
+      return best && coreMesh.localToWorld(best.dir.clone().multiplyScalar(coreR * 0.98));
+    }).filter(Boolean);
+  }
+}
+
+// where each item's lines point, this frame
+function anchorsFor(key) {
+  const B = basis(), R = MAP.core.radius, u = coreMesh?.material?.uniforms, f = feats.find((x) => x.key === key);
+  if (f && f.lines === false) return [];
+  const hit = hovered === key ? hoverHit : null, hang = hovered === key ? hoverAng : null;
+  switch (key) {
+    case "color": return [new THREE.Vector3(), B.up.clone().multiplyScalar(coreR * 0.8), B.up.clone().multiplyScalar(-coreR * 0.8)]; // its middle, top and bottom
+    case "accent": return hit ? [hit] : picks.accent || [];
+    case "vowels": return hit ? [hit] : picks.vowels || [];
+    case "breathy": return [around(hang ?? LEFTWARD + 0.25, R * 0.97, B)];                                     // the edge
+    case "raspy":
+      if (u?.gloss.value > 0) return [onSurface(u.gw1.value.x, u.gw1.value.y, B), onSurface(u.gw2.value.x, u.gw2.value.y, B)]; // the highlight and the glint
+      return [hit || onSurface(-0.5, -0.35, B)];                                                                  // the spikes (or the plain surface)
+    case "bright":
+      if (sunMesh) { const s = sunMesh.material.uniforms, th = (picks.ray - s.off.value.valueOf()) / s.n.value * 2 * Math.PI + s.turn.value; return [around(th, s.r0.value + s.len.value * 0.5, B)]; }
+      if (swirlMesh) { const s = swirlMesh.material.uniforms, W = MAP.timbre.swirl, rr = picks.armR; return [around((Math.PI / 2 + 2 * Math.PI * picks.arm) / W.arms - W.twist * Math.log(rr) + s.turn.value, rr * R, B)]; }
+      return [];
+  }
+  return [];
+}
+
+// what's under the pointer (client coordinates; first: what the ray hit)
+function whatsAt(clientX, clientY, h) {
+  if (h?.part === "accent") return { key: "accent", hit: h.point };
+  const w = wrapEl().getBoundingClientRect(), c = coreOnScreen(), px = clientX - w.left, py = clientY - w.top;
+  const x = (px - c.x) / c.r, y = -(py - c.y) / c.r, r = Math.hypot(x, y), ang = Math.atan2(y, x), u = coreMesh.material.uniforms;
+  const tb = orbInfo.traits.timbre, ok = tb.enough;
+  if (r < 1) {
+    if (!h) return null;
+    if (ok && r > Math.max(0.84, 1 - u.edgeW.value)) return { key: "breathy", ang };
+    if (u.gloss.value > 0 && onGlass(x, y, u)) return { key: "raspy" };
+    if (vowelWeight(h.point) > 0.25) return { key: "vowels", hit: h.point };
+    if (ok && tb.raspy >= MAP.timbre.spikes.from && r > 0.3 && Math.abs(y) < 0.55) return { key: "raspy", hit: h.point };
+    return { key: "color" };
+  }
+  if (!ok) return null;
+  if (r < 1.1) return { key: "breathy", ang };
+  if (sunMesh && r < (sunMesh.material.uniforms.r0.value + sunMesh.material.uniforms.len.value) / MAP.core.radius + 0.06) return { key: "bright", ang };
+  if (swirlMesh && r < 1 + MAP.timbre.swirl.reach[0] + (MAP.timbre.swirl.reach[1] - MAP.timbre.swirl.reach[0]) * swirlMesh.material.uniforms.amt.value * 0.8) return { key: "bright", ang };
+  if (tb.breathy > 0.15 && r < MAP.timbre.mist.reach) return { key: "breathy", ang };
+  return null;
+}
+function onGlass(x, y, u) { // over one of the smooth highlights (with a little room around it)?
+  for (const [w, rot] of [[u.gw1.value, u.gShape.value.x], [u.gw2.value, u.gShape.value.y]]) {
+    const dx = x - w.x, dy = y - w.y, cs = Math.cos(rot), sn = Math.sin(rot);
+    if (Math.hypot((cs * dx + sn * dy) / w.z, (-sn * dx + cs * dy) / w.w) < 1.4) return true;
+  }
+  return false;
+}
+function vowelWeight(p) { // how strongly the vowel spots cover this point of the core (as the core's own shader reads it)
+  if (!vImg) return 0;
+  const d = coreMesh.worldToLocal(p.clone()).normalize().applyMatrix3(vTilt);
+  const uu = ((Math.atan2(d.z, d.x) / (2 * Math.PI)) % 1 + 1) % 1, vv = 0.5 + Math.asin(Math.max(-1, Math.min(1, d.y))) / Math.PI;
+  const X = Math.min(vImg.width - 1, Math.floor(uu * vImg.width)), Y = Math.min(vImg.height - 1, Math.floor((1 - vv) * vImg.height)), i = (Y * vImg.width + X) * 4;
+  return (vImg.data[i] + vImg.data[i + 1]) / 255;
+}
+
+// lines from the open item's heading, across the dividing line, to each spot it describes
+function drawFeatureLines(svg) {
+  const el = document.querySelector(`#featureList .feat[data-key="${shownKey}"] .feat-head`), list = $("featureList");
+  const pts = anchorsFor(shownKey);
+  if (!el || !pts.length || !el.offsetParent) { svg.innerHTML = ""; return; }
+  const w = wrapEl().getBoundingClientRect(), r = el.getBoundingClientRect(), lr = list.getBoundingClientRect();
+  const sx = r.right - w.left + 10, sy = Math.max(lr.top + 8, Math.min(lr.bottom - 8, r.top + r.height / 2)) - w.top;
+  let out = `<circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="2.5"/>`;
+  for (const v of pts) { const [ax, ay] = toScreen(v); out += `<line x1="${sx.toFixed(1)}" y1="${sy.toFixed(1)}" x2="${ax.toFixed(1)}" y2="${ay.toFixed(1)}"/><circle cx="${ax.toFixed(1)}" cy="${ay.toFixed(1)}" r="3.5"/>`; }
+  svg.innerHTML = out;
 }
 
 // ---------------------------------------------------------------- the ID card (top right), with a picture download
