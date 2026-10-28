@@ -50,7 +50,11 @@ export const MAP = {
     // edge: how far in from the outline the core fades (share of its radius) — cleanest, middle, breathiest.
     //   Breathy edges are also broken up by cloudy noise, and a soft mist drifts just outside them.
     edge: [0.03, 0.14, 0.42], noise: 0.35, mist: { reach: 1.32, strength: 0.75 },
-    spikes: { height: 0.22, from: 0.15 }, // raspy → small pyramids rise from every face, the tips reaching the normal outline: height for the raspiest voice; smoother than `from` stays a plain sphere
+    // raspy ↔ smooth: any lean away from the exact middle shows (only a voice within `from` of the middle stays plain).
+    //   raspy → small pyramids rise from every face, the tips reaching the normal outline; height for the raspiest voice,
+    //   and even a slight lean gets `min` of it. smooth → polished glass, its strength likewise starting at `min`.
+    spikes: { height: 0.22, from: 0.02, min: 0.18 },
+    glass: { from: 0.02, min: 0.3 },
   },
   // VOWELS → soft glowing spots in the core's own surface (painted into it, so on a spiky core they ride up
   //   and down the spikes with it). Two colors, the core's neighbours on the color wheel (`hue` of a turn either
@@ -243,7 +247,8 @@ function glassLook(rnd) {
 }
 function core(T) {
   const C = MAP.core, TM = MAP.timbre, tb = T.timbre;
-  const spiky = Math.max(0, tb.raspy), spikeH = spiky >= TM.spikes.from ? TM.spikes.height * spiky : 0;
+  const SP = TM.spikes, GL = TM.glass;
+  const spiky = tb.raspy >= SP.from ? SP.min + (1 - SP.min) * Math.min(1, tb.raspy) : 0, spikeH = spiky ? SP.height * spiky : 0; // (a slight lean: small spikes)
   // every core has the same outline: spiky cores sit a little smaller so their tips reach it
   const geo = spikeH ? spikyCore(C.radius / (1 + spikeH), spiky) : new THREE.SphereGeometry(C.radius, 160, 120);
   const cMain = voiceColor(T.pitch, T.note), R = MAP.range;
@@ -259,7 +264,7 @@ function core(T) {
     vertexShader: CORE_VERT, fragmentShader: CORE_FRAG, transparent: true, depthWrite: false,
     uniforms: { cMain: { value: cMain }, cTop: { value: cTop }, cBot: { value: cBot }, band: { value: new THREE.Vector2(...R.band) },
 
-      gloss: { value: tb.raspy <= -TM.from ? Math.min(1, -tb.raspy * 1.1) : 0 }, gw1: { value: G.w1 }, gw2: { value: G.w2 }, gShape: { value: G.shape },
+      gloss: { value: tb.raspy <= -GL.from ? GL.min + (1 - GL.min) * Math.min(1, -tb.raspy * 1.1) : 0 }, gw1: { value: G.w1 }, gw2: { value: G.w2 }, gShape: { value: G.shape },
       edgeW: { value: tb.breathy < 0 ? TM.edge[1] + (TM.edge[1] - TM.edge[0]) * tb.breathy : TM.edge[1] + (TM.edge[2] - TM.edge[1]) * tb.breathy }, coreRad: { value: C.radius },
       cloud: { value: Math.max(0, tb.breathy) },
       vMap: { value: vMap }, vOn: { value: vMap ? 1 : 0 }, vFront: { value: vFront }, vBack: { value: vBack }, vTilt: { value: vTilt },
