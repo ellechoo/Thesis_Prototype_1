@@ -95,7 +95,7 @@ export const MAP = {
   lineColor: 0xf4f1ea,
   // the structure's color: a very light tint of the core's own hue (its note), at this saturation and lightness for
   // every voice, so it reads as nearly white with a hint of the core's color, whatever the core's depth
-  shell: { sat: 0.75, light: 0.88 },
+  shell: { sat: 0.85, light: 0.84 },
 };
 
 // ---------------------------------------------------------------- helpers

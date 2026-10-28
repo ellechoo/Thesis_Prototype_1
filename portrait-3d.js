@@ -12,9 +12,9 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { getTake, archiveIsShared } from "./store.js?v=2";
 import { currentTakeId } from "./nav.js?v=8";
 import { formatDate, slug, download } from "./shared.js?v=2";
-import { buildOrb, MAP } from "./voice-orb.js?v=41";
-import { renderIdCard } from "./id-card.js?v=45";
-import { renderBreakdown } from "./breakdown.js?v=34";
+import { buildOrb, MAP } from "./voice-orb.js?v=42";
+import { renderIdCard } from "./id-card.js?v=46";
+import { renderBreakdown } from "./breakdown.js?v=35";
 const esc = (x) => String(x ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 const $ = (id) => document.getElementById(id);
