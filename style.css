@@ -1084,7 +1084,7 @@ html:has(.archive-stage:not([hidden])) { scrollbar-gutter: auto; overflow: hidde
 .download-btn svg { width: 21px; height: 21px; }
 .download-btn:hover { border-color: var(--text); }
 .download-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-@media (max-width: 640px) { .download-btn { top: 22px; right: 14px; width: 40px; height: 40px; } }
+@media (max-width: 640px) { .download-btn { top: 14px; right: 14px; width: 40px; height: 40px; } }
 
 /* everything that shapes the portrait: one box per item (the list on wide screens; the box at the bottom on narrower ones) */
 .feat { margin-bottom: 8px; border: 1px solid #2a2824; border-radius: 14px; background: #0a0a09; transition: border-color .2s ease, background-color .2s ease; }
@@ -1139,7 +1139,7 @@ html:has(.archive-stage:not([hidden])) { scrollbar-gutter: auto; overflow: hidde
 .spots-btn.off .eye-off { display: block; }
 .spots-btn.off { color: var(--muted); }
 .hotspots[hidden] { display: none; }
-@media (max-width: 640px) { .spots-btn { top: 72px; width: 40px; height: 40px; } }
+@media (max-width: 640px) { .spots-btn { top: 62px; width: 40px; height: 40px; } }
 @media (min-width: 900px) { .hotspots, .spots-btn { display: none; } }
 @media (prefers-reduced-motion: reduce) { .hotspot span::after { animation: none; transform: scale(2.2); opacity: .35; } .hotspot.seen span::after { opacity: 0; } .explore .stage-wrap { transition: none; } }
 @keyframes sheet-in { from { opacity: 0; transform: translateY(8px); } }
