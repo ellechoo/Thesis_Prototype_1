@@ -174,7 +174,7 @@ function wireCallouts() {
     queued = [e.clientX, e.clientY];
     requestAnimationFrame(() => {
       if (!queued) return; const [x, y] = queued; queued = null;
-      const f = tapsOn() ? whatsAt(x, y, pick(x, y)) : null; hoverFeature(f); canvas.style.cursor = f ? "help" : "";
+      const f = isWide() ? whatsAt(x, y, pick(x, y)) : null; hoverFeature(f); canvas.style.cursor = f ? "help" : ""; // (narrower screens: clicks only, no hover)
     });
   });
   canvas.addEventListener("pointerleave", () => { queued = null; if (hovered) { hovered = null; setShown(); } });
