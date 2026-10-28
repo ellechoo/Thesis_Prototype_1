@@ -1160,6 +1160,7 @@ html:has(.archive-stage:not([hidden])) { scrollbar-gutter: auto; overflow: hidde
   .side-panel { position: absolute; z-index: 3; top: 0; bottom: 0; left: 0; width: 33.333%; box-sizing: border-box; display: flex; flex-direction: column; gap: 18px; padding: 26px; border-right: 1px solid #3d3a35; }
   .explore .side-panel .portrait-head { position: static; max-width: none; padding-top: 12px; }
   .explore .side-panel .portrait-head h1 { font-size: 38px; }
+  .explore .side-panel .portrait-head .sub { margin-top: 10px; } /* the recording date, a little further below the name */
   .side-panel .jump-btn.in-box { display: flex; position: static; width: 100%; flex: none; }
   .feature-list { display: block; flex: 1; min-height: 0; overflow-y: auto; margin: 0 -10px; padding: 0 10px; scrollbar-width: thin; scrollbar-color: #3d3a35 transparent;
     --ft: 0px; --fb: 0px; -webkit-mask-image: linear-gradient(transparent, #000 var(--ft), #000 calc(100% - var(--fb)), transparent); mask-image: linear-gradient(transparent, #000 var(--ft), #000 calc(100% - var(--fb)), transparent); }
