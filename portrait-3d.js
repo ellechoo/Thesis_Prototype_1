@@ -11,9 +11,9 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { getTake, archiveIsShared } from "./store.js?v=2";
 import { currentTakeId } from "./nav.js?v=8";
 import { formatDate, slug, download } from "./shared.js?v=2";
-import { buildOrb, MAP } from "./voice-orb.js?v=34";
-import { renderIdCard } from "./id-card.js?v=38";
-import { renderBreakdown } from "./breakdown.js?v=27";
+import { buildOrb, MAP } from "./voice-orb.js?v=35";
+import { renderIdCard } from "./id-card.js?v=39";
+import { renderBreakdown } from "./breakdown.js?v=28";
 const esc = (x) => String(x ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 const $ = (id) => document.getElementById(id);
@@ -451,7 +451,7 @@ function pickFor(key, pref) {
     picks.vowels = [true, false].map((front) => {
       let best = null, bs = 0;
       for (const s of vowelSpots) { if (s.front !== front) continue; const f = s.dir.dot(toCamLocal); if (f < 0.45) continue; const sc = s.crowd * f * f; if (sc > bs) { bs = sc; best = s; } }
-      return best && coreMesh.localToWorld(best.dir.clone().multiplyScalar(coreR * 0.98));
+      return best && best.dir; // (kept in the core's own frame: the core turns on its own, the other way to the structure)
     }).filter(Boolean);
   }
 }
@@ -469,8 +469,9 @@ function anchorsFor(key) {
       return picks.accent;
     case "vowels":
       if (hit) return [hit];
-      if (!picks.vowels || picks.vowels.length < 2 || picks.vowels.some((p) => p.clone().normalize().dot(B.toCam) < 0.3)) pickFor("vowels", null);
-      return picks.vowels || [];
+      { const spot = (d) => coreMesh.localToWorld(d.clone().multiplyScalar(coreR * 0.98));
+        if (!picks.vowels || picks.vowels.length < 2 || picks.vowels.some((d) => spot(d).normalize().dot(B.toCam) < 0.3)) pickFor("vowels", null);
+        return (picks.vowels || []).map(spot); }
     case "breathy": return [around(hang ?? LEFTWARD + 0.25, R * 0.97, B)];                                     // the edge
     case "raspy":
       if (u?.gloss.value > 0) return [onSurface(u.gw1.value.x, u.gw1.value.y, B), onSurface(u.gw2.value.x, u.gw2.value.y, B)]; // the highlight and the glint

@@ -8,6 +8,7 @@
 //   LOOK CLOSER  Pitch range → the core's top takes the shade of the highest pitch, its bottom the lowest.
 //   LOOK CLOSER  Timbre → the core's surroundings, edge and shape (bright = a sun, dark = a swirl drawn inwards;
 //                         breathy = a cloudy edge, clean = a crisp one; raspy = spiky, smooth = glossy).
+// MOTION: the core always turns the opposite way to the structure (see counterSpin).
 // Everything is rebuilt from the stored measurements, so every archived voice follows these rules.
 // All the dials are in MAP.
 import * as THREE from "three";
@@ -263,9 +264,27 @@ function core(T) {
   });
   const mesh = new THREE.Mesh(geo, mat);
   mesh.userData.part = "core";
+  counterSpin(mesh);
   // The glow is drawn first; the structures are drawn over it and fade out behind it (see fadeBehindCore).
   mesh.renderOrder = -1;
   return { pts: mesh, color: cMain, size: C.radius, reach: C.radius };
+}
+
+// The core turns the opposite way to the structure, at the same speed. However the portrait is being turned (the page
+// spinning it, the viewer dragging it, the camera orbiting), the structure appears turned by the camera's angle round
+// the portrait's upright axis; the core is turned by twice that angle the other way, so it appears to turn by the same
+// amount in reverse. (Seen from almost straight above or below, that angle is unreliable, so the core holds still there.)
+// Its glass highlights and top/bottom shading are placed on screen, so they stay put either way.
+function counterSpin(mesh) {
+  const cam = new THREE.Vector3(), inv = new THREE.Matrix4();
+  let last = 0;
+  mesh.onBeforeRender = (renderer, scene, camera) => {
+    if (!mesh.parent) return;
+    cam.setFromMatrixPosition(camera.matrixWorld).applyMatrix4(inv.copy(mesh.parent.matrixWorld).invert()); // the camera, in the portrait's own frame
+    if (Math.hypot(cam.x, cam.z) > 0.15 * cam.length()) last = 2 * Math.atan2(cam.x, cam.z);
+    mesh.rotation.y = last;
+    mesh.updateMatrixWorld();
+  };
 }
 
 // ---------------------------------------------------------------- vowel space (spots in the core's surface)
