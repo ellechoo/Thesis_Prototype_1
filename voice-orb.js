@@ -1,7 +1,7 @@
-// voice-orb.js — the 3D voice portrait: a glowing core wrapped in a crisp white structure.
+// voice-orb.js — the 3D voice portrait: a glowing core wrapped in a crisp structure in the core's opposite color.
 //
 // HIERARCHY (most distinguishing traits first):
-//   SEEN FIRST   Accent → the white STRUCTURE around the core. Each accent family has its own kind
+//   SEEN FIRST   Accent → the STRUCTURE around the core (in the color opposite the core's on the color wheel). Each accent family has its own kind
 //                         (prisms, donut rings, petal cloud, wings, spiral coil) and each accent inside a
 //                         family its own variation. Every accent is its own layer, as strong as its share.
 //                Note + pitch → the COLOR of the glowing core (note = hue, average pitch = deep ↔ pale).
@@ -84,6 +84,9 @@ export const MAP = {
     },
   },
   lineColor: 0xf4f1ea,
+  // the structure's color: the hue opposite the core's on the color wheel (the note's opposite), at this saturation and
+  // lightness for every voice, so it stays bright on black whatever the core's depth
+  shell: { sat: 0.85, light: 0.62 },
 };
 
 // ---------------------------------------------------------------- helpers
@@ -317,7 +320,7 @@ function vowelMap(T) {
   return tex;
 }
 
-// ---------------------------------------------------------------- the white structures (accent)
+// ---------------------------------------------------------------- the structures (accent), drawn white here and tinted in buildOrb
 // Every structure is an outer layer around the core. The family sets the kind of structure; the
 // voice's top accent inside that family picks one of the family's variations.
 // Parts of a structure that sit behind the core fade out exactly as much as the core's glow covers them
@@ -771,7 +774,12 @@ export function buildOrb(take) {
   CORE_R = size; CORE_COL = color;
   for (const a of T.accents) group.add(STRUCT[a.family](T, a.w, a.label));
   CORE_R = null; CORE_COL = null;
-  return { group, traits: T, legend: legendFor(T), coreColor: color };
+  // the structure takes the color opposite the core's (the shading of the metal rings and the line weights stay as they are)
+  const hsl = {}; color.getHSL(hsl);
+  const shell = new THREE.Color().setHSL((hsl.h + 0.5) % 1, MAP.shell.sat, MAP.shell.light);
+  group.children.forEach((o) => { if (o.userData.part === "core" || o.userData.screenOnly) return;
+    o.traverse((m) => { for (const mt of m.material ? [].concat(m.material) : []) if (mt.color) mt.color.copy(shell); }); });
+  return { group, traits: T, legend: legendFor(T), coreColor: color, shellColor: shell };
 }
 
 // e.g. "Bright, slightly breathy" — the words for the three timbre dials (only the ones that stand out)
@@ -786,7 +794,7 @@ export function legendFor(T) {
   const mix = T.accents.map((a) => `${MAP.accent.families[a.family].structure}, ${MAP.accent.variants[a.label] || ""} (${a.name}, ${Math.round(a.w * 100)}%)`).join("; layered with ");
   return [
     { key: "accent", tier: 1, data: "Accent", value: T.accentTop ? T.accentTop.name : "Not measured",
-      visual: T.hasAccent ? `The white structure: ${mix}. Each accent family has its own kind of structure, and each of the 16 accents its own variation; mixed accents layer theirs, smaller shares fainter.` : "No accent result, so the structure defaults to the prism shell." },
+      visual: T.hasAccent ? `The structure around the core, in the color opposite the core's on the color wheel: ${mix}. Each accent family has its own kind of structure, and each of the 16 accents its own variation; mixed accents layer theirs, smaller shares fainter.` : "No accent result, so the structure defaults to the prism shell." },
     { key: "core", tier: 1, data: "Note & pitch", value: `${T.note} · ${Math.round(T.pitch)} Hz`, visual: `The color of the glowing core. The note picks the hue (the 12 notes go round the color wheel, C = red); the pitch picks how deep or pale it is — lower voices richer, higher voices lighter (scale stretched to this archive, ${MAP.color.lowHz}–${MAP.color.highHz} Hz).` },
     { key: "timbre", tier: 1, data: "Timbre", value: timbreWords(T.timbre), visual: T.timbre.enough
         ? "The core's surroundings, edge and shape. Bright voices shine like a sun (rays in the core's colour); dark voices pull in a swirl of their own colour, like water down a drain. Breathy voices have a cloudy edge, clean ones a crisp edge. Raspy voices grow small spikes; smooth ones turn glossy, like polished glass, with crisp highlights and a bright rim. Each is as strong as it is in the voice, compared with the rest of the archive."
