@@ -344,12 +344,15 @@ function renderSheet() { // narrower screens: the open item's box at the bottom 
 const SHEET_COVER = 0.3; // how much of the frame's height the box may cover (about the empty space below the portrait) before the frame grows
 function layoutSheet() {
   const wrap = wrapEl(), stage = $("stage"), box = $("featureSheet")?.firstElementChild;
-  if (isWide()) { wrap.style.height = stage.style.height = ""; return; }
+  if (isWide()) { wrap.style.height = stage.style.height = ""; if ($("featureSheet")) $("featureSheet").style.top = ""; return; }
   const was = wrap.style.height; wrap.style.transition = "none"; wrap.style.height = "";
   const base = wrap.getBoundingClientRect().height; wrap.style.height = was; void wrap.offsetHeight; wrap.style.transition = "";
   stage.style.height = base + "px";
   const need = box ? base * (1 - SHEET_COVER) + box.offsetHeight + 12 : base;
   wrap.style.height = Math.max(base, need) + "px";
+  // the box goes straight to its place (measured from the top, so it doesn't ride down as the frame grows below it)
+  const sheet = $("featureSheet");
+  if (sheet) sheet.style.top = box ? Math.max(base * (1 - SHEET_COVER), base - 12 - box.offsetHeight) + "px" : "";
 }
 const keepHit = (f) => f.hit && (f.core ? { local: coreMesh.worldToLocal(f.hit.clone()) } : f.hit); // (a spot on the core is kept in the core's own frame: it keeps turning)
 
