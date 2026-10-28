@@ -1058,7 +1058,7 @@ html:has(.archive-stage:not([hidden])) { scrollbar-gutter: auto; overflow: hidde
 .explore .portrait-head { top: 18px; left: 22px; }
 @media (max-width: 640px) {
   .explore .stage-wrap { height: calc(100svh - 148px); min-height: 320px; border-radius: 16px; margin-top: 8px; }
-  .explore .portrait-head { top: 14px; left: 16px; }
+  .explore .portrait-head { top: 24px; left: 18px; }
 }
 /* Portrait page layout: the box's top gap matches its side gaps, and it reaches down to just above "See full breakdown".
    --side is the gap either side of the box, up to the usual page padding (very wide screens add centring space at the
@@ -1079,19 +1079,12 @@ html:has(.archive-stage:not([hidden])) { scrollbar-gutter: auto; overflow: hidde
   .jump-btn { border-radius: 16px; min-height: 48px; font-size: 14px; }
 }
 
-/* Portrait page: the download button (top right) saves the voice's ID card as a picture */
+/* Portrait page: the download button (top right) opens a preview of what can be saved (the voice's ID card) */
 .download-btn { position: absolute; z-index: 3; top: 14px; right: 14px; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border-radius: 50%; border: 1px solid var(--line); background: rgba(0, 0, 0, .85); color: var(--text); cursor: pointer; transition: border-color .15s ease, background-color .15s ease; }
 .download-btn svg { width: 21px; height: 21px; }
 .download-btn:hover { border-color: var(--text); }
 .download-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.download-btn.busy { cursor: progress; }
-.download-btn.busy svg { animation: dl-nudge .9s ease-in-out infinite; } /* the arrow bobs while the picture is made */
-@keyframes dl-nudge { 50% { transform: translateY(3px); } }
-@media (max-width: 640px) { .download-btn { top: 12px; right: 12px; width: 40px; height: 40px; } }
-@media (prefers-reduced-motion: reduce) { .download-btn.busy svg { animation: none; opacity: .5; } }
-.id-offscreen { position: fixed; left: -10000px; top: 0; width: min(980px, calc(100vw - 32px)); pointer-events: none; } /* where the card is drawn for the download */
-.id-offscreen .id-view { margin: 0; max-width: none; }
-.id-offscreen .id-card { animation: none; }
+@media (max-width: 640px) { .download-btn { top: 22px; right: 14px; width: 40px; height: 40px; } }
 
 /* everything that shapes the portrait: one box per item (the list on wide screens; the box at the bottom on narrower ones) */
 .feat { margin-bottom: 8px; border: 1px solid #2a2824; border-radius: 14px; background: #0a0a09; transition: border-color .2s ease, background-color .2s ease; }
@@ -1116,13 +1109,24 @@ html:has(.archive-stage:not([hidden])) { scrollbar-gutter: auto; overflow: hidde
 .feature-sheet { position: absolute; z-index: 3; left: 12px; right: 12px; bottom: 12px; pointer-events: none; }
 .feature-sheet > * { pointer-events: auto; }
 .feature-sheet .feat { background: rgba(10, 10, 9, .94); box-shadow: 0 10px 30px rgba(0, 0, 0, .55); animation: sheet-in .22s ease; }
-.feature-sheet .feat-body > div { max-height: min(26svh, 220px); overflow-y: auto; overscroll-behavior: contain; }
 .sheet-row { display: flex; align-items: center; }
-.sheet-row .feat-head { flex: 1; min-width: 0; padding-right: 6px; }
+.sheet-row .feat-head { flex: 1; min-width: 0; padding-right: 6px; cursor: default; }
+.feature-sheet .feat-name { color: #fff; }
 .sheet-close { flex: none; width: 40px; height: 40px; margin-right: 4px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--muted); font: 400 22px/1 system-ui, sans-serif; cursor: pointer; }
 .sheet-close:hover:not(:disabled) { color: var(--text); }
 .sheet-close:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; }
-.sheet-hint { margin: 0; text-align: center; font-size: 12.5px; color: var(--muted); pointer-events: none; }
+/* the frame grows (smoothly) when an explanation needs more room than the bottom of the portrait */
+@media (max-width: 899.98px) { .explore .stage-wrap { background: #000; transition: height .28s ease; } }
+
+/* narrower screens: a pulsing point on each part of the portrait that can be tapped */
+.hotspots { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
+.hotspot { position: absolute; left: -18px; top: -18px; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: none; pointer-events: auto; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.hotspot span { position: absolute; left: 50%; top: 50%; width: 11px; height: 11px; margin: -5.5px 0 0 -5.5px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 1.5px rgba(0, 0, 0, .55), 0 0 10px rgba(255, 255, 255, .6); }
+.hotspot span::after { content: ""; position: absolute; inset: -1px; border-radius: 50%; border: 1.5px solid #fff; animation: spot-pulse 1.6s ease-out infinite; animation-delay: var(--delay, 0s); }
+@keyframes spot-pulse { from { transform: scale(1); opacity: .9; } to { transform: scale(3.2); opacity: 0; } }
+.hotspot:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; }
+@media (min-width: 900px) { .hotspots { display: none; } }
+@media (prefers-reduced-motion: reduce) { .hotspot span::after { animation: none; transform: scale(1.9); opacity: .5; } .explore .stage-wrap { transition: none; } }
 @keyframes sheet-in { from { opacity: 0; transform: translateY(8px); } }
 
 /* Portrait page, wide screens: the box splits. The portrait has the right two-thirds; the left third (behind a thin

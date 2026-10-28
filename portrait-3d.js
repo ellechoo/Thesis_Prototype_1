@@ -4,7 +4,7 @@
 // mouse wheel zoom. Wide screens: the box's left third lists everything that shapes the portrait; opening one (or hovering
 // that part of the portrait) shows its explanation, with lines across to where it shows. Narrower screens: tap (or hover)
 // a part and the same kind of box shows at the bottom of the portrait, with its lines.
-// The download button (top right) saves this voice's ID card as a picture.
+// The download button (top right) shows what can be downloaded (this voice's ID card), with a button to save it as a picture.
 // (People who ask their device for reduced motion get no automatic turning.)
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
@@ -106,7 +106,7 @@ function setUpScene() {
   }, { capture: true, passive: false });
   renderer.setAnimationLoop(() => {
     controls.autoRotateSpeed += (spinTarget - controls.autoRotateSpeed) * 0.06; // eases into the slower (or normal) speed
-    controls.update(); render(); drawLines();
+    controls.update(); render(); drawLines(); placeHotspots();
   });
 
   let wasWide = null;
@@ -114,6 +114,7 @@ function setUpScene() {
     resize(); const w = isWide();
     if (wasWide !== null && w !== wasWide) { fit(); hovered = null; shownKey = undefined; setShown(); } // switching layouts: start clean
     wasWide = w;
+    if (!w) requestAnimationFrame(layoutSheet);
   }).observe(stage);
   resize();
   fit();
@@ -180,8 +181,6 @@ function wireCallouts() {
     const f = whatsAt(e.clientX, e.clientY, pick(e.clientX, e.clientY));
     if (e.pointerType !== "mouse") { hovered = null; if (f) { hoverHit = keepHit(f); hoverAng = f.ang; } pinned = f ? f.key : null; pinnedHit = f ? { hit: hoverHit, ang: f.ang } : null; setShown(); }
     else if (f) { pinned = f.key; pinnedHit = { hit: hoverHit, ang: hoverAng }; setShown(); }
-    const box = f && $("featureSheet")?.querySelector(".feat"); // tapping the same part again opens its box back up
-    if (box && !box.classList.contains("open")) { box.classList.add("open"); box.querySelector(".feat-head").setAttribute("aria-expanded", "true"); }
   });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && shownKey) { pinned = hovered = null; setShown(); } });
 }
@@ -206,27 +205,27 @@ function buildFeatures() {
   const T = orbInfo.traits, tb = T.timbre, ok = tb.enough, F = MAP.timbre.from, none = "There was too little clear voice in this recording to read this, so the core is left plain.";
   const has = { sun: ok && tb.bright >= F, swirl: ok && -tb.bright >= F, spikes: ok && tb.raspy >= MAP.timbre.spikes.from, gloss: ok && tb.raspy <= -F, vowels: T.vowels.pts.length > 0 };
   feats = [
-    { key: "accent", name: "Accent", value: byKey.accent?.value || "",
+    { key: "accent", name: "Accent", value: byKey.accent?.value || "", spot: true,
       measure: "Which of 16 broad accent groups this voice sounds closest to, according to an accent-recognition model. Mixed accents get a share of several.",
       look: byKey.accent?.visual || "" },
-    { key: "color", name: "Note, pitch & range", value: `${T.note} · ${Math.round(T.pitch)} Hz`,
+    { key: "color", name: "Note, pitch & range", value: `${T.note} · ${Math.round(T.pitch)} Hz`, spot: true,
       measure: `How high or low this voice sits (its typical pitch, ${Math.round(T.pitch)} Hz), the musical note closest to it (${T.note}), and its range: how far it climbs above that and drops below it (${Math.round(T.lo)}–${Math.round(T.hi)} Hz).`,
       look: `Together they make the color of the glowing core. The note picks the hue: the 12 notes go round the color wheel (C red, D yellow, A violet, B pink, in any octave). The pitch picks how deep or pale it is: lower voices are richer, higher voices lighter. The range shades the top and bottom: the top is lighter the higher this voice climbs, the bottom darker the lower it drops (the very highest and lowest moments are ignored, so one squeak or croak doesn't count).` },
-    { key: "vowels", name: "Vowel space", value: has.vowels ? `${T.vowels.n} vowel moments` : "Not enough to map", lines: has.vowels,
+    { key: "vowels", name: "Vowel space", value: has.vowels ? `${T.vowels.n} vowel moments` : "Not enough to map", lines: has.vowels, spot: has.vowels,
       measure: "How this voice shapes its vowels: how open the mouth is and where the tongue sits, measured from the sound alone (the same points as the vowel chart in the breakdown).",
       look: byKey.vowels?.visual || "" },
     { group: "Timbre" },
-    { key: "bright", name: "Bright ↔ dark", value: ok ? dial(tb.bright, "bright", "dark") : "Not measured", lines: has.sun || has.swirl,
+    { key: "bright", name: "Bright ↔ dark", value: ok ? dial(tb.bright, "bright", "dark") : "Not measured", lines: has.sun || has.swirl, spot: has.sun || has.swirl,
       measure: "Where the sound's energy sits, in the low or the high frequencies, compared with everyone in the archive. More energy up high sounds brighter.",
       look: !ok ? none : has.sun ? "Bright voices shine like a sun: small rays in the core's own color, set a little apart from it and slowly turning clockwise. The brighter the voice, the longer and wider the rays."
         : has.swirl ? "Dark voices pull in a swirl of their own color, like water down a drain: arms curling in towards the core, slowly turning anticlockwise. The darker the voice, the further out and thicker they reach."
         : "This voice sits near the middle, so it has neither: bright voices get sun rays round the core, dark ones a swirl curling into it." },
-    { key: "breathy", name: "Breathy ↔ clean", value: ok ? dial(tb.breathy, "breathy", "clean") : "Not measured", lines: ok,
+    { key: "breathy", name: "Breathy ↔ clean", value: ok ? dial(tb.breathy, "breathy", "clean") : "Not measured", lines: ok, spot: ok,
       measure: "How much air and noise is mixed into the tone, compared with everyone in the archive.",
       look: !ok ? none : Math.abs(tb.breathy) < F ? "The edge of the core. This voice is in the middle, so its edge fades softly: neither crisp (clean voices) nor cloudy (breathy ones)."
         : tb.breathy > 0 ? "The edge of the core. Breathy voices fade out into a soft, cloudy edge, with a mist of the core's color drifting just outside it. The breathier the voice, the wider and cloudier the edge. (Clean voices have a crisp one.)"
         : "The edge of the core. Clean voices have a crisp, sharp edge; the cleaner the voice, the crisper. (Breathy voices fade out into a soft, cloudy edge with a mist just outside it.)" },
-    { key: "raspy", name: "Raspy ↔ smooth", value: ok ? dial(tb.raspy, "raspy", "smooth") : "Not measured", lines: ok,
+    { key: "raspy", name: "Raspy ↔ smooth", value: ok ? dial(tb.raspy, "raspy", "smooth") : "Not measured", lines: ok, spot: has.spikes || has.gloss,
       measure: "How much the pitch wobbles from one moment to the next (jitter), compared with everyone in the archive.",
       look: !ok ? none : has.spikes ? "Raspy voices grow small spikes all over the core, like a sea urchin. The raspier the voice, the taller the spikes."
         : has.gloss ? "Smooth voices turn glossy, like polished glass: a crisp oval highlight, a small glint and a bright rim. The smoother the voice, the glossier. The highlights sit a little differently for every voice."
@@ -271,6 +270,29 @@ function setUpFeatures() {
   new ResizeObserver(placeList).observe(list);
   placeList();
   renderSheet();
+  // narrower screens: a pulsing point on each part of the portrait that has a box (people can't hover on phones)
+  const spots = $("hotspots");
+  if (spots) {
+    spots.innerHTML = feats.filter((f) => f.spot).map((f) => `<button type="button" class="hotspot" data-key="${f.key}" aria-label="${esc(f.name)}: ${esc(f.value)}"><span></span></button>`).join("");
+    spots.querySelectorAll(".hotspot").forEach((b, i) => {
+      b.style.setProperty("--delay", `${(i * 0.37) % 1.6}s`); // not all pulsing in step
+      b.addEventListener("click", () => { pinned = b.dataset.key; pinnedHit = null; hovered = null; setShown(); });
+    });
+  }
+  for (const k of ["accent", "vowels", "bright"]) pickFor(k, null);
+}
+// each point sits on its part, following it as the portrait turns (the open one's point gives way to its lines)
+function placeHotspots() {
+  const spots = $("hotspots"); if (!spots || isWide()) return;
+  const w = wrapEl().getBoundingClientRect(), c = renderer.domElement.getBoundingClientRect(), top = c.top - w.top, box = $("featureSheet")?.firstElementChild;
+  const bottom = box ? box.getBoundingClientRect().top - w.top - 10 : top + c.height; // (none behind the open box)
+  for (const b of spots.children) {
+    const k = b.dataset.key, pts = k === shownKey ? [] : anchorsFor(k, true);
+    const v = k === "color" ? pts[1] : pts[0]; // note, pitch & range: the top of the core
+    if (!v) { b.hidden = true; continue; }
+    const [x, y] = toScreen(v); b.hidden = y < top + 4 || y > bottom - 4;
+    b.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+  }
 }
 // The list sits midway between the title and the button (as much room above it as below, with everything closed).
 // An item opens downward; only if it would run out of room does the list move up (and then scroll, if it still doesn't fit).
@@ -290,19 +312,30 @@ function featBox(f, where, open = false) {
   const id = `feat-${where}-${f.key}`, head = `<button type="button" class="feat-head" aria-expanded="${open}" aria-controls="${id}">
         <span class="feat-name">${esc(f.name)}</span><span class="feat-val">${esc(f.value)}</span><span class="feat-chev" aria-hidden="true"></span>
       </button>`;
+  const plain = `<div class="feat-head"><span class="feat-name">${esc(f.name)}</span><span class="feat-val">${esc(f.value)}</span></div>`; // (the box at the bottom doesn't fold)
   return `<div class="feat${open ? " open" : ""}" data-key="${f.key}">
-      ${where === "sheet" ? `<div class="sheet-row">${head}<button type="button" class="sheet-close" aria-label="Close">×</button></div>` : head}
+      ${where === "sheet" ? `<div class="sheet-row">${plain}<button type="button" class="sheet-close" aria-label="Close">×</button></div>` : head}
       <div class="feat-body" id="${id}" role="region"><div><p>${esc(f.measure)}</p><p>${esc(f.look)}</p></div></div>
     </div>`;
 }
-function renderSheet() { // narrower screens: the open item's box at the bottom of the portrait (or a hint when none is open)
+function renderSheet() { // narrower screens: the open item's box at the bottom of the portrait
   const sheet = $("featureSheet"); if (!sheet) return;
   const f = !isWide() && feats.find((x) => x.key === shownKey);
-  if (!f) { sheet.innerHTML = `<p class="sheet-hint">${matchMedia("(hover: hover)").matches ? "Hover over" : "Tap"} a part of the portrait to see what it shows</p>`; return; }
-  sheet.innerHTML = featBox(f, "sheet", true);
-  const box = sheet.firstElementChild;
-  box.querySelector(".feat-head").addEventListener("click", () => { const on = box.classList.toggle("open"); box.querySelector(".feat-head").setAttribute("aria-expanded", on); });
-  box.querySelector(".sheet-close").addEventListener("click", () => { pinned = hovered = null; setShown(); });
+  sheet.innerHTML = f ? featBox(f, "sheet", true) : "";
+  sheet.querySelector(".sheet-close")?.addEventListener("click", () => { pinned = hovered = null; setShown(); });
+  layoutSheet();
+}
+// The box may cover up to the lower part of the portrait; a longer explanation makes the portrait's frame taller to fit
+// it (the portrait itself stays where it is), and closing it brings the frame back to its usual height.
+const SHEET_COVER = 0.3; // how much of the frame's height the box may cover (about the empty space below the portrait) before the frame grows
+function layoutSheet() {
+  const wrap = wrapEl(), stage = $("stage"), box = $("featureSheet")?.firstElementChild;
+  if (isWide()) { wrap.style.height = stage.style.height = ""; return; }
+  const was = wrap.style.height; wrap.style.transition = "none"; wrap.style.height = "";
+  const base = wrap.getBoundingClientRect().height; wrap.style.height = was; void wrap.offsetHeight; wrap.style.transition = "";
+  stage.style.height = base + "px";
+  const need = box ? base * (1 - SHEET_COVER) + box.offsetHeight + 12 : base;
+  wrap.style.height = Math.max(base, need) + "px";
 }
 const keepHit = (f) => f.hit && (f.core ? { local: coreMesh.worldToLocal(f.hit.clone()) } : f.hit); // (a spot on the core is kept in the core's own frame: it keeps turning)
 
@@ -343,7 +376,7 @@ const nearestTurn = (want, have) => want + Math.round((have - want) / (2 * Math.
 
 // choose what each item's lines aim at, from what's in view now (pref: the screen angle to aim near, when hovering)
 function pickFor(key, pref) {
-  const ang = pref ?? aim(), B = basis(), c = coreOnScreen(), wide = isWide();
+  const wide = isWide(), ang = pref ?? (wide ? aim() : key === "bright" ? 0.35 : aim()), B = basis(), c = coreOnScreen();
   if (key === "bright" && sunMesh) { // the long ray nearest that angle
     const u = sunMesh.material.uniforms, n = u.n.value;
     picks.ray = 2 * Math.round(((ang - u.turn.value) / (2 * Math.PI) * n + u.off.value) / 2);
@@ -358,7 +391,7 @@ function pickFor(key, pref) {
       for (const p of pts) {
         if (p.dot(B.toCam) < 0.05) continue;
         const [x, y] = toScreen(p); if (Math.hypot(x - c.x, y - c.y) < c.r * 1.05) continue;
-        const score = wide ? x : -y;
+        const score = wide ? x : -x; // toward the list (wide screens); else the right-hand side, clear of the other points
         if (score < bx) { bx = score; best = p; }
       }
       return best;
@@ -375,10 +408,10 @@ function pickFor(key, pref) {
 }
 
 // where each item's lines point, this frame
-function anchorsFor(key) {
+function anchorsFor(key, spot = false) {
   const B = basis(), R = MAP.core.radius, u = coreMesh?.material?.uniforms, f = feats.find((x) => x.key === key);
   if (f && f.lines === false) return [];
-  const mine = hovered === key || (!hovered && pinnedHit && pinned === key);
+  const mine = !spot && (hovered === key || (!hovered && pinnedHit && pinned === key));
   const hit0 = mine ? hoverHit : null, hit = hit0?.local ? coreMesh.localToWorld(hit0.local.clone()) : hit0, hang = mine ? hoverAng : null;
   switch (key) {
     case "color": return [new THREE.Vector3(), B.up.clone().multiplyScalar(coreR * 0.8), B.up.clone().multiplyScalar(-coreR * 0.8)]; // its middle, top and bottom
@@ -391,7 +424,7 @@ function anchorsFor(key) {
       { const spot = (d) => coreMesh.localToWorld(d.clone().multiplyScalar(coreR * 0.98));
         if (!picks.vowels || picks.vowels.length < 2 || picks.vowels.some((d) => spot(d).normalize().dot(B.toCam) < 0.3)) pickFor("vowels", null);
         return (picks.vowels || []).map(spot); }
-    case "breathy": return [around(hang ?? aim() + (isWide() ? 0.25 : 0.5), R * 0.97, B)];                                     // the edge
+    case "breathy": return [around(hang ?? (isWide() ? aim() + 0.25 : Math.PI * 1.12), R * 0.97, B)]; // (narrower screens: the left edge, clear of the other points)                                     // the edge
     case "raspy":
       if (u?.gloss.value > 0) return [onSurface(u.gw1.value.x, u.gw1.value.y, B), onSurface(u.gw2.value.x, u.gw2.value.y, B)]; // the highlight and the glint
       return [hit || onSurface(-0.5, -0.35, B)];                                                                  // the spikes (or the plain surface)
@@ -456,28 +489,34 @@ function drawFeatureLines(svg) {
   svg.innerHTML = out;
 }
 
-// ---------------------------------------------------------------- download (top right): this voice's ID card, as a picture
-// The card is drawn off screen (at the size it has on this screen) and saved as a PNG.
+// ---------------------------------------------------------------- download (top right): first a preview of what will be saved
+// (for now, this voice's ID card), with the button that saves it as a picture
 function wireIdCard() {
-  const btn = $("downloadBtn");
+  const dlg = $("idDialog"), view = $("idView"), btn = $("idDownload");
+  let made = false;
+  $("downloadBtn").addEventListener("click", () => {
+    if (!made) {
+      renderIdCard(view, take); made = true;
+      // the card's own × closes the dialog here (on the Archive it goes back to the gallery)
+      view.querySelector(".id-close")?.addEventListener("click", (e) => { e.preventDefault(); dlg.close(); });
+    }
+    if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
+  });
+  $("idClose").addEventListener("click", () => dlg.close());
+  dlg.addEventListener("click", (e) => { if (e.target === dlg) dlg.close(); }); // a click on the dimmed backdrop
   btn.addEventListener("click", async () => {
-    if (btn.classList.contains("busy")) return;
-    btn.classList.add("busy"); btn.setAttribute("aria-busy", "true");
-    const holder = document.createElement("div");
-    holder.className = "id-offscreen"; holder.setAttribute("aria-hidden", "true");
-    holder.innerHTML = '<section class="id-view"></section>'; document.body.appendChild(holder);
+    const card = view.querySelector(".id-card"); if (!card) return;
+    const label = btn.textContent; btn.disabled = true; btn.textContent = "Preparing…";
     try {
-      renderIdCard(holder.firstElementChild, take);
-      const card = holder.querySelector(".id-card");
-      await Promise.all([...card.querySelectorAll("img")].map((im) => im.decode().catch(() => {})));
       const { toPng } = await import("https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/+esm");
       const url = await toPng(card, { pixelRatio: 2, backgroundColor: "#000000", filter: (n) => !n.classList?.contains("id-close") });
       download(await (await fetch(url)).blob(), `${slug(take.name)}-voice-id.png`);
+      btn.textContent = label;
     } catch (e) {
       console.warn("Couldn't make the picture:", e);
-      btn.title = "Couldn't make the picture. Try again.";
+      btn.textContent = "Couldn't make the picture, try again";
     }
-    holder.remove(); btn.classList.remove("busy"); btn.removeAttribute("aria-busy");
+    btn.disabled = false;
   });
 }
 
