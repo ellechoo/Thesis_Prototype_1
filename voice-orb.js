@@ -73,6 +73,9 @@ export const MAP = {
   // structure, in its own variation), as strong as its share; accents under minShare are left out.
   accent: {
     minShare: 0.06,
+    // mixed accents: every layer is drawn more solidly than its share alone would give. The strongest accent is fully
+    //   solid and the others keep their order, but none is fainter than `mixLift` (0–1) of the way up.
+    mixLift: 0.25,
     families: {
       americas: { labels: ["us", "canada"], name: "Americas", structure: "a prism shell" },
       british: { labels: ["england", "scotland", "ireland", "wales"], name: "British Isles", structure: "a ring round the middle, drawn in fine lines" },
@@ -779,7 +782,8 @@ export function buildOrb(take) {
   sunRays(T, group, color, reach);
   darkSwirl(T, group, color);
   CORE_R = size; CORE_COL = color;
-  for (const a of T.accents) group.add(STRUCT[a.family](T, a.w, a.label));
+  const top = T.accents[0]?.w || 1, lift = (w) => (T.accents.length > 1 ? Math.min(1, MAP.accent.mixLift + (1 - MAP.accent.mixLift) * (w / top)) : w);
+  for (const a of T.accents) group.add(STRUCT[a.family](T, lift(a.w), a.label)); // (the share only sets how solid each layer is)
   CORE_R = null; CORE_COL = null;
   // the structure takes a very light tint of the core's color (the shading of the metal rings and the line weights stay as they are)
   const hsl = {}; color.getHSL(hsl);
