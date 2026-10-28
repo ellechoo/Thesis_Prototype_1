@@ -15,8 +15,8 @@
 // portrait fades in when ready.
 import * as THREE from "three";
 import { listTakes, getTake } from "./store.js?v=2";
-import { buildOrb } from "./voice-orb.js?v=36";
-import { renderIdCard } from "./id-card.js?v=40";
+import { buildOrb } from "./voice-orb.js?v=37";
+import { renderIdCard } from "./id-card.js?v=41";
 
 const $ = (id) => document.getElementById(id);
 const still = matchMedia("(prefers-reduced-motion: reduce)").matches; // then nothing turns or glides on its own
