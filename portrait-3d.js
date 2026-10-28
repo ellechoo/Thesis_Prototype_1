@@ -270,7 +270,8 @@ function setUpFeatures() {
   new ResizeObserver(placeList).observe(list);
   placeList();
   renderSheet();
-  // narrower screens: a pulsing point on each part of the portrait that has a box (people can't hover on phones)
+  // narrower screens: a pulsing point on each part of the portrait that has a box (people can't hover on phones); once its
+  // box has been opened the point stays, quieter and still, so the ones still pulsing are the ones not seen yet
   const spots = $("hotspots");
   if (spots) {
     spots.innerHTML = feats.filter((f) => f.spot).map((f) => `<button type="button" class="hotspot" data-key="${f.key}" aria-label="${esc(f.name)}: ${esc(f.value)}"><span></span></button>`).join("");
@@ -349,6 +350,7 @@ function setShown() {
   if (!hovered && pinnedHit && k === pinned) { hoverHit = pinnedHit.hit; hoverAng = pinnedHit.ang; } // a clicked spot stays pointed at
   if (k !== shownKey) {
     shownKey = k;
+    if (k && !isWide()) $("hotspots")?.querySelector(`[data-key="${k}"]`)?.classList.add("seen"); // its point stops pulsing: opened already
     if (k) pickFor(k, hovered || pinnedHit ? hoverAng : null);
     renderSheet();
     document.querySelectorAll("#featureList .feat").forEach((el) => {
