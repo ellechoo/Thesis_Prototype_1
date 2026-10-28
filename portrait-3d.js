@@ -20,7 +20,7 @@ const $ = (id) => document.getElementById(id);
 const VIEW_RADIUS = 1.4;     // how much of the scene fits on screen (the structures reach about 1.3 from the center)
 const VIEW_RADIUS_WIDE = 1.2; // wide screens: the portrait has the right two-thirds of the box, drawn a little bigger
 const WIDE = 900;            // from this width (px) the box splits: popups and button on the left third, portrait on the right
-const SPIN_SPEED = 0.6;      // slow turn (OrbitControls units; 2 = one turn every 30 s)
+const SPIN_SPEED = -0.6;     // slow turn (OrbitControls units; 2 = one turn every 30 s). Negative: the structure turns to the left (the core, the other way)
 const SPIN_RESUME_MS = 700;  // after someone turns it by hand (or the popups close), wait this long before turning again
 const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 let take, orbInfo, renderer, scene, camera, controls, byKey = {}, coreMesh, coreR = 0.58;
