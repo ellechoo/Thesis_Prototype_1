@@ -1161,7 +1161,10 @@ html:has(.archive-stage:not([hidden])) { scrollbar-gutter: auto; overflow: hidde
   .explore .side-panel .portrait-head h1 { font-size: 38px; }
   .side-panel .jump-btn.in-box { display: flex; position: static; width: 100%; flex: none; }
   .feature-list { display: block; flex: 1; min-height: 0; overflow-y: auto; margin: 0 -10px; padding: 0 10px; scrollbar-width: thin; scrollbar-color: #3d3a35 transparent;
-    -webkit-mask-image: linear-gradient(transparent, #000 10px, #000 calc(100% - 14px), transparent); mask-image: linear-gradient(transparent, #000 10px, #000 calc(100% - 14px), transparent); } /* soft edges, so it shows when there's more to scroll */
+    --ft: 0px; --fb: 0px; -webkit-mask-image: linear-gradient(transparent, #000 var(--ft), #000 calc(100% - var(--fb)), transparent); mask-image: linear-gradient(transparent, #000 var(--ft), #000 calc(100% - var(--fb)), transparent); }
+  /* a soft fade only at an edge where there's more to scroll to (so an open box at the top or bottom isn't faded) */
+  .feature-list.more-above { --ft: 14px; }
+  .feature-list.more-below { --fb: 18px; }
   .feat-inner { display: flex; flex-direction: column; transition: margin-top .28s ease; } /* (flex: margins between boxes add up, as placeList counts them) */
 }
 @media (prefers-reduced-motion: reduce) { .feat, .feat-body, .feat-chev, .feat-inner { transition: none; } }

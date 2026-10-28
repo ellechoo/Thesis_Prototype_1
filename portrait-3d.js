@@ -106,7 +106,7 @@ function setUpScene() {
   }, { capture: true, passive: false });
   renderer.setAnimationLoop(() => {
     controls.autoRotateSpeed += (spinTarget - controls.autoRotateSpeed) * 0.06; // eases into the slower (or normal) speed
-    controls.update(); render(); drawLines(); placeHotspots();
+    controls.update(); render(); drawLines(); placeHotspots(); listFades();
   });
 
   let wasWide = null;
@@ -302,6 +302,19 @@ function setUpFeatures() {
 }
 let spotsOn = true;
 const tapsOn = () => isWide() || spotsOn; // (narrower screens with the points hidden: the portrait is only for looking at)
+// wide screens: the list fades at its top or bottom edge only when there's more to scroll to that way
+function listFades() {
+  const l = $("featureList"); if (!l || !isWide()) return;
+  let above = l.scrollTop > 1, below = l.scrollTop + l.clientHeight < l.scrollHeight - 1;
+  const open = l.querySelector(".feat.open"); // never fade an open box's own top or bottom edge
+  if (open && (above || below)) {
+    const lr = l.getBoundingClientRect(), r = open.getBoundingClientRect();
+    if (r.top >= lr.top - 2 && r.top <= lr.top + 18) above = false;
+    if (r.bottom <= lr.bottom + 2 && r.bottom >= lr.bottom - 22) below = false;
+  }
+  if (l.classList.contains("more-above") !== above) l.classList.toggle("more-above", above);
+  if (l.classList.contains("more-below") !== below) l.classList.toggle("more-below", below);
+}
 // each point sits on its part, following it as the portrait turns (the open one's point gives way to its lines)
 function placeHotspots() {
   const spots = $("hotspots"); if (!spots || isWide() || !spotsOn) return;
