@@ -75,7 +75,7 @@ function setUpScene() {
   controls.autoRotate = !still;
   controls.autoRotateSpeed = SPIN_SPEED;
   let resume = null;
-  const pauseSpin = () => { controls.autoRotate = false; clearTimeout(resume); if (!still) resume = setTimeout(() => { if (!callout && !shownKey) controls.autoRotate = true; }, SPIN_RESUME_MS); };
+  const pauseSpin = () => { controls.autoRotate = false; clearTimeout(resume); if (!still) resume = setTimeout(() => { if (!callout && !hovered) controls.autoRotate = true; }, SPIN_RESUME_MS); };
   controls.addEventListener("start", () => { controls.autoRotate = false; clearTimeout(resume); });
   controls.addEventListener("end", () => { pauseSpin(); if (shownKey && !hovered) pickFor(shownKey, null); }); // re-aim the lines at what's now in view
 
@@ -296,8 +296,9 @@ function wireCallouts(pauseSpin) {
 // The box's left third lists each thing that shapes the portrait (accent; note, pitch & range; vowel space; and the three
 // timbre scales). Each opens to its explanation, with a line (or lines) across to where it shows on the portrait. It works
 // the other way round too: hovering a part of the portrait opens its item. A click (in the list or on the portrait) keeps
-// an item open; hovering something else shows that one until the pointer moves away. The portrait stops turning while
-// an item is open, and starts again shortly after it closes.
+// an item open; hovering something else shows that one until the pointer moves away. The portrait keeps turning while
+// an item is open (its lines follow, moving to another spot when theirs turns away); it only stops while the pointer
+// is on it, and starts again shortly after.
 const LEFTWARD = Math.PI * 0.86; // where the lines aim when there's a choice: the upper left, toward the list
 let feats = [], pinned = null, hovered = null, hoverHit = null, hoverAng = null, shownKey = null, picks = {}, resumeSpin = () => {};
 let sunMesh = null, swirlMesh = null, accentPts = [], vowelSpots = [], vImg = null, vTilt = null, vTiltT = null;
@@ -366,18 +367,28 @@ function setUpFeatures() {
     for (const a of vowelSpots) for (const b of vowelSpots) if (a.front === b.front && a.dir.dot(b.dir) > 0.94) a.crowd++;
   }
   // the list
-  list.innerHTML = feats.map((f) => f.group ? `<p class="feat-group">${esc(f.group)}</p>` : `
+  list.innerHTML = '<div class="feat-inner">' + feats.map((f) => f.group ? `<p class="feat-group">${esc(f.group)}</p>` : `
     <div class="feat" data-key="${f.key}">
       <button type="button" class="feat-head" aria-expanded="false" aria-controls="feat-${f.key}">
         <span class="feat-name">${esc(f.name)}</span><span class="feat-val">${esc(f.value)}</span><span class="feat-chev" aria-hidden="true"></span>
       </button>
       <div class="feat-body" id="feat-${f.key}" role="region"><div><p>${esc(f.measure)}</p><p>${esc(f.look)}</p></div></div>
-    </div>`).join("");
+    </div>`).join("") + "</div>";
   list.querySelectorAll(".feat-head").forEach((b) => b.addEventListener("click", () => {
     const k = b.parentElement.dataset.key;
     pinned = shownKey === k ? null : k; hovered = null; setShown();
   }));
   list.addEventListener("scroll", drawLines, { passive: true });
+  new ResizeObserver(placeList).observe(list);
+  placeList();
+}
+// The list sits midway between the title and the button (as much room above it as below, with everything closed).
+// An item opens downward; only if it would run out of room does the list move up (and then scroll, if it still doesn't fit).
+function placeList() {
+  const list = $("featureList"), inner = list?.firstElementChild; if (!inner || !list.clientHeight) return;
+  const H = list.clientHeight, closed = [...inner.children].reduce((s, el) => s + (el.classList.contains("feat") ? el.querySelector(".feat-head").offsetHeight + 1 : el.offsetHeight + parseFloat(getComputedStyle(el).marginTop) + parseFloat(getComputedStyle(el).marginBottom)), 0);
+  const open = inner.querySelector(".feat.open .feat-body > div")?.scrollHeight || 0;
+  inner.style.marginTop = Math.max(0, Math.min((H - closed) / 2, H - closed - open)) + "px";
 }
 
 function hoverFeature(f) {
@@ -395,7 +406,8 @@ function setShown() {
     });
     if (k) { const el = document.querySelector(`#featureList .feat[data-key="${k}"]`); setTimeout(() => { if (shownKey === k) el?.scrollIntoView({ block: "nearest", behavior: still ? "auto" : "smooth" }); }, 300); }
   }
-  if (k) controls.autoRotate = false; else resumeSpin();
+  if (hovered) controls.autoRotate = false; else if (!controls.autoRotate) resumeSpin();
+  placeList();
   drawLines();
 }
 
@@ -451,8 +463,14 @@ function anchorsFor(key) {
   const hit = hovered === key ? hoverHit : null, hang = hovered === key ? hoverAng : null;
   switch (key) {
     case "color": return [new THREE.Vector3(), B.up.clone().multiplyScalar(coreR * 0.8), B.up.clone().multiplyScalar(-coreR * 0.8)]; // its middle, top and bottom
-    case "accent": return hit ? [hit] : picks.accent || [];
-    case "vowels": return hit ? [hit] : picks.vowels || [];
+    case "accent": // (as the portrait turns, a point that goes round the back is swapped for one in view)
+      if (hit) return [hit];
+      if (!picks.accent || picks.accent.some((p) => p.dot(B.toCam) < 0)) pickFor("accent", null);
+      return picks.accent;
+    case "vowels":
+      if (hit) return [hit];
+      if (!picks.vowels || picks.vowels.length < 2 || picks.vowels.some((p) => p.clone().normalize().dot(B.toCam) < 0.3)) pickFor("vowels", null);
+      return picks.vowels || [];
     case "breathy": return [around(hang ?? LEFTWARD + 0.25, R * 0.97, B)];                                     // the edge
     case "raspy":
       if (u?.gloss.value > 0) return [onSurface(u.gw1.value.x, u.gw1.value.y, B), onSurface(u.gw2.value.x, u.gw2.value.y, B)]; // the highlight and the glint

@@ -1119,6 +1119,8 @@ html:has(.archive-stage:not([hidden])) { scrollbar-gutter: auto; overflow: hidde
   .side-panel .jump-btn.in-box { display: flex; position: static; width: 100%; flex: none; }
   .feature-list { display: block; flex: 1; min-height: 0; overflow-y: auto; margin: 0 -10px; padding: 0 10px; scrollbar-width: thin; scrollbar-color: #3d3a35 transparent;
     -webkit-mask-image: linear-gradient(transparent, #000 10px, #000 calc(100% - 14px), transparent); mask-image: linear-gradient(transparent, #000 10px, #000 calc(100% - 14px), transparent); } /* soft edges, so it shows when there's more to scroll */
+  .feat-inner { transition: margin-top .28s ease; }
+  .explore .side-panel .portrait-head h1 { font-size: 38px; }
   .feat-group { margin: 18px 0 2px; font: 600 11px system-ui, -apple-system, "Segoe UI", sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
   .feat-group:first-child { margin-top: 0; }
   .feat { border-bottom: 1px solid #23221f; }
@@ -1135,4 +1137,4 @@ html:has(.archive-stage:not([hidden])) { scrollbar-gutter: auto; overflow: hidde
   .feat-body p:first-child { color: var(--muted); }
   .feat-body p:last-child { margin-bottom: 14px; }
 }
-@media (prefers-reduced-motion: reduce) { .feat-body, .feat-chev { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .feat-body, .feat-chev, .feat-inner { transition: none; } }
