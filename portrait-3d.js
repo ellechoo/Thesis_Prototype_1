@@ -21,7 +21,9 @@ const VIEW_RADIUS = 1.4;     // how much of the scene fits on screen (the struct
 const VIEW_RADIUS_WIDE = 1.2; // wide screens: the portrait has the right two-thirds of the box, drawn a little bigger
 const WIDE = 900;            // from this width (px) the box splits: popups and button on the left third, portrait on the right
 const SPIN_SPEED = -0.6;     // slow turn (OrbitControls units; 2 = one turn every 30 s). Negative: the structure turns to the left (the core, the other way)
-const SPIN_RESUME_MS = 700;  // after someone turns it by hand (or the popups close), wait this long before turning again
+const SPIN_RESUME_MS = 700;  // after someone turns it by hand, wait this long before turning again
+const SPIN_SLOW = 0.25;      // while the pointer is on the portrait (or its popups are up) it slows to this share of its speed, without stopping
+let spinTarget = SPIN_SPEED; // the speed it's easing towards
 const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 let take, orbInfo, renderer, scene, camera, controls, byKey = {}, coreMesh, coreR = 0.58;
 
@@ -75,7 +77,7 @@ function setUpScene() {
   controls.autoRotate = !still;
   controls.autoRotateSpeed = SPIN_SPEED;
   let resume = null;
-  const pauseSpin = () => { controls.autoRotate = false; clearTimeout(resume); if (!still) resume = setTimeout(() => { if (!callout && !hovered) controls.autoRotate = true; }, SPIN_RESUME_MS); };
+  const pauseSpin = () => { controls.autoRotate = false; clearTimeout(resume); if (!still) resume = setTimeout(() => { controls.autoRotate = true; }, SPIN_RESUME_MS); };
   controls.addEventListener("start", () => { controls.autoRotate = false; clearTimeout(resume); });
   controls.addEventListener("end", () => { pauseSpin(); if (shownKey && !hovered) pickFor(shownKey, null); }); // re-aim the lines at what's now in view
 
@@ -101,7 +103,10 @@ function setUpScene() {
     camera.position.copy(controls.target).add(off.setFromSpherical(sph));
     controls.update();
   }, { capture: true, passive: false });
-  renderer.setAnimationLoop(() => { controls.update(); render(); drawLines(); });
+  renderer.setAnimationLoop(() => {
+    controls.autoRotateSpeed += (spinTarget - controls.autoRotateSpeed) * 0.06; // eases into the slower (or normal) speed
+    controls.update(); render(); drawLines();
+  });
 
   let wasWide = null;
   new ResizeObserver(() => {
@@ -180,7 +185,7 @@ function showCallouts(part, hit) {
   }
   layoutCallouts();
   requestAnimationFrame(() => callout?.boxes.forEach((b) => b.el.classList.add("on")));
-  controls.autoRotate = false;
+  spinTarget = SPIN_SPEED * SPIN_SLOW;
 }
 let hideTimer = null;
 function hideCallouts(now = false) {
@@ -260,7 +265,7 @@ function wireCallouts(pauseSpin) {
     return hit ? { part: hit.object.userData.part, point: hit.point.clone() } : null;
   };
   let queued = null, down = null;
-  const resumeLater = () => { if (!still) pauseSpin(); };
+  const resumeLater = () => { spinTarget = SPIN_SPEED; }; // back up to its usual speed
   canvas.addEventListener("pointermove", (e) => {
     if (e.pointerType !== "mouse" || e.buttons) return;
     queued = [e.clientX, e.clientY];
@@ -297,8 +302,8 @@ function wireCallouts(pauseSpin) {
 // timbre scales). Each opens to its explanation, with a line (or lines) across to where it shows on the portrait. It works
 // the other way round too: hovering a part of the portrait opens its item. A click (in the list or on the portrait) keeps
 // an item open; hovering something else shows that one until the pointer moves away. The portrait keeps turning while
-// an item is open (its lines follow, moving to another spot when theirs turns away); it only stops while the pointer
-// is on it, and starts again shortly after.
+// an item is open (its lines follow, moving to another spot when theirs turns away), slowing down (never stopping)
+// while the pointer is on it.
 const LEFTWARD = Math.PI * 0.86; // where the lines aim when there's a choice: the upper left, toward the list
 let feats = [], pinned = null, hovered = null, hoverHit = null, hoverAng = null, shownKey = null, picks = {}, resumeSpin = () => {};
 let sunMesh = null, swirlMesh = null, accentPts = [], vowelSpots = [], vImg = null, vTilt = null, vTiltT = null;
@@ -393,7 +398,7 @@ function placeList() {
 
 function hoverFeature(f) {
   if (!f) { if (hovered) { hovered = null; setShown(); } return; }
-  hoverHit = f.hit; hoverAng = f.ang;
+  hoverHit = f.hit && (f.core ? { local: coreMesh.worldToLocal(f.hit.clone()) } : f.hit); hoverAng = f.ang; // (a spot on the core is kept in the core's own frame: it keeps turning)
   if (hovered !== f.key) { hovered = f.key; setShown(); }
 }
 function setShown() {
@@ -406,7 +411,7 @@ function setShown() {
     });
     if (k) { const el = document.querySelector(`#featureList .feat[data-key="${k}"]`); setTimeout(() => { if (shownKey === k) el?.scrollIntoView({ block: "nearest", behavior: still ? "auto" : "smooth" }); }, 300); }
   }
-  if (hovered) controls.autoRotate = false; else if (!controls.autoRotate) resumeSpin();
+  spinTarget = hovered ? SPIN_SPEED * SPIN_SLOW : SPIN_SPEED; // slower while the pointer is on it, never stopped
   placeList();
   drawLines();
 }
@@ -460,7 +465,7 @@ function pickFor(key, pref) {
 function anchorsFor(key) {
   const B = basis(), R = MAP.core.radius, u = coreMesh?.material?.uniforms, f = feats.find((x) => x.key === key);
   if (f && f.lines === false) return [];
-  const hit = hovered === key ? hoverHit : null, hang = hovered === key ? hoverAng : null;
+  const hit0 = hovered === key ? hoverHit : null, hit = hit0?.local ? coreMesh.localToWorld(hit0.local.clone()) : hit0, hang = hovered === key ? hoverAng : null;
   switch (key) {
     case "color": return [new THREE.Vector3(), B.up.clone().multiplyScalar(coreR * 0.8), B.up.clone().multiplyScalar(-coreR * 0.8)]; // its middle, top and bottom
     case "accent": // (as the portrait turns, a point that goes round the back is swapped for one in view)
@@ -494,8 +499,8 @@ function whatsAt(clientX, clientY, h) {
     if (!h) return null;
     if (ok && r > Math.max(0.84, 1 - u.edgeW.value)) return { key: "breathy", ang };
     if (u.gloss.value > 0 && onGlass(x, y, u)) return { key: "raspy" };
-    if (vowelWeight(h.point) > 0.25) return { key: "vowels", hit: h.point };
-    if (ok && tb.raspy >= MAP.timbre.spikes.from && r > 0.3 && Math.abs(y) < 0.55) return { key: "raspy", hit: h.point };
+    if (vowelWeight(h.point) > 0.25) return { key: "vowels", hit: h.point, core: true };
+    if (ok && tb.raspy >= MAP.timbre.spikes.from && r > 0.3 && Math.abs(y) < 0.55) return { key: "raspy", hit: h.point, core: true };
     return { key: "color" };
   }
   if (!ok) return null;
