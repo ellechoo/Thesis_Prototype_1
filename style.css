@@ -994,6 +994,15 @@ body:is([data-phase="countdown"], [data-phase="recording"]) .record-page #status
 /* ---- Archive gallery: one full-screen stage of live portraits, in a Flat (endless) or Globe view ---- */
 .visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .archive-stage, main.wide > .archive-stage { position: fixed; inset: 0; z-index: 0; margin: 0; width: auto; max-width: none; overflow: hidden; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+/* leaving for a voice's Portrait page: the stage fades to black, zooming in a touch more */
+.archive-stage { transition: opacity .28s ease, transform .4s cubic-bezier(.3, 0, .7, 1); }
+body.leaving .archive-stage { opacity: 0; transform: scale(1.06); }
+/* arriving on the Portrait page: fade in from black; from the Archive the portrait also settles from a little closer */
+#content { transition: opacity .55s ease; }
+body.arriving #content { opacity: 0; transition: none; }
+.explore .stage { transition: transform .8s cubic-bezier(.2, .7, .2, 1); }
+body.arriving.from-archive .explore .stage { transform: scale(1.12); transition: none; }
+@media (prefers-reduced-motion: reduce) { .archive-stage, .explore .stage { transition: none; } body.leaving .archive-stage, body.arriving.from-archive .explore .stage { transform: none; } #content { transition: opacity .2s ease; } }
 .archive-stage.dragging { cursor: grabbing; }
 .archive-stage.pointing { cursor: pointer; }
 .archive-stage .stage-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }

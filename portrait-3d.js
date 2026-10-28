@@ -34,11 +34,17 @@ async function load() {
   try { take = await getTake(id); } catch (e) { return empty(`Couldn't load the recording: ${e.message}`); }
   if (!take) return empty(archiveIsShared ? "That recording isn't in the archive." : "That recording isn't saved in this browser.");
   take.frames ||= [];
+  // fade in (from black) once the portrait has drawn; coming from the Archive it also settles from a little closer,
+  // carrying on the Archive's zoom into this voice
+  let fromArchive = false;
+  try { fromArchive = sessionStorage.getItem("arriveFrom") === "archive"; sessionStorage.removeItem("arriveFrom"); } catch {}
+  document.body.classList.add("arriving"); document.body.classList.toggle("from-archive", fromArchive);
   $("content").hidden = false;
   document.title = `${take.name}'s Voiceprint`;
   $("title").textContent = `${take.name}'s Voiceprint`;
   $("subtitle").textContent = `Recorded ${formatDate(take.createdAt)}`;
   setUpScene();
+  requestAnimationFrame(() => requestAnimationFrame(() => document.body.classList.remove("arriving"))); // (after its first frames)
   try { renderBreakdown(take); } catch (e) { console.warn("Couldn't show the measurements:", e); }
   wireIdCard();
 }
