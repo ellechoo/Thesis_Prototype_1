@@ -211,34 +211,37 @@ const cap = (t) => t[0].toUpperCase() + t.slice(1);
 // a timbre dial in words, using the same cut-off as the portrait (anything this close to the middle draws nothing)
 function dial(v, pos, neg) { const a = Math.abs(v); if (a < MAP.timbre.from) return "In the middle"; return cap((a >= 0.75 ? "very " : a >= 0.4 ? "" : "slightly ") + (v > 0 ? pos : neg)); }
 
+// each item: a short line on what it shows, plus a small picture (color swatches with their hex codes, a scale with this
+// voice's place on it, or the accent shares). The full detail is in the breakdown below the portrait.
+const hex = (c) => "#" + c.getHexString().toUpperCase();
+const swatch = (c, label) => `<span class="fv-sw"><i style="background:${hex(c)}"></i><span><b>${esc(label)}</b><code>${hex(c)}</code></span></span>`;
+// (the scale reads in the same order as the item's name: "Bright ↔ dark" has bright on the left)
+const scale = (v, pos, neg) => `<div class="fv-scale" role="img" aria-label="${esc(dial(v, pos.toLowerCase(), neg.toLowerCase()))}, on a scale from ${esc(pos)} to ${esc(neg)}">
+    <span>${esc(pos)}</span><span class="fv-track" style="--v:${((1 - Math.max(-1, Math.min(1, v))) / 2).toFixed(3)}"><i></i></span><span>${esc(neg)}</span></div>`;
 function buildFeatures() {
-  const T = orbInfo.traits, tb = T.timbre, ok = tb.enough, F = MAP.timbre.from, none = "There was too little clear voice in this recording to read this, so the core is left plain.";
+  const T = orbInfo.traits, tb = T.timbre, ok = tb.enough, F = MAP.timbre.from, u = coreMesh?.material?.uniforms || {};
+  const none = "Too little clear voice to read this, so the core is left plain.";
   const has = { sun: ok && tb.bright >= F, swirl: ok && -tb.bright >= F, spikes: ok && tb.raspy >= MAP.timbre.spikes.from, gloss: ok && tb.raspy <= -F, vowels: T.vowels.pts.length > 0 };
+  const shares = T.hasAccent ? `<div class="fv-bars">${T.accents.slice(0, 3).map((a) => `<div class="fv-bar"><span>${esc(a.name)}</span><span class="fv-bar-track"><i style="width:${Math.round(a.w * 100)}%"></i></span><span class="fv-num">${Math.round(a.w * 100)}%</span></div>`).join("")}</div>` : "";
   feats = [
     { key: "accent", name: "Accent", value: byKey.accent?.value || "", spot: true,
-      measure: "Which of 16 broad accent groups this voice sounds closest to, according to an accent-recognition model. Mixed accents get a share of several.",
-      look: byKey.accent?.visual || "" },
+      text: T.hasAccent ? "The accent group the voice sounds closest to. Each group has its own structure; a mix of accents layers them." : "No accent result, so the structure is the default prism shell.",
+      visual: shares },
     { key: "color", name: "Note, pitch & range", value: `${T.note} · ${Math.round(T.pitch)} Hz`, spot: true,
-      measure: `How high or low this voice sits (its typical pitch, ${Math.round(T.pitch)} Hz), the musical note closest to it (${T.note}), and its range: how far it climbs above that and drops below it (${Math.round(T.lo)}–${Math.round(T.hi)} Hz).`,
-      look: `Together they make the color of the glowing core. The note picks the hue: the 12 notes go round the color wheel (C red, D yellow, A violet, B pink, in any octave). The pitch picks how deep or pale it is: lower voices are richer, higher voices lighter. The range shades the top and bottom: the top is lighter the higher this voice climbs, the bottom darker the lower it drops (the very highest and lowest moments are ignored, so one squeak or croak doesn't count).` },
+      text: "The note picks the color and the pitch how deep it is. The top and bottom shade to the highest and lowest notes.",
+      visual: u.cMain ? `<div class="fv-sws">${swatch(u.cBot.value, `Low · ${Math.round(T.lo)} Hz`)}${swatch(u.cMain.value, `${T.note} · ${Math.round(T.pitch)} Hz`)}${swatch(u.cTop.value, `High · ${Math.round(T.hi)} Hz`)}</div>` : "" },
     { key: "vowels", name: "Vowel space", value: has.vowels ? `${T.vowels.n} vowel moments` : "Not enough to map", lines: has.vowels, spot: has.vowels,
-      measure: "How this voice shapes its vowels: how open the mouth is and where the tongue sits, measured from the sound alone (the same points as the vowel chart in the breakdown).",
-      look: byKey.vowels?.visual || "" },
+      text: has.vowels ? "Each glowing spot is a vowel sound. Vowels like “ee” glow in one color, vowels like “oo” in the other." : "Too few vowels were measured to map them.",
+      visual: has.vowels && u.vFront ? `<div class="fv-sws">${swatch(u.vFront.value, "“ee” vowels")}${swatch(u.vBack.value, "“oo” vowels")}</div>` : "" },
     { key: "bright", name: "Bright ↔ dark", value: ok ? dial(tb.bright, "bright", "dark") : "Not measured", lines: has.sun || has.swirl, spot: has.sun || has.swirl,
-      measure: "Where the sound's energy sits, in the low or the high frequencies, compared with everyone in the archive. More energy up high sounds brighter.",
-      look: !ok ? none : has.sun ? "Bright voices shine like a sun: small rays in the core's own color, set a little apart from it and slowly turning clockwise. The brighter the voice, the longer and wider the rays."
-        : has.swirl ? "Dark voices pull in a swirl of their own color, like water down a drain: arms curling in towards the core, slowly turning anticlockwise. The darker the voice, the further out and thicker they reach."
-        : "This voice sits near the middle, so it has neither: bright voices get sun rays round the core, dark ones a swirl curling into it." },
+      text: !ok ? none : has.sun ? "Bright voices shine with sun rays around the core." : has.swirl ? "Dark voices pull in a swirl of color, like water down a drain." : "Near the middle, so neither sun rays nor a swirl.",
+      visual: ok ? scale(tb.bright, "Bright", "Dark") : "" },
     { key: "breathy", name: "Breathy ↔ clean", value: ok ? dial(tb.breathy, "breathy", "clean") : "Not measured", lines: ok, spot: ok,
-      measure: "How much air and noise is mixed into the tone, compared with everyone in the archive.",
-      look: !ok ? none : Math.abs(tb.breathy) < F ? "The edge of the core. This voice is in the middle, so its edge fades softly: neither crisp (clean voices) nor cloudy (breathy ones)."
-        : tb.breathy > 0 ? "The edge of the core. Breathy voices fade out into a soft, cloudy edge, with a mist of the core's color drifting just outside it. The breathier the voice, the wider and cloudier the edge. (Clean voices have a crisp one.)"
-        : "The edge of the core. Clean voices have a crisp, sharp edge; the cleaner the voice, the crisper. (Breathy voices fade out into a soft, cloudy edge with a mist just outside it.)" },
+      text: !ok ? none : Math.abs(tb.breathy) < F ? "Near the middle, so the core's edge fades softly." : tb.breathy > 0 ? "Breathy voices get a soft, cloudy edge." : "Clean voices get a crisp, sharp edge.",
+      visual: ok ? scale(tb.breathy, "Breathy", "Clean") : "" },
     { key: "raspy", name: "Raspy ↔ smooth", value: ok ? dial(tb.raspy, "raspy", "smooth") : "Not measured", lines: ok, spot: has.spikes || has.gloss,
-      measure: "How much the pitch wobbles from one moment to the next (jitter), compared with everyone in the archive.",
-      look: !ok ? none : has.spikes ? "Raspy voices grow small spikes all over the core, like a sea urchin. The raspier the voice, the taller the spikes."
-        : has.gloss ? "Smooth voices turn glossy, like polished glass: a crisp oval highlight, a small glint and a bright rim. The smoother the voice, the glossier. The highlights sit a little differently for every voice."
-        : "This voice is in the middle, so the surface is plain: raspy voices grow small spikes, smooth ones turn glossy like polished glass." },
+      text: !ok ? none : has.spikes ? "Raspy voices grow small spikes all over the core." : has.gloss ? "Smooth voices look like polished glass." : "Near the middle, so the surface is plain.",
+      visual: ok ? scale(tb.raspy, "Raspy", "Smooth") : "" },
   ];
 }
 
@@ -351,7 +354,7 @@ function featBox(f, where, open = false) {
   const plain = `<div class="feat-head"><span class="feat-name">${esc(f.name)}</span><span class="feat-val">${esc(f.value)}</span></div>`; // (the box at the bottom doesn't fold)
   return `<div class="feat${open ? " open" : ""}" data-key="${f.key}">
       ${where === "sheet" ? `<div class="sheet-row">${plain}<button type="button" class="sheet-close" aria-label="Close">×</button></div>` : head}
-      <div class="feat-body" id="${id}" role="region"><div><p>${esc(f.measure)}</p><p>${esc(f.look)}</p></div></div>
+      <div class="feat-body" id="${id}" role="region"><div><p>${esc(f.text)}</p>${f.visual || ""}</div></div>
     </div>`;
 }
 function renderSheet() { // narrower screens: the open item's box at the bottom of the portrait

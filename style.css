@@ -1103,6 +1103,25 @@ html:has(.archive-stage:not([hidden])) { scrollbar-gutter: auto; overflow: hidde
 .feat-body p { margin: 0 14px 10px; font-size: 13px; line-height: 1.5; color: #cfccc6; }
 .feat-body p:first-child { color: var(--muted); }
 .feat-body p:last-child { margin-bottom: 14px; }
+/* the small pictures in each item: color swatches (with hex codes), a scale, or the accent shares */
+.feat-body .fv-sws, .feat-body .fv-scale, .feat-body .fv-bars { margin: 0 14px 14px; }
+.fv-sws { display: flex; flex-wrap: wrap; gap: 10px 16px; }
+.fv-sw { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.fv-sw > i { flex: none; width: 22px; height: 22px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .18); }
+.fv-sw > span { display: grid; line-height: 1.25; }
+.fv-sw b { font-weight: 500; font-size: 12px; color: #d9d7d2; }
+.fv-sw code { font: 11px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: var(--muted); letter-spacing: .02em; }
+.fv-scale { display: grid; grid-template-columns: 4.2em 1fr 4.2em; align-items: center; gap: 10px; font-size: 12px; color: var(--muted); }
+.fv-scale > span:last-child { text-align: right; } /* (fixed-width ends, so every scale's track lines up) */
+.fv-track { position: relative; height: 6px; border-radius: 3px; background: linear-gradient(90deg, #3a3833, #6d6a63, #3a3833); }
+.fv-track::before { content: ""; position: absolute; left: 50%; top: -3px; width: 1px; height: 12px; background: #8a867e; } /* a typical voice */
+.fv-track i { position: absolute; top: 50%; left: calc(var(--v) * 100%); width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 2px #0f0f0e; }
+.fv-bars { display: grid; gap: 6px; }
+.fv-bar { display: grid; grid-template-columns: minmax(0, 7.5em) 1fr 3ch; align-items: center; gap: 10px; font-size: 12px; color: #d9d7d2; }
+.fv-bar > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fv-bar-track { height: 6px; border-radius: 3px; background: #2a2824; overflow: hidden; }
+.fv-bar-track i { display: block; height: 100%; border-radius: inherit; background: #d9d7d2; }
+.fv-num { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
 .feat-group { margin: 18px 2px 8px; font: 600 11px system-ui, -apple-system, "Segoe UI", sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 .feat-group:first-child { margin-top: 0; }
 
