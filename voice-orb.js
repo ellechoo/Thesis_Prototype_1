@@ -277,6 +277,17 @@ function core(T) {
   counterSpin(mesh);
   // The glow is drawn first; the structures are drawn over it and fade out behind it (see fadeBehindCore).
   mesh.renderOrder = -1;
+  // A spiky core overlaps itself (spikes on the far side face the viewer too). Being see-through at its edge, it would
+  // draw those over the nearer spikes, so it looks hollow as it turns. So first an invisible pass records its front-most
+  // surface, the glow then draws only that, and afterwards that record is cleared so the structures still show softly
+  // through the core's rim as before.
+  if (spikeH) {
+    const front = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ colorWrite: false, transparent: true, depthWrite: true }));
+    front.renderOrder = -1.5; front.raycast = () => {}; front.userData.screenOnly = true;
+    front.onBeforeRender = (r, s, c, g, m, gr) => mesh.onBeforeRender(r, s, c, g, m, gr); // (the core's turn, set before either draws)
+    mesh.add(front);
+    mesh.onAfterRender = (r) => r.clearDepth();
+  }
   return { pts: mesh, color: cMain, size: C.radius, reach: C.radius };
 }
 
