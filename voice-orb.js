@@ -862,7 +862,7 @@ float behindCore() {
 }`).replace("#include <opaque_fragment>", "#include <opaque_fragment>\ngl_FragColor.a *= behindCore();");
   };
   mat.customProgramCacheKey = () => "beadBehindCore";
-  const beads = new THREE.Group(); beads.userData.screenOnly = true;
+  const beads = new THREE.Group(); beads.userData.screenOnly = true; beads.userData.pauses = true; // (the Voiceprint page finds the sparks by this)
   let yLo = Infinity, yHi = -Infinity; for (let k = 1; k < segsW.length; k += 3) { yLo = Math.min(yLo, segsW[k]); yHi = Math.max(yHi, segsW[k]); }
   for (const p of pauses) {
     const u = ((p.start + p.end) / 2 - t0) / (t1 - t0), th = (u - 0.5) * 2 * Math.PI; // (0 … 1 around, from the first word to the last)
@@ -876,7 +876,7 @@ float behindCore() {
     if (!hits.length) continue;
     const want = yHi - u * (yHi - yLo), q = hits.reduce((best, h) => (Math.abs(h[1] - want) < Math.abs(best[1] - want) ? h : best)); // one bead per pause
     const r = Math.min(P.maxSize, P.size + p.seconds * P.perSecond), m = new THREE.Sprite(mat);
-    m.position.set(q[0], q[1], q[2]); m.scale.setScalar(r * 2 * P.spark * 2); beads.add(m); // (the picture is twice the spark's size, leaving room for the glow)
+    m.position.set(q[0], q[1], q[2]); m.scale.setScalar(r * 2 * P.spark * 2); m.userData.part = "pauses"; beads.add(m); // (the picture is twice the spark's size, leaving room for the glow)
   }
   group.add(beads);
 }

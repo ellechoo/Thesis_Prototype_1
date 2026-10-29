@@ -1420,3 +1420,9 @@ body:is([data-phase="review"], [data-phase="processing"]) .rec-page :is(.review,
 .home-block .home-actions { justify-content: flex-start; align-items: center; gap: 16px; }
 .home-block .home-actions .home-small { display: inline-flex; align-items: center; gap: 7px; }
 .home-clock { width: 15px; height: 15px; flex: none; }
+
+/* Voiceprint: the "Talking & pauses" box's small bar (talking in the voice's colour, pauses dark) */
+.fv-rhythm { display: flex; height: 8px; border-radius: 3px; overflow: hidden; background: #1b1a18; margin-top: 2px; }
+.fv-rhythm i { display: block; height: 100%; }
+.fv-rhythm i.t { background: var(--accent); }
+.fv-rhythm i.p { background: #1b1a18; }
