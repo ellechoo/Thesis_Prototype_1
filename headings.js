@@ -4,6 +4,8 @@
 // each visible heading changes to a new mix, so the headings shimmer gently. Capitals and sizes come from style.css.
 // Headings that change later (a name filled in, an ID card opened) are picked up automatically.
 // Screen readers get the plain text; people who ask for reduced motion get still letters.
+// A heading marked data-steady-width (the Join page's headline, which the speech bubble wraps around) is held at the
+// width of its widest possible mix, so the letters changing never resize what's around it.
 const SELECTOR = "h1, h2, .section-title, .review-title, .processing-title, .id-brand";
 const STEP_MS = 150;
 const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -27,7 +29,20 @@ function mix(el) {
   el.dataset.mixFull = el.textContent; // (if anything else changes the text later, it no longer matches, and it's mixed again)
   el._letters = [...el.querySelectorAll(".mx-l")];
   if (!mixed.has(el)) { mixed.add(el); seen.observe(el); }
+  if (el.hasAttribute("data-steady-width")) holdWidth(el);
 }
+// every letter at its widest (boldest, upright, smallest optical size), measured, then back to its own mix
+const WIDEST = "font-weight:700;font-style:normal;font-variation-settings:'SOFT' 0,'WONK' 0,'opsz' 9";
+function holdWidth(el) {
+  const ls = el._letters, keep = ls.map((l) => l.style.cssText), inner = el.querySelector(".mx");
+  el.style.minWidth = "";
+  ls.forEach((l) => (l.style.cssText = WIDEST));
+  const w = inner.getBoundingClientRect().width;
+  ls.forEach((l, i) => (l.style.cssText = keep[i]));
+  if (w) { el.style.minWidth = Math.ceil(w + 2) + "px"; el.style.width = el.style.minWidth; }
+}
+addEventListener("resize", () => { for (const el of mixed) if (el.hasAttribute("data-steady-width")) holdWidth(el); });
+document.fonts?.ready.then(() => { for (const el of mixed) if (el.hasAttribute("data-steady-width")) holdWidth(el); }); // (once the font has loaded)
 function scan(root = document) {
   const list = root.nodeType === 1 && root.matches?.(SELECTOR) ? [root] : [];
   for (const el of [...list, ...(root.querySelectorAll?.(SELECTOR) || [])]) if (el.dataset.mixFull !== el.textContent) mix(el);
