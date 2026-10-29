@@ -76,6 +76,10 @@ export const MAP = {
     // mixed accents: every layer is drawn more solidly than its share alone would give. The strongest accent is fully
     //   solid and the others keep their order, but none is fainter than `mixLift` (0–1) of the way up.
     mixLift: 0.25,
+    // accents drawn with heavy, solid lines (rings, braids, coils) read stronger than the fine-line ones at the same
+    //   opacity, so when they're a small share they fade further: at a tiny share their opacity is multiplied by this
+    //   number, easing back to full as the share nears the strongest accent's (the strongest is never dimmed).
+    heavy: { england: 0.4, ireland: 0.4, scotland: 0.55, african: 0.45, southatlandtic: 0.45, bermuda: 0.45, canada: 0.7 },
     families: {
       americas: { labels: ["us", "canada"], name: "Americas", structure: "a prism shell" },
       british: { labels: ["england", "scotland", "ireland", "wales"], name: "British Isles", structure: "a ring round the middle, drawn in fine lines" },
@@ -794,7 +798,15 @@ export function buildOrb(take) {
   darkSwirl(T, group, color);
   CORE_R = size; CORE_COL = color;
   const top = T.accents[0]?.w || 1, lift = (w) => (T.accents.length > 1 ? Math.min(1, MAP.accent.mixLift + (1 - MAP.accent.mixLift) * (w / top)) : w);
-  const structs = T.accents.map((a) => { const st = STRUCT[a.family](T, lift(a.w), a.label); group.add(st); return st; }); // (the share only sets how solid each layer is)
+  const structs = T.accents.map((a) => {
+    const st = STRUCT[a.family](T, lift(a.w), a.label); group.add(st); // (the share only sets how solid each layer is)
+    const f = MAP.accent.heavy[a.label];
+    if (f && T.accents.length > 1 && a.w < top) { // heavy-looking accents with a small share fade further (see MAP.accent.heavy)
+      const k = f + (1 - f) * (a.w / top), seen = new Set();
+      st.traverse((o) => { for (const m of [].concat(o.material || [])) if (!seen.has(m)) { seen.add(m); m.opacity *= k; m.transparent = true; } });
+    }
+    return st;
+  });
   CORE_R = null; CORE_COL = null;
   // the structure takes a very light tint of the core's color (the shading of the metal rings and the line weights stay as they are)
   const hsl = {}; color.getHSL(hsl);
