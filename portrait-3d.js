@@ -282,7 +282,7 @@ function buildFeatures() {
       text: !ok ? none : has.spikes ? "Raspy voices grow small spikes all over the core." : has.gloss ? "Smooth voices look like polished glass." : "Near the middle, so the surface is plain.",
       visual: ok ? scale(tb.raspy, "Raspy", "Smooth") : "" },
     { key: "pauses", name: "Talking & pauses", value: pauseSparks.length ? `${pauseSparks.length} pause${pauseSparks.length === 1 ? "" : "s"}` : "No long pauses", lines: pauseSparks.length > 0, spot: pauseSparks.length > 0,
-      text: pauseSparks.length ? "Each spark is a pause in the reading. The fewer the pauses, the more the sparks glow." : "No pause was longer than 0.2 seconds, so there are no sparks.",
+      text: pauseSparks.length ? "Each star is a pause in the reading. The fewer the pauses, the more the stars glow." : "No pause was longer than 0.2 seconds, so there are no stars.",
       visual: rhythmBar() },
   ];
 }
