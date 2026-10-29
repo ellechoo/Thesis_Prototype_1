@@ -58,10 +58,10 @@ export function checkTake({ frames, seconds, noiseFloor }) {
   if (voicedSeconds < L.noVoiceSeconds && beats < L.noVoiceSyllables) {
     const peak = Math.max(-120, ...frames.map((f) => f.db));
     const why = roomIsNoisy(noiseFloor)
-      ? { key: "none-noisy", title: "There's too much background noise", text: "We couldn't pick out your voice from the sounds around you, so there's nothing to measure. Try somewhere quieter, or hold the microphone closer, then try again." }
+      ? { key: "none-noisy", title: "There's too much background noise", text: "Couldn't pick out your voice from the sounds around you, so there's nothing to measure. Try somewhere quieter, or hold the microphone closer, then try again." }
       : peak > toDb(noiseFloor || 1e-4) + 6
-        ? { key: "none-quiet", title: "Your voice came through too quietly", text: "We could hardly hear you, so there's nothing to measure. Move closer to the microphone or speak up a little, then try again." }
-        : { key: "none", title: "We couldn't hear a voice", text: "This recording doesn't seem to have anyone speaking in it, so there's nothing to make a portrait from. Check that the right microphone is on, then try again." };
+        ? { key: "none-quiet", title: "Your voice came through too quietly", text: "Your voice could hardly be heard, so there's nothing to measure. Move closer to the microphone or speak up a little, then try again." }
+        : { key: "none", title: "Couldn't hear a voice", text: "This recording doesn't seem to have anyone speaking in it, so there's nothing to make a portrait from. Check that the right microphone is on, then try again." };
     return { block: true, issues: [why] };
   }
 
@@ -74,7 +74,7 @@ export function checkTake({ frames, seconds, noiseFloor }) {
     add("noisy", "There's a lot of background noise", "Your voice is hard to pick out from the sounds around you, so the measurements may be off. A quieter spot helps.");
 
   // clearly not the passage
-  if (beats < L.fewSyllables) add("short", "That seems too short to be the whole passage", "We only caught a few words. Read the whole passage (any way you like), then tap Done.");
+  if (beats < L.fewSyllables) add("short", "That seems too short to be the whole passage", "Only a few words came through. Read the whole passage (any way you like), then tap Done.");
   else if (seconds > 8 && active.length / n < L.mostlySilentShare) add("silent", "Most of the recording was silent", "Try again, starting to read soon after Go.");
   else if (seconds > L.longSeconds) add("long", "That was much longer than the passage", "The passage takes about ten seconds. Try reading just the passage, then tap Done.");
   if (voicedSeconds >= L.humSeconds && beats < L.humMaxBeats && voiced.length / Math.max(1, active.length) >= L.humVoicedShare) {
@@ -97,15 +97,15 @@ export function measureGaps(take) {
   const add = (key, title, text) => gaps.push({ key, title, text });
   const voiced = frames.filter((f) => f.pitch).length;
   if (!take.summary?.pitchHz || voiced < 10)
-    add("pitch", "Pitch", "We couldn't hear a clear pitch, so the color of your Voiceprint might not match your voice.");
+    add("pitch", "Pitch", "Couldn't hear a clear pitch, so the color of your Voiceprint might not match your voice.");
   const timbre = frames.filter((f) => f.active && f.pitch && f.centroidHz).length;
   if (!take.summary?.timbre && timbre < 40)
-    add("timbre", "Voice quality", "We didn't hear enough of your voice to tell how bright, breathy or raspy it is.");
+    add("timbre", "Voice quality", "Not enough of your voice came through to tell how bright, breathy or raspy it is.");
   const vowels = frames.filter((f) => f.f1 && f.f2 && f.f1 >= 200 && f.f1 <= 1100 && f.f2 >= 600 && f.f2 <= 3200).length;
-  if (vowels < 8) add("vowels", "Vowels", "We couldn't pick out enough vowel sounds to show how you say them.");
+  if (vowels < 8) add("vowels", "Vowels", "Couldn't pick out enough vowel sounds to show how you say them.");
   if (!take.accent?.results?.length)
     add("accent", "Accent", /too short|needs at least/.test(take.accentNote || "")
       ? "The recording was too short to tell what accent you have."
-      : "We couldn't tell what accent you have this time.");
+      : "Couldn't tell what accent you have this time.");
   return gaps;
 }
