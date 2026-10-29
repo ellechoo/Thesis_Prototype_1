@@ -261,7 +261,7 @@ function buildFeatures() {
   const T = orbInfo.traits, tb = T.timbre, ok = tb.enough, F = MAP.timbre.from, u = coreMesh?.material?.uniforms || {};
   const none = "Too little clear voice to read this, so the core is left plain.";
   const has = { sun: ok && tb.bright >= F, swirl: ok && -tb.bright >= F, spikes: ok && tb.raspy >= MAP.timbre.spikes.from, gloss: ok && tb.raspy <= -MAP.timbre.glass.from, vowels: T.vowels.pts.length > 0 };
-  const shares = T.hasAccent ? `<div class="fv-bars">${T.accents.slice(0, 3).map((a) => `<div class="fv-bar"><span>${esc(a.name)}</span><span class="fv-bar-track"><i style="width:${Math.round(a.w * 100)}%"></i></span><span class="fv-num">${Math.round(a.w * 100)}%</span></div>`).join("")}</div>` : "";
+  const shares = T.hasAccent ? `<div class="fv-bars">${T.accents.map((a) => `<div class="fv-bar"><span>${esc(a.name)}</span><span class="fv-bar-track"><i style="width:${Math.round(a.share * 100)}%"></i></span><span class="fv-num">${Math.round(a.share * 100)}%</span></div>`).join("")}</div>` : "";
   feats = [
     { key: "accent", name: "Accent", value: byKey.accent?.value || "", spot: T.hasAccent, lines: T.hasAccent,
       text: T.hasAccent ? "The accent group the voice sounds closest to. Each group has its own structure; a mix of accents layers them." : "No accent result, so there is no structure around the core.",
