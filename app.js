@@ -220,6 +220,7 @@ function review(info, issues = []) {
   pending = { prepared, url };
   const warn = issues.length > 0;
   ui.reviewTitle.textContent = "How did that sound?";
+  ui.review.classList.remove("gaps");
   ui.reviewWarn.hidden = !warn;
   ui.reviewWarn.innerHTML = warn ? `<p class="warn-title">This recording might not work well</p><ul>${issues.map((i) => `<li><b>${i.title}.</b> ${i.text}</li>`).join("")}</ul>` : "";
   ui.use.textContent = warn ? "Use it anyway" : "Use this recording";
@@ -254,6 +255,7 @@ ui.use.addEventListener("click", async () => {
 // listing what's missing. Recording again is the main button; "Continue anyway" saves the take as it is.
 function askAboutGaps(take, url, gaps) {
   pending = { take, url };
+  ui.review.classList.add("gaps"); // the title turns red (style.css)
   ui.reviewTitle.textContent = gaps.length === 1 ? "One part couldn't be measured" : "Some parts couldn't be measured";
   ui.reviewWarn.hidden = false;
   ui.reviewWarn.innerHTML = `<ul>${gaps.map((g) => `<li><b>${g.title}.</b> ${g.text}</li>`).join("")}</ul>`;

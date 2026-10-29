@@ -1427,3 +1427,6 @@ body:is([data-phase="review"], [data-phase="processing"]) .rec-page :is(.review,
 .fv-rhythm i { display: block; height: 100%; }
 .fv-rhythm i.t { background: var(--accent); }
 .fv-rhythm i.p { background: #1b1a18; }
+
+/* Record page: "Some parts couldn't be measured" in the secondary color */
+.review.gaps .review-title { color: var(--accent); }
