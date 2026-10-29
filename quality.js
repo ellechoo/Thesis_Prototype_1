@@ -97,15 +97,15 @@ export function measureGaps(take) {
   const add = (key, title, text) => gaps.push({ key, title, text });
   const voiced = frames.filter((f) => f.pitch).length;
   if (!take.summary?.pitchHz || voiced < 10)
-    add("pitch", "Note & pitch", "We couldn't find a clear pitch, so your color and note are a guess.");
+    add("pitch", "Pitch", "We couldn't hear a clear pitch, so the color of your Voiceprint might not match your voice.");
   const timbre = frames.filter((f) => f.active && f.pitch && f.centroidHz).length;
   if (!take.summary?.timbre && timbre < 40)
-    add("timbre", "Bright, breathy & raspy", "There wasn't enough clear voice to read the texture of your voice, so these are left in the middle.");
+    add("timbre", "Voice quality", "We didn't hear enough of your voice to tell how bright, breathy or raspy it is.");
   const vowels = frames.filter((f) => f.f1 && f.f2 && f.f1 >= 200 && f.f1 <= 1100 && f.f2 >= 600 && f.f2 <= 3200).length;
-  if (vowels < 8) add("vowels", "Vowel space", "We couldn't pick out enough vowels, so the vowel colors on the core are missing.");
+  if (vowels < 8) add("vowels", "Vowels", "We couldn't pick out enough vowel sounds to show how you say them.");
   if (!take.accent?.results?.length)
     add("accent", "Accent", /too short|needs at least/.test(take.accentNote || "")
-      ? "The recording was too short for the accent check, so there's no accent structure."
-      : "The accent check didn't work this time, so there's no accent structure.");
+      ? "The recording was too short to tell what accent you have."
+      : "We couldn't tell what accent you have this time.");
   return gaps;
 }
