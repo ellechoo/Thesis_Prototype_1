@@ -72,7 +72,7 @@ export const MAP = {
   // accent families → kinds of structure. Each of the 16 accents is drawn as its own layer (its family's
   // structure, in its own variation), as strong as its share; accents under minShare are left out.
   accent: {
-    minShare: 0.06,
+    minShare: 0.05, // only accents above 5% of the voice's accent scores get a layer
     // mixed accents: every layer is drawn more solidly than its share alone would give. The strongest accent is fully
     //   solid and the others keep their order, but none is fainter than `mixLift` (0–1) of the way up.
     mixLift: 0.25,
@@ -148,7 +148,7 @@ export function traits(take) {
   let accents = (take.accent?.results || []).filter((r) => famOf(r.label) && r.score > 0).map((r) => ({ label: r.label, name: r.name || r.label, family: famOf(r.label), w: r.score }));
   let tot = accents.reduce((a, x) => a + x.w, 0);
   if (!tot) { accents = []; tot = 1; } // no accent result: no structure at all (there is no default accent)
-  accents = accents.map((x) => ({ ...x, w: x.w / tot })).filter((x) => x.w >= MAP.accent.minShare);
+  accents = accents.map((x) => ({ ...x, w: x.w / tot, share: x.w / tot })).filter((x) => x.w > MAP.accent.minShare);
   tot = accents.reduce((a, x) => a + x.w, 0);
   accents = accents.map((x) => ({ ...x, w: x.w / tot })).sort((a, b) => b.w - a.w);
   const timbre = timbreOf(take, frames);
