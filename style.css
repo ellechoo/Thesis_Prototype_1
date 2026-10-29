@@ -1380,9 +1380,14 @@ body:is([data-phase="review"], [data-phase="processing"]) .rec-page :is(.review,
 }
 :is(.explore .jump-btn.in-box, .portrait-data .foot-strip) .jump-label { color: var(--text); }
 :is(.explore .jump-btn.in-box, .portrait-data .foot-strip) .jump-arrow { color: var(--text); font-size: 17px; transition: transform .2s ease; }
-:is(.explore .jump-btn.in-box, .portrait-data .foot-strip):hover { background: var(--accent); border-color: #3d3a35; }
-:is(.explore .jump-btn.in-box, .portrait-data .foot-strip):hover .jump-arrow { transform: translateY(2px); }
-.portrait-data .foot-strip:hover .jump-arrow { transform: translateY(-2px); }
+/* hover only where there's a real pointer (on phones a tap left it red until the next tap elsewhere); a tap flashes red while pressed */
+@media (hover: hover) {
+  :is(.explore .jump-btn.in-box, .portrait-data .foot-strip):hover { background: var(--accent); border-color: #3d3a35; }
+  :is(.explore .jump-btn.in-box, .portrait-data .foot-strip):hover .jump-arrow { transform: translateY(2px); }
+  .portrait-data .foot-strip:hover .jump-arrow { transform: translateY(-2px); }
+}
+:is(.explore .jump-btn.in-box, .portrait-data .foot-strip):active { background: var(--accent); }
+@media (hover: none) { :is(.explore .jump-btn.in-box, .portrait-data .foot-strip):hover { background: #000; } :is(.explore .jump-btn.in-box, .portrait-data .foot-strip):active { background: var(--accent); } }
 :is(.explore .jump-btn.in-box, .portrait-data .foot-strip):focus-visible { outline: 2px solid var(--text); outline-offset: -4px; }
 @media (min-width: 900px) {
   .side-panel .jump-btn.in-box { position: static; flex: none; margin: auto -26px -26px; width: calc(100% + 52px); }
