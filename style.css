@@ -6,8 +6,8 @@
   --text: #ecebe7;
   --muted: #9c9890;
   --line: #34322e;
-  --accent: #ffd43b; /* the site's secondary color: a warm yellow (buttons, focus rings, chart highlights) */
-  --accent-text: #0e0e0d;
+  --accent: #e5352d; /* the site's secondary color: a strong red (buttons, focus rings, chart highlights) */
+  --accent-text: #fff; /* labels on the red */
   --good: #51cf66;
   --warn: #ff922b;
   --ref: #6e6a63;
@@ -982,7 +982,7 @@ body:is([data-phase="countdown"], [data-phase="recording"]) .record-page #status
 .home-btn { position: relative; isolation: isolate; transition: transform .2s ease, box-shadow .2s ease, filter .2s ease; }
 .home-btn::before, .home-btn::after { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; border: 2px solid var(--accent); opacity: 0; pointer-events: none; animation: home-btn-wave 2.8s ease-out infinite; }
 .home-btn::after { animation-delay: .45s; }
-.home-btn:hover { transform: none; filter: brightness(1.12); box-shadow: 0 0 0 4px rgba(255, 212, 59, .32), 0 0 26px rgba(255, 212, 59, .5); } /* hover: it lights up and gains a soft ring; the button itself stays put */
+.home-btn:hover { transform: none; filter: brightness(1.12); box-shadow: 0 0 0 4px rgba(229, 53, 45, .32), 0 0 26px rgba(229, 53, 45, .5); } /* hover: it lights up and gains a soft ring; the button itself stays put */
 @keyframes home-btn-wave {
   0% { opacity: .75; transform: scale(1); }
   70%, 100% { opacity: 0; transform: scale(1.18, 1.55); }
