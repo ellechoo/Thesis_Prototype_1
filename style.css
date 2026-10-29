@@ -1429,7 +1429,7 @@ body:is([data-phase="review"], [data-phase="processing"]) .rec-page :is(.review,
 .fv-rhythm i.p { background: #1b1a18; }
 
 /* Record page: "Some parts couldn't be measured" in the secondary color */
-.review.gaps .review-title { color: var(--accent); font-size: var(--h2) !important; line-height: 1.1; }
+.review.gaps .review-title { color: var(--accent); font-size: clamp(28px, 2.8vw, 38px) !important; line-height: 1.05; }
 .rec-page .review.gaps .controls { margin-top: 12px; } /* more room above "Continue anyway" / "Record again" */
 /* phones: "Continue anyway" and "Record again" fill the width of the box, labels centered */
 @media (max-width: 640px) {
