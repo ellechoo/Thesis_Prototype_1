@@ -281,8 +281,8 @@ audio { width: 100%; }
 .review audio { width: 100%; }
 .review .note { margin: 0; }
 /* the gentle warning when a recording clearly might not work (see quality.js) */
-.review-warn { padding: 12px 14px; border-radius: 10px; border: 1px solid #6b5a2e; background: rgba(240, 190, 80, .08); }
-.review-warn .warn-title { margin: 0 0 6px; font-weight: 600; color: #f1d08a; }
+.review-warn { padding: 12px 14px; border-radius: 10px; border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent); background: color-mix(in srgb, var(--accent) 10%, transparent); } /* tinted with the secondary color (red) */
+.review-warn .warn-title { margin: 0 0 6px; font-weight: 600; color: color-mix(in srgb, var(--accent) 55%, #fff); }
 .review-warn ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
 .review-warn li { font-size: 14px; line-height: 1.45; color: var(--text); }
 .review-warn b { font-weight: 600; }
