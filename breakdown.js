@@ -58,7 +58,7 @@ function setUpAudio() {
       (archiveIsShared && take.sharedToArchive ? " in the archive." : ".");
   } else {
     player.hidden = true;
-    note.textContent = "The recording itself isn't kept, only the data from it.";
+    note.textContent = ""; // (no note: the page already says recordings aren't kept)
   }
 }
 
