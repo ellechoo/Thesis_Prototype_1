@@ -102,7 +102,8 @@ export const MAP = {
   // wraps round more than once), the bead goes on the one nearest a height that moves from the top of the structure at the
   // first word to the bottom at the last, so the beads also read in order. Longer pauses give bigger beads.
   // Each bead is a small, plump four-pointed spark. The fewer pauses a reading has, the more its sparks glow (a soft halo
-  // round each): at fewFor pauses or fewer, the full glow; at manyFor or more, plain sparks.
+  // round each): at fewFor pauses or fewer, the full glow; at manyFor or more, plain sparks. The raspier the voice, the
+  // sharper the spark's points; the smoother, the rounder its tips and sides (the same raspy ↔ smooth dial as the core).
   // An exact tie for the strongest accent puts beads on every tied structure.
   pauses: { minSeconds: 0.2, size: 0.017, perSecond: 0.04, maxSize: 0.042, spark: 2.1, fewFor: 2, manyFor: 10, tie: 0.005 },
 };
@@ -805,17 +806,22 @@ export function buildOrb(take) {
 
 // ---- talking & pauses: beads threaded on the strongest accent's lines (see MAP.pauses)
 const SPARKS = {};
-function sparkPicture(glow) { // a plump four-pointed spark in the middle; with more glow, a soft halo around it (the spark itself never changes)
-  const k = Math.round(glow * 4) / 4; if (SPARKS[k]) return SPARKS[k];
+// a plump four-pointed spark in the middle. glow (0 … 1): a soft halo round it. edge (−1 … 1, the raspy ↔ smooth dial):
+// raspy voices get sharp, needle-like points; smooth voices get rounded tips and softly curved sides.
+function sparkPicture(glow, edge) {
+  const k = Math.round(glow * 4) / 4, e = Math.round(Math.max(-1, Math.min(1, edge)) * 4) / 4, key = k + "/" + e;
+  if (SPARKS[key]) return SPARKS[key];
   const c = document.createElement("canvas"); c.width = c.height = 256;
   const g = c.getContext("2d"), m = 128;
   if (k > 0) { const gr = g.createRadialGradient(m, m, 0, m, m, m); gr.addColorStop(0, `rgba(255,255,255,${0.75 * k})`); gr.addColorStop(0.3, `rgba(255,255,255,${0.32 * k})`); gr.addColorStop(0.6, `rgba(255,255,255,${0.1 * k})`); gr.addColorStop(1, "rgba(255,255,255,0)"); g.fillStyle = gr; g.fillRect(0, 0, 256, 256); }
-  const outer = 62, inner = 24; // (points about two-and-a-half times as long as the body is wide)
-  g.fillStyle = "#fff"; g.beginPath();
+  const sharp = (e + 1) / 2, round = 1 - sharp; // 1 = raspiest, 0 = smoothest
+  const w = 30 * round;                          // rounding: a thick round-cornered outline drawn over the fill
+  const outer = 62 - w / 2, inner = 20 + 9 * round - w / 2;
+  g.fillStyle = g.strokeStyle = "#fff"; g.lineJoin = "round"; g.lineWidth = w; g.beginPath();
   for (let i = 0; i < 8; i++) { const r = i % 2 ? inner : outer, a = (i / 8) * Math.PI * 2 - Math.PI / 2; g.lineTo(m + Math.cos(a) * r, m + Math.sin(a) * r); }
-  g.closePath(); g.fill();
+  g.closePath(); g.fill(); if (w > 0.5) g.stroke();
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
-  return (SPARKS[k] = t);
+  return (SPARKS[key] = t);
 }
 function pauseBeads(rhythm, T, structs, group, color, coreR) {
   const P = MAP.pauses, t0 = rhythm?.start, t1 = rhythm?.end ?? (t0 != null && rhythm?.totalSeconds ? t0 + rhythm.totalSeconds : null);
@@ -834,7 +840,7 @@ function pauseBeads(rhythm, T, structs, group, color, coreR) {
     else if (o.isMesh) for (let k = 0; k + 2 < n; k += 3) { push(get(k), get(k + 1)); push(get(k + 1), get(k + 2)); }
   });
   const glow = Math.max(0, Math.min(1, (P.manyFor - pauses.length) / (P.manyFor - P.fewFor)));
-  const mat = new THREE.SpriteMaterial({ map: sparkPicture(glow), color: color.clone(), transparent: true, depthWrite: false, toneMapped: false });
+  const mat = new THREE.SpriteMaterial({ map: sparkPicture(glow, T.timbre?.enough ? T.timbre.raspy : 0), color: color.clone(), transparent: true, depthWrite: false, toneMapped: false });
   // hidden behind the core, exactly as the structure's own lines are (fadeBehindCore): checked at each bead's centre
   mat.onBeforeCompile = (sh) => {
     sh.uniforms.coreR = { value: coreR || MAP.core.radius };
