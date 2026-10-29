@@ -101,8 +101,8 @@ export const MAP = {
   // a line of that structure at that angle (like a bead threaded on string). Where several lines pass that angle (a coil
   // wraps round more than once), the bead goes on the one nearest a height that moves from the top of the structure at the
   // first word to the bottom at the last, so the beads also read in order. Longer pauses give bigger beads.
-  // Each bead is a small four-pointed spark. The fewer pauses a reading has, the more its sparks shine (a soft glow, longer
-  // rays and a gentle twinkle): at fewFor pauses or fewer, full shine; at manyFor or more, plain sparks.
+  // Each bead is a small, plump four-pointed spark. The fewer pauses a reading has, the more its sparks glow (a soft halo
+  // round each): at fewFor pauses or fewer, the full glow; at manyFor or more, plain sparks.
   // An exact tie for the strongest accent puts beads on every tied structure.
   pauses: { minSeconds: 0.2, size: 0.017, perSecond: 0.04, maxSize: 0.042, spark: 2.1, fewFor: 2, manyFor: 10, tie: 0.005 },
 };
@@ -805,12 +805,12 @@ export function buildOrb(take) {
 
 // ---- talking & pauses: beads threaded on the strongest accent's lines (see MAP.pauses)
 const SPARKS = {};
-function sparkPicture(shine) { // a four-pointed spark; with more shine: a soft glow behind it and longer, finer rays
-  const k = Math.round(shine * 4) / 4; if (SPARKS[k]) return SPARKS[k];
+function sparkPicture(glow) { // a plump four-pointed spark in the middle; with more glow, a soft halo around it (the spark itself never changes)
+  const k = Math.round(glow * 4) / 4; if (SPARKS[k]) return SPARKS[k];
   const c = document.createElement("canvas"); c.width = c.height = 256;
   const g = c.getContext("2d"), m = 128;
-  if (k > 0) { const gr = g.createRadialGradient(m, m, 0, m, m, m); gr.addColorStop(0, `rgba(255,255,255,${0.55 * k})`); gr.addColorStop(0.25, `rgba(255,255,255,${0.22 * k})`); gr.addColorStop(1, "rgba(255,255,255,0)"); g.fillStyle = gr; g.fillRect(0, 0, 256, 256); }
-  const outer = 70 + 52 * k, inner = 22 - 10 * k;
+  if (k > 0) { const gr = g.createRadialGradient(m, m, 0, m, m, m); gr.addColorStop(0, `rgba(255,255,255,${0.75 * k})`); gr.addColorStop(0.3, `rgba(255,255,255,${0.32 * k})`); gr.addColorStop(0.6, `rgba(255,255,255,${0.1 * k})`); gr.addColorStop(1, "rgba(255,255,255,0)"); g.fillStyle = gr; g.fillRect(0, 0, 256, 256); }
+  const outer = 62, inner = 24; // (points about two-and-a-half times as long as the body is wide)
   g.fillStyle = "#fff"; g.beginPath();
   for (let i = 0; i < 8; i++) { const r = i % 2 ? inner : outer, a = (i / 8) * Math.PI * 2 - Math.PI / 2; g.lineTo(m + Math.cos(a) * r, m + Math.sin(a) * r); }
   g.closePath(); g.fill();
@@ -833,9 +833,8 @@ function pauseBeads(rhythm, T, structs, group, color, coreR) {
     else if (o.isLine) for (let k = 0; k + 1 < n; k++) push(get(k), get(k + 1));
     else if (o.isMesh) for (let k = 0; k + 2 < n; k += 3) { push(get(k), get(k + 1)); push(get(k + 1), get(k + 2)); }
   });
-  const shine = Math.max(0, Math.min(1, (P.manyFor - pauses.length) / (P.manyFor - P.fewFor)));
-  const mat = new THREE.SpriteMaterial({ map: sparkPicture(shine), color: color.clone(), transparent: true, depthWrite: false, toneMapped: false });
-  const twinkle = shine > 0 && !(typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches);
+  const glow = Math.max(0, Math.min(1, (P.manyFor - pauses.length) / (P.manyFor - P.fewFor)));
+  const mat = new THREE.SpriteMaterial({ map: sparkPicture(glow), color: color.clone(), transparent: true, depthWrite: false, toneMapped: false });
   // hidden behind the core, exactly as the structure's own lines are (fadeBehindCore): checked at each bead's centre
   mat.onBeforeCompile = (sh) => {
     sh.uniforms.coreR = { value: coreR || MAP.core.radius };
@@ -867,10 +866,8 @@ float behindCore() {
     }
     if (!hits.length) continue;
     const want = yHi - u * (yHi - yLo), q = hits.reduce((best, h) => (Math.abs(h[1] - want) < Math.abs(best[1] - want) ? h : best)); // one bead per pause
-    const r = Math.min(P.maxSize, P.size + p.seconds * P.perSecond), m = new THREE.Sprite(mat), base = r * 2 * P.spark * (1 + 0.45 * shine);
-    m.position.set(q[0], q[1], q[2]); m.scale.setScalar(base); beads.add(m);
-    if (twinkle) { const ph = Math.random() * 6.28, sp = 1.6 + Math.random() * 1.4; // each spark twinkles on its own beat
-      m.onBeforeRender = () => m.scale.setScalar(base * (1 + 0.22 * shine * Math.sin(performance.now() / 1000 * sp + ph))); }
+    const r = Math.min(P.maxSize, P.size + p.seconds * P.perSecond), m = new THREE.Sprite(mat);
+    m.position.set(q[0], q[1], q[2]); m.scale.setScalar(r * 2 * P.spark * 2); beads.add(m); // (the picture is twice the spark's size, leaving room for the glow)
   }
   group.add(beads);
 }
