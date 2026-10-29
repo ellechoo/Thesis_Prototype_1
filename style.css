@@ -1407,3 +1407,11 @@ body:is([data-phase="review"], [data-phase="processing"]) .rec-page :is(.review,
 :is(.explore .jump-btn.in-box, .portrait-data .foot-strip) :is(.jump-label, .jump-arrow) { color: var(--accent); }
 @media (hover: hover) { :is(.explore .jump-btn.in-box, .portrait-data .foot-strip):hover :is(.jump-label, .jump-arrow) { color: var(--accent-text); } }
 :is(.explore .jump-btn.in-box, .portrait-data .foot-strip):active :is(.jump-label, .jump-arrow) { color: var(--accent-text); }
+
+/* the strips' arrows nudge in the direction they point, gently and on repeat: down for "See full breakdown", up for
+   "Back to the portrait" (still for people who turn motion off) */
+.explore .jump-btn.in-box .jump-arrow { display: inline-block; animation: arrow-down 1.6s ease-in-out infinite; }
+.portrait-data .foot-strip .jump-arrow { display: inline-block; animation: arrow-up 1.6s ease-in-out infinite; }
+@keyframes arrow-down { 0%, 100% { transform: translateY(-2px); } 50% { transform: translateY(4px); } }
+@keyframes arrow-up { 0%, 100% { transform: translateY(2px); } 50% { transform: translateY(-4px); } }
+@media (prefers-reduced-motion: reduce) { .explore .jump-btn.in-box .jump-arrow, .portrait-data .foot-strip .jump-arrow { animation: none; } }
