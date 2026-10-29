@@ -1429,4 +1429,9 @@ body:is([data-phase="review"], [data-phase="processing"]) .rec-page :is(.review,
 .fv-rhythm i.p { background: #1b1a18; }
 
 /* Record page: "Some parts couldn't be measured" in the secondary color */
-.review.gaps .review-title { color: var(--accent); }
+.review.gaps .review-title { color: var(--accent); font-size: var(--h2) !important; line-height: 1.1; }
+/* phones: "Continue anyway" and "Record again" fill the width of the box, labels centered */
+@media (max-width: 640px) {
+  .rec-page .review.gaps .controls { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .rec-page .review.gaps .controls button { width: 100%; justify-content: center; text-align: center; }
+}
