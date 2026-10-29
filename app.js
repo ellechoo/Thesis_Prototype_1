@@ -13,6 +13,7 @@ const COUNTDOWN = 3;             // seconds; the room-noise check runs during it
 const CALIBRATE_MS = 1500;
 const MAX_TAKE_SECONDS = 120;    // recording stops by itself here
 const MIN_TAKE_SECONDS = 1;
+const MAX_NAME = 24;             // longest name or nickname (characters); the name box has the same limit (record.html)
 
 const $ = (id) => document.getElementById(id);
 const ui = {
@@ -68,7 +69,7 @@ function setPhase(p) {
 }
 
 function getName() {
-  const name = ui.name.value.trim().replace(/\s+/g, " ");
+  const name = [...ui.name.value.trim().replace(/\s+/g, " ")].slice(0, MAX_NAME).join("").trim(); // (also cut to the limit here, whatever got into the box)
   if (!name) {
     setStatus("Enter a name or nickname first.", true);
     ui.name.focus();
