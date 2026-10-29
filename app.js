@@ -2,7 +2,7 @@
 import { VoiceAnalyzer } from "./voice-analyzer.js";
 import { startRecording, resampleTo, encodeWav } from "./recorder.js";
 import { computeRhythm } from "./rhythm.js";
-import { checkTake, roomIsNoisy, measureGaps } from "./quality.js?v=2";
+import { checkTake, roomIsNoisy, measureGaps } from "./quality.js?v=3";
 import { nameIsBlocked } from "./name-check.js?v=1";
 import { makePassageTracker, canFollowWords } from "./progress.js?v=9";
 import { saveTake, newId, archiveIsShared } from "./store.js?v=2";
@@ -261,7 +261,7 @@ function askAboutGaps(take, url, gaps) {
   ui.use.classList.remove("primary");
   ui.retry.classList.add("primary");
   ui.retry.textContent = "Record again";
-  ui.reviewNote.textContent = "Recording again in a quiet spot, reading the whole passage clearly, usually fixes this. Or continue and your Voiceprint is made without these parts.";
+  ui.reviewNote.textContent = "Recording again somewhere quiet and reading the whole passage clearly usually fixes this. Or continue, and we'll make your Voiceprint without these parts.";
   setPhase("review");
   setStatus("");
   ui.retry.focus();
