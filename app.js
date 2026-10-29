@@ -3,6 +3,7 @@ import { VoiceAnalyzer } from "./voice-analyzer.js";
 import { startRecording, resampleTo, encodeWav } from "./recorder.js";
 import { computeRhythm } from "./rhythm.js";
 import { checkTake, roomIsNoisy } from "./quality.js?v=1";
+import { nameIsBlocked } from "./name-check.js?v=1";
 import { makePassageTracker, canFollowWords } from "./progress.js?v=8";
 import { saveTake, newId, archiveIsShared } from "./store.js?v=2";
 import {
@@ -72,6 +73,11 @@ function getName() {
   const name = [...ui.name.value.trim().replace(/\s+/g, " ")].slice(0, MAX_NAME).join("").trim(); // (also cut to the limit here, whatever got into the box)
   if (!name) {
     setStatus("Enter a name or nickname first.", true);
+    ui.name.focus();
+    return null;
+  }
+  if (nameIsBlocked(name)) { // a slur or swear word as a word of its own (see name-check.js)
+    setStatus("Please choose a different name. Names can't include swear words or slurs.", true);
     ui.name.focus();
     return null;
   }
