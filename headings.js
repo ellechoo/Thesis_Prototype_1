@@ -4,6 +4,9 @@
 // each visible heading changes to a new mix, so the headings shimmer gently. Capitals and sizes come from style.css.
 // Headings that change later (a name filled in, an ID card opened) are picked up automatically.
 // Screen readers get the plain text; people who ask for reduced motion get still letters.
+// Headings on an ID card behave differently: when the card appears, their letters scramble for a moment, then settle
+// one by one into a new random mix and stay put (no shimmer), so a downloaded card keeps the letters it settled on.
+// While that's happening the heading carries data-settling (the download waits for it to go).
 // A heading marked data-steady-width (the Join page's headline, which the speech bubble wraps around) is held at the
 // width of its widest possible mix, so the letters changing never resize what's around it.
 const SELECTOR = "h1, h2, .section-title, .review-title, .processing-title, .id-brand";
@@ -30,6 +33,26 @@ function mix(el) {
   el._letters = [...el.querySelectorAll(".mx-l")];
   if (!mixed.has(el)) { mixed.add(el); seen.observe(el); }
   if (el.hasAttribute("data-steady-width")) holdWidth(el);
+  el._settle = !!el.closest(".id-card");
+  if (el._settle && !still) settle(el);
+}
+// ID cards: scramble (about 1.2 s), then each letter settles, left to right, into its final random look; then still
+const SETTLE_TICK = 70, SCRAMBLE_TICKS = 17, SETTLE_TICKS = 12;
+function settle(el) {
+  clearInterval(el._settleTimer);
+  const ls = el._letters, final = ls.map(() => letterStyle(Math.random));
+  let tick = 0;
+  el.setAttribute("data-settling", "");
+  el._settleTimer = setInterval(() => {
+    tick++;
+    let left = 0;
+    ls.forEach((l, i) => {
+      const at = SCRAMBLE_TICKS + Math.round(i * (SETTLE_TICKS / Math.max(1, ls.length)));
+      if (tick < at) { left++; if (Math.random() < 0.6) l.style.cssText = letterStyle(Math.random); }
+      else l.style.cssText = final[i];
+    });
+    if (!left || !el.isConnected) { clearInterval(el._settleTimer); el.removeAttribute("data-settling"); }
+  }, SETTLE_TICK);
 }
 // every letter at its widest (boldest, upright, smallest optical size), measured, then back to its own mix
 const WIDEST = "font-weight:700;font-style:normal;font-variation-settings:'SOFT' 0,'WONK' 0,'opsz' 9";
@@ -65,7 +88,7 @@ new MutationObserver((records) => {
 if (!still) setInterval(() => {
   if (document.hidden) return;
   for (const el of visible) {
-    const ls = el._letters; if (!ls?.length) continue;
+    const ls = el._letters; if (!ls?.length || el._settle) continue; // (ID card headings settle once and stay)
     ls[Math.floor(Math.random() * ls.length)].style.cssText = letterStyle(Math.random);
   }
 }, STEP_MS);
