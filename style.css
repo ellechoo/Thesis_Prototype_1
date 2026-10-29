@@ -1345,8 +1345,8 @@ body:is([data-phase="review"], [data-phase="processing"]) .rec-page :is(.review,
    Section titles are bigger here than the site's usual section titles. */
 .portrait-data { max-width: none; margin: 0; padding-top: 0; display: grid; gap: var(--side, 20px); }
 .portrait-data .block, .portrait-data .block + .block { --pad: 32px; margin: 0; padding: 30px var(--pad) 30px; border: 1px solid #3d3a35; border-radius: 22px; background: #000; min-width: 0; }
-.portrait-data .section-title { font-size: clamp(30px, 3.2vw, 44px) !important; margin: 0 0 12px; }
-.portrait-data .chart-head { margin-bottom: 12px; }
+.portrait-data .section-title { font-size: clamp(30px, 3.2vw, 44px) !important; margin: 0 0 24px; }
+.portrait-data .chart-head { margin-bottom: 24px; }
 .portrait-data .chart-head .section-title { margin: 0; }
 .portrait-data .block-note { margin: 0 0 24px; }
 .portrait-data .device-note { margin: 18px 0 0; }
@@ -1359,6 +1359,7 @@ body:is([data-phase="review"], [data-phase="processing"]) .rec-page :is(.review,
 .jump-foot { margin-top: var(--side, 20px); }
 @media (max-width: 899.98px) {
   .portrait-data .block, .portrait-data .block + .block { --pad: 20px; padding: 24px var(--pad) 24px; border-radius: 16px; }
-  .portrait-data .section-title { font-size: clamp(28px, 8vw, 34px) !important; }
+  .portrait-data .section-title { font-size: clamp(28px, 8vw, 34px) !important; margin-bottom: 18px; }
+  .portrait-data .chart-head { margin-bottom: 18px; }
   .portrait-data details { margin-top: 24px; padding-top: 18px; }
 }
