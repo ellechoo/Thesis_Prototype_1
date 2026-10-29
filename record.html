@@ -7,10 +7,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..700,0..100,0..1;1,9..144,300..700,0..100,0..1&display=swap" />
-  <link rel="stylesheet" href="style.css?v=88" />
+  <link rel="stylesheet" href="style.css?v=89" />
 </head>
 <body data-phase="idle">
-  <main class="rec-page wide">
+  <main class="rec-page">
     <!-- the Record tab shows here only -->
     <nav class="tabs">
       <a href="index.html" class="nav-home">Join</a>
@@ -20,10 +20,10 @@
     </nav>
     <h1 class="visually-hidden">Record your voice</h1>
 
-    <!-- one box, like the Voiceprint page's. Computers: a left third (name and Start, how it works, settings) and the
-         passage on the right two-thirds, where the review appears afterwards. Phones: everything stacked in that order. -->
+    <!-- one compact box in the same style as the Voiceprint page's, in order of importance: name and Start (the timer
+         and Cancel / Done take their place while recording), how it works, the passage, then settings and privacy.
+         The review and analysing steps take the passage's place afterwards. -->
     <div class="rec-box">
-      <section class="rec-panel">
         <section class="start-card" id="startCard">
           <label for="nameInput" class="field-label">Your name or a nickname</label>
           <div class="start-row">
@@ -46,27 +46,12 @@
           <div class="meter" aria-hidden="true"><div id="meterFill" class="fill"></div><div id="gateMark" class="gate"></div></div>
         </section>
 
-        <section class="rec-how">
-          <p class="rec-label">How it works</p>
-          <ol class="rec-steps">
-            <li>Find a quiet place.</li>
-            <li>Enter your name and tap <b>Start</b><span class="kbd-hint"> (or press the space bar)</span>.</li>
-            <li>After the countdown, read the passage at your usual pace, then tap <b>Done</b>.</li>
-          </ol>
-          <p class="fine" id="archiveNotice"></p>
-        </section>
+        <ol class="rec-steps">
+          <li>Find a quiet place.</li>
+          <li>Tap <b>Start</b><span class="kbd-hint"> (or press the space bar)</span>. A 3, 2, 1 countdown follows.</li>
+          <li>Read the passage aloud at your usual pace, then tap <b>Done</b>.</li>
+        </ol>
 
-        <details class="settings-box">
-          <summary>Settings</summary>
-          <div class="settings">
-            <label><input type="checkbox" id="optFilters" checked /> Filter rumble &amp; hiss (80 Hz – 8 kHz)</label>
-            <label><input type="checkbox" id="optBrowserNS" /> Browser noise suppression (cleaner, but alters the voice)</label>
-            <p class="hint">Settings apply to the next recording. The accent check always uses the unfiltered audio.</p>
-          </div>
-        </details>
-      </section>
-
-      <section class="rec-stage">
         <section class="passage-wrap">
           <p class="rec-label passage-label">You'll read this <button type="button" class="why-btn" popovertarget="whyPassage" aria-label="Why this passage?">?</button></p>
           <div id="whyPassage" class="why-pop" popover>
@@ -106,7 +91,15 @@
           <p class="processing-title">Analyzing your voice…</p>
           <p class="note" id="processingStep"></p>
         </section>
-      </section>
+        <details class="settings-box">
+          <summary>Settings &amp; privacy</summary>
+          <div class="settings">
+            <label><input type="checkbox" id="optFilters" checked /> Filter rumble &amp; hiss (80 Hz – 8 kHz)</label>
+            <label><input type="checkbox" id="optBrowserNS" /> Browser noise suppression (cleaner, but alters the voice)</label>
+            <p class="hint">Settings apply to the next recording. The accent check always uses the unfiltered audio.</p>
+            <p class="fine" id="archiveNotice"></p>
+          </div>
+        </details>
     </div>
   </main>
   <script type="module" src="nav.js?v=8"></script>

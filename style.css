@@ -1241,26 +1241,23 @@ h2, .section-title { font-size: var(--h2) !important; }
 .home-block .home-actions .home-small { margin: 0; line-height: 1; }
 
 /* ================================================================ Record page
-   One box, matching the Voiceprint page's. Computers: a left third (behind a thin line) with, in order of importance,
-   name + Start, how it works, and settings at the bottom; the passage fills the right two-thirds (quiet before Start,
-   big and bright while reading), and the review / analysing steps take its place afterwards. Phones: the same box with
-   everything stacked in that order; while reading, the passage moves to the top. The layout follows body[data-phase]. */
-.rec-page { --side: min(33px, calc((100cqw - min(1360px, 100cqw - 40px)) / 2)); }
-.rec-box { position: relative; max-width: 1400px; margin: calc(var(--side) - 4px) auto 0; border: 1px solid #3d3a35; border-radius: 22px; background: #000; overflow: hidden; display: flex; flex-direction: column; }
-.rec-panel { display: flex; flex-direction: column; gap: 28px; padding: 28px 26px 24px; min-width: 0; margin: 0; }
-.rec-stage { position: relative; display: grid; align-content: center; padding: 28px 26px; min-width: 0; margin: 0; }
-.rec-label { margin: 0 0 12px; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+   One compact box in the same style as the Voiceprint page's (thin border, rounded corners, black), centred in the
+   space above the tabs. In order of importance: name + Start, how it works, the passage, settings & privacy. While
+   recording, the timer and Cancel / Done replace the name and Start, and everything but the passage steps aside.
+   The passage stays the same size throughout. The review and analysing steps take the passage's place afterwards. */
+main.rec-page { max-width: 1400px; display: flex; flex-direction: column; min-height: calc(100svh - 110px); box-sizing: border-box; }
+.rec-box { width: 100%; max-width: 620px; margin: auto; box-sizing: border-box; padding: 30px 32px 22px; border: 1px solid #3d3a35; border-radius: 22px; background: #000; display: flex; flex-direction: column; gap: 22px; }
+.rec-label { margin: 0 0 10px; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 
-/* name + Start: the first thing */
-.rec-page .start-card { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 0; background: none; border: 0; border-radius: 0; transition: opacity .2s; }
-.rec-page .start-card.dimmed .start-row input, .rec-page .start-card.dimmed .field-label { opacity: .45; }
-.rec-page .field-label { font-size: 14px; font-weight: 500; color: var(--muted); }
-.rec-page .start-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
-.rec-page .start-row input { flex: 1 1 200px; min-width: 0; height: 52px; padding: 8px 2px 10px; border: 0; border-bottom: 1px solid var(--muted); border-radius: 0; background: transparent; color: var(--text); font: 400 21px var(--sans); }
+/* name + Start */
+.rec-page .start-card { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; margin: 0; padding: 0; background: none; border: 0; border-radius: 0; }
+.rec-page .field-label { font-size: 13px; font-weight: 500; color: var(--muted); }
+.rec-page .start-row { display: flex; gap: 12px; align-items: center; }
+.rec-page .start-row input { flex: 1 1 auto; min-width: 0; height: 48px; padding: 6px 2px 8px; border: 0; border-bottom: 1px solid var(--muted); border-radius: 0; background: transparent; color: var(--text); font: 400 20px var(--sans); }
 .rec-page .start-row input::placeholder { color: #5b5852; }
-.rec-page .start-row input:focus { outline: none; border-bottom: 2px solid var(--accent); padding-bottom: 9px; }
-.rec-page .btn-stack { display: flex; gap: 10px; }
-.rec-page button.big { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 52px; padding: 0 30px; border-radius: 999px; font: 600 16px var(--sans); }
+.rec-page .start-row input:focus { outline: none; border-bottom: 2px solid var(--accent); padding-bottom: 7px; }
+.rec-page .btn-stack { display: flex; gap: 10px; flex: 0 0 auto; }
+.rec-page button.big { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 48px; padding: 0 28px; border-radius: 999px; font: 600 16px var(--sans); }
 .rec-page button.big .btn-icon { width: 18px; height: 18px; }
 .rec-page button.cancel-btn { background: transparent; border: 1px solid var(--muted); color: var(--text); }
 .rec-page button.cancel-btn:hover { border-color: var(--text); }
@@ -1269,88 +1266,70 @@ h2, .section-title { font-size: var(--h2) !important; }
 .rec-page #status:empty { display: none; }
 
 /* recording: timer and level */
-.rec-page .session { display: grid; gap: 10px; }
-.rec-page .session .rec-row { display: flex; align-items: baseline; gap: 14px; }
+.rec-page .session { display: grid; gap: 10px; margin: 0; }
+.rec-page .session .rec-row { display: flex; align-items: baseline; gap: 12px; }
 .rec-page .session .rec-dot { align-self: center; }
-.rec-page .session .timer { font: 300 44px/1 var(--sans); letter-spacing: -0.02em; min-width: 3.2ch; font-variant-numeric: tabular-nums; }
+.rec-page .session .timer { font: 300 34px/1 var(--sans); letter-spacing: -0.02em; min-width: 3.2ch; font-variant-numeric: tabular-nums; }
 .rec-page .hearing { font-size: 14px; color: var(--muted); }
 .rec-page .hearing.on { color: var(--text); }
-.rec-page .session .meter { height: 8px; border: 0; border-radius: 4px; background: #1b1a18; }
-.rec-page .session .meter .fill { background: var(--muted); border-radius: 4px; }
+.rec-page .session .meter { height: 6px; border: 0; border-radius: 3px; background: #1b1a18; }
+.rec-page .session .meter .fill { background: var(--muted); border-radius: 3px; }
 .rec-page .session .meter .fill.on { background: var(--accent); }
 .rec-page .session .meter .gate { width: 2px; background: var(--line); }
 
-/* how it works */
-.rec-page .rec-steps { list-style: none; counter-reset: step; margin: 0; padding: 0; display: grid; gap: 10px; font-size: 15.5px; line-height: 1.5; color: #cfccc6; }
-.rec-page .rec-steps li { counter-increment: step; position: relative; padding-left: 26px; }
+/* how it works: three short lines */
+.rec-page .rec-steps { list-style: none; counter-reset: step; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 15px; line-height: 1.45; color: #cfccc6; }
+.rec-page .rec-steps li { counter-increment: step; position: relative; padding-left: 24px; }
 .rec-page .rec-steps li::before { content: counter(step); position: absolute; left: 0; color: var(--accent); font-weight: 600; }
 .rec-page .rec-steps b { color: var(--text); font-weight: 600; }
-.rec-page .rec-how .fine { margin: 16px 0 0; font-size: 12.5px; line-height: 1.55; color: var(--muted); max-width: 52ch; }
 
-/* settings: last, quiet */
-.rec-page .settings-box { margin-top: auto; padding: 0; border: 0; background: none; font-size: 13px; color: var(--muted); }
-.rec-page .settings-box summary { cursor: pointer; }
-.rec-page .settings-box .settings { margin-top: 10px; display: grid; gap: 8px; }
-.rec-page .settings-box label { display: flex; gap: 8px; align-items: flex-start; color: #cfccc6; }
-.rec-page .settings-box .hint { margin: 2px 0 0; }
-
-/* the passage */
-.rec-page .passage-wrap { max-width: 860px; width: 100%; margin: 0 auto; }
+/* the passage: one size throughout; brighter while reading */
+.rec-page .passage-wrap { margin: 0; padding-top: 20px; border-top: 1px solid #2a2824; }
 .rec-page .passage-label { display: flex; align-items: center; }
 .rec-page .passage-box { position: relative; }
-.rec-page .passage { margin: 0; padding: 0; background: none; border: 0; border-radius: 0; font: 400 clamp(26px, 2.6vw, 36px)/1.42 var(--sans); letter-spacing: -0.01em; color: var(--text); text-wrap: pretty; transition: font-size .45s ease, color .45s ease; }
+.rec-page .passage { margin: 0; padding: 0; background: none; border: 0; border-radius: 0; font: 400 21px/1.5 var(--sans); color: #b3afa7; text-wrap: pretty; transition: color .3s ease; }
+body:is([data-phase="countdown"], [data-phase="recording"]) .rec-page .passage { color: var(--text); }
 .rec-page .passage .w.done { color: var(--accent); }
 .rec-page .passage .w.current { background: var(--accent); color: var(--accent-text); box-shadow: 0 0 0 2px var(--accent); border-radius: 3px; }
-.rec-page .countdown { position: absolute; inset: -12px; display: grid; place-items: center; background: #000; border-radius: 0; pointer-events: none; }
-.rec-page .countdown span { font: 300 clamp(90px, 12vw, 150px)/1 var(--sans); color: var(--accent); }
-.rec-page #followNote { margin-top: 12px; }
-body[data-phase="idle"] .rec-page .passage { font-size: clamp(20px, 1.9vw, 26px); color: #b3afa7; }
+.rec-page .countdown { position: absolute; inset: -6px; display: grid; place-items: center; background: #000; border-radius: 0; pointer-events: none; }
+.rec-page .countdown span { font: 300 96px/1 var(--sans); color: var(--accent); }
+.rec-page #followNote { margin: 10px 0 0; }
 
-/* review and analysing: in the passage's place */
-.rec-page .review, .rec-page .processing { width: min(100%, 560px); margin: 0 auto; }
-.rec-page .review { display: grid; gap: 12px; padding: 22px; background: #0b0b0a; border: 1px solid #2a2824; border-radius: 18px; }
+/* review and analysing, in the passage's place */
+.rec-page .review { display: grid; gap: 12px; margin: 0; padding: 20px 0 0; background: none; border: 0; border-top: 1px solid #2a2824; border-radius: 0; }
 .rec-page .review .controls { display: flex; flex-wrap: wrap; gap: 10px; }
 .rec-page .review .controls button { border-radius: 999px; padding: 11px 22px; font-weight: 600; }
-.rec-page .processing { padding: 28px 22px; background: none; border: 0; text-align: center; }
+.rec-page .processing { margin: 0; padding: 26px 0 10px; background: none; border: 0; border-top: 1px solid #2a2824; border-radius: 0; text-align: center; }
+
+/* settings & privacy: last, quiet */
+.rec-page .settings-box { margin: 0; padding: 14px 0 0; border: 0; border-top: 1px solid #1d1c19; border-radius: 0; background: none; font-size: 13px; color: var(--muted); }
+.rec-page .settings-box summary { cursor: pointer; width: fit-content; }
+.rec-page .settings-box summary:hover { color: var(--text); }
+.rec-page .settings-box .settings { margin-top: 12px; display: grid; gap: 8px; }
+.rec-page .settings-box label { display: flex; gap: 8px; align-items: flex-start; color: #cfccc6; }
+.rec-page .settings-box .hint, .rec-page .settings-box .fine { margin: 2px 0 0; font-size: 12.5px; line-height: 1.55; color: var(--muted); }
 
 /* the phases */
-body:is([data-phase="countdown"], [data-phase="recording"]) .rec-page :is(.field-label, .start-row input, .rec-how, .settings-box, .passage-label) { display: none; }
-body:is([data-phase="review"], [data-phase="processing"]) .rec-page .passage-wrap { display: none; }
-body:is([data-phase="review"], [data-phase="processing"]) .rec-page :is(.rec-how, .settings-box) { opacity: .4; pointer-events: none; }
+body:is([data-phase="countdown"], [data-phase="recording"]) .rec-page :is(.field-label, .start-row input, .rec-steps, .settings-box, .passage-label) { display: none; }
+body:is([data-phase="countdown"], [data-phase="recording"]) .rec-page .start-row { justify-content: flex-end; }
+body:is([data-phase="countdown"], [data-phase="recording"]) .rec-page .btn-stack { flex: 1; }
+body:is([data-phase="countdown"], [data-phase="recording"]) .rec-page .btn-stack button { flex: 1; }
+body:is([data-phase="countdown"], [data-phase="recording"]) .rec-page .session { order: -1; }
+body:is([data-phase="review"], [data-phase="processing"]) .rec-page :is(.start-card, .passage-wrap, .rec-steps, .settings-box) { display: none; }
+body:is([data-phase="review"], [data-phase="processing"]) .rec-page :is(.review, .processing) { padding-top: 0; border-top: 0; }
 
-/* computers: the split box */
-@media (min-width: 900px) {
-  .rec-box { flex-direction: row; height: calc(100svh - 70px - var(--side)); min-height: 520px; }
-  .rec-panel { flex: 0 0 33.333%; box-sizing: border-box; padding: 30px 26px 26px; border-right: 1px solid #3d3a35; overflow-y: auto; scrollbar-width: thin; }
-  .rec-stage { flex: 1; padding: 40px clamp(32px, 5vw, 80px); overflow-y: auto; }
-  .rec-page .start-row input { flex-basis: 100%; }
-  .rec-page .btn-stack { flex: 1; }
-  .rec-page .btn-stack button { flex: 1; }
-  body:is([data-phase="countdown"], [data-phase="recording"]) .rec-page .passage { font-size: clamp(30px, 3vw, 42px); }
-  body:is([data-phase="countdown"], [data-phase="recording"]) .rec-page .rec-panel { justify-content: center; }
-  body:is([data-phase="countdown"], [data-phase="recording"]) .rec-page .start-card { order: 2; }
-}
-/* phones: stacked, in order of importance; while reading, the passage first */
+/* phones: the same box, a little tighter; Start under the name; the passage first while reading */
 @media (max-width: 899.98px) {
-  .rec-page { padding-bottom: 72px; }
-  .rec-box { min-height: calc(100svh - 132px - var(--side)); border-radius: 16px; }
-  .rec-panel, .rec-stage { display: contents; }
-  .rec-page .start-card { order: 1; margin: 22px 18px 0; }
-  .rec-page .session { order: 2; margin: 0 18px; }
-  .rec-page .rec-how { order: 3; margin: 30px 18px 0; }
-  .rec-page .passage-wrap { order: 4; margin: 32px 0 0; padding: 0 18px; }
-  .rec-page .review, .rec-page .processing { order: 5; margin: 22px auto; width: calc(100% - 36px); }
-  .rec-page .settings-box { order: 6; margin: 30px 18px 22px; }
+  main.rec-page { min-height: calc(100svh - 130px); }
+  .rec-box { padding: 22px 20px 16px; gap: 18px; border-radius: 16px; margin: 4px auto auto; }
+  .rec-page .start-row { flex-wrap: wrap; }
+  .rec-page .start-row input { flex-basis: 100%; }
   .rec-page .btn-stack { flex: 1 1 100%; }
   .rec-page .btn-stack button { flex: 1; }
-  body:is([data-phase="countdown"], [data-phase="recording"]) .rec-box { justify-content: center; }
-  body:is([data-phase="countdown"], [data-phase="recording"]) .rec-page .passage-wrap { order: 0; margin-top: 26px; }
-  body:is([data-phase="countdown"], [data-phase="recording"]) .rec-page .passage { font-size: clamp(26px, 7.4vw, 34px); line-height: 1.32; }
-  body:is([data-phase="countdown"], [data-phase="recording"]) .rec-page .session { margin-top: 26px; }
-  body:is([data-phase="countdown"], [data-phase="recording"]) .rec-page .start-card { order: 3; margin: 18px 18px 22px; }
-  body:is([data-phase="countdown"], [data-phase="recording"]) .rec-page .session .timer { font-size: 32px; }
-  body:is([data-phase="review"], [data-phase="processing"]) .rec-page .review, body:is([data-phase="review"], [data-phase="processing"]) .rec-page .processing { order: 0; }
-  body:is([data-phase="review"], [data-phase="processing"]) .rec-page :is(.start-card, .rec-how, .settings-box) { display: none; }
+  .rec-page .rec-steps { font-size: 14px; gap: 4px; }
+  .rec-page .passage { font-size: 19px; line-height: 1.48; }
+  body:is([data-phase="countdown"], [data-phase="recording"]) .rec-page .passage-wrap { order: -2; padding-top: 0; border-top: 0; }
+  .rec-page .countdown span { font-size: 80px; }
 }
 @media (hover: none), (max-width: 640px) { .rec-page .kbd-hint { display: none; } }
 @media (prefers-reduced-motion: reduce) { .rec-page .passage { transition: none; } }
