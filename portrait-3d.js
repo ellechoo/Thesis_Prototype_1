@@ -530,17 +530,16 @@ function vowelWeight(p) { // how strongly the vowel spots cover this point of th
 
 // lines from the open item's heading, across the dividing line, to each spot it describes
 function drawFeatureLines(svg) {
+  // each line starts at the middle of the open box's edge (computers: its right side; phones: its top) and ends in a dot
+  // on the portrait
   const wide = isWide(), pts = anchorsFor(shownKey);
-  const el = wide ? document.querySelector(`#featureList .feat[data-key="${shownKey}"] .feat-head`) : $("featureSheet")?.querySelector(".feat");
+  const el = wide ? document.querySelector(`#featureList .feat[data-key="${shownKey}"]`) : $("featureSheet")?.querySelector(".feat");
   if (!el || !pts.length || !el.offsetParent) { svg.innerHTML = ""; return; }
   const w = wrapEl().getBoundingClientRect(), r = el.getBoundingClientRect();
   let sx, sy;
-  if (wide) { const lr = $("featureList").getBoundingClientRect(); sx = r.right - w.left + 10; sy = Math.max(lr.top + 8, Math.min(lr.bottom - 8, r.top + r.height / 2)) - w.top; }
-  else { // from the box's top edge, below the spots
-    const mx = pts.reduce((s, v) => s + toScreen(v)[0], 0) / pts.length;
-    sx = Math.max(r.left - w.left + 28, Math.min(r.right - w.left - 28, mx)); sy = r.top - w.top - 6;
-  }
-  let out = `<circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="2.5"/>`;
+  if (wide) { const lr = $("featureList").getBoundingClientRect(); sx = r.right - w.left; sy = Math.max(lr.top + 8, Math.min(lr.bottom - 8, r.top + r.height / 2)) - w.top; }
+  else { sx = r.left + r.width / 2 - w.left; sy = r.top - w.top; }
+  let out = "";
   for (const v of pts) { const [ax, ay] = toScreen(v); out += `<line x1="${sx.toFixed(1)}" y1="${sy.toFixed(1)}" x2="${ax.toFixed(1)}" y2="${ay.toFixed(1)}"/><circle cx="${ax.toFixed(1)}" cy="${ay.toFixed(1)}" r="3.5"/>`; }
   svg.innerHTML = out;
 }
