@@ -12,9 +12,9 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { getTake, archiveIsShared } from "./store.js?v=2";
 import { currentTakeId } from "./nav.js?v=8";
 import { formatDate, slug, download } from "./shared.js?v=3";
-import { buildOrb, MAP, traits, voiceColor } from "./voice-orb.js?v=53";
-import { renderIdCard } from "./id-card.js?v=58";
-import { renderBreakdown } from "./breakdown.js?v=48";
+import { buildOrb, MAP, traits, voiceColor } from "./voice-orb.js?v=54";
+import { renderIdCard } from "./id-card.js?v=59";
+import { renderBreakdown } from "./breakdown.js?v=49";
 const esc = (x) => String(x ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 const $ = (id) => document.getElementById(id);
@@ -257,7 +257,7 @@ const swatch = (c, label) => `<span class="fv-sw"><i style="background:${hex(c)}
 const scale = (v, pos, neg) => `<div class="fv-scale" role="img" aria-label="${esc(dial(v, pos.toLowerCase(), neg.toLowerCase()))}, on a scale from ${esc(pos)} to ${esc(neg)}">
     <span>${esc(pos)}</span><span class="fv-track" style="--v:${((1 - Math.max(-1, Math.min(1, v))) / 2).toFixed(3)}"><i></i></span><span>${esc(neg)}</span></div>`;
 function buildFeatures() {
-  pauseSparks = orbInfo.group.children.find((o) => o.userData.pauses)?.children || [];
+  pauseSparks = (orbInfo.group.children.find((o) => o.userData.pauses)?.children || []).filter((o) => o.isSprite); // (not the line joining floating stars)
   const T = orbInfo.traits, tb = T.timbre, ok = tb.enough, F = MAP.timbre.from, u = coreMesh?.material?.uniforms || {};
   const none = "Too little clear voice to read this, so the core is left plain.";
   const has = { sun: ok && tb.bright >= F, swirl: ok && -tb.bright >= F, spikes: ok && tb.raspy >= MAP.timbre.spikes.from, gloss: ok && tb.raspy <= -MAP.timbre.glass.from, vowels: T.vowels.pts.length > 0 };

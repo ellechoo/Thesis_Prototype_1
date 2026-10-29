@@ -863,6 +863,7 @@ float behindCore() {
 }`).replace("#include <opaque_fragment>", "#include <opaque_fragment>\ngl_FragColor.a *= behindCore();");
   };
   mat.customProgramCacheKey = () => "beadBehindCore";
+  const us = []; // (each star's place along the reading, 0 … 1)
   const beads = new THREE.Group(); beads.userData.screenOnly = true; beads.userData.pauses = true; // (the Voiceprint page finds the sparks by this)
   let yLo = Infinity, yHi = -Infinity; for (let k = 1; k < segsW.length; k += 3) { yLo = Math.min(yLo, segsW[k]); yHi = Math.max(yHi, segsW[k]); }
   for (const p of pauses) {
@@ -881,6 +882,16 @@ float behindCore() {
     const want = yHi - u * (yHi - yLo), q = hits.reduce((best, h) => (Math.abs(h[1] - want) < Math.abs(best[1] - want) ? h : best)); // one bead per pause
     const r = Math.min(P.maxSize, P.size + p.seconds * P.perSecond), m = new THREE.Sprite(mat);
     m.position.set(q[0], q[1], q[2]); m.scale.setScalar(r * 2 * P.spark * 2); m.userData.part = "pauses"; beads.add(m); // (the picture is twice the spark's size, leaving room for the glow)
+    us.push(u);
+  }
+  // floating stars (no structure): a thin white line joins each star to the next, in order, following their winding path
+  // round the core (so it never cuts through it) and fading behind the core like the structures' lines
+  if (!segsW.length && us.length > 1) {
+    const R = P.free, pts = [], u0 = us[0], u1 = us[us.length - 1], n = Math.max(24, Math.round((u1 - u0) * 240));
+    for (let i = 0; i <= n; i++) { const u = u0 + (u1 - u0) * (i / n), th = (u - 0.5) * 2 * Math.PI; pts.push(Math.cos(th) * R.r, R.y - u * 2 * R.y, Math.sin(th) * R.r); }
+    const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.Float32BufferAttribute(pts, 3));
+    const lm = fadeBehindCore(new THREE.LineBasicMaterial({ color: MAP.lineColor, transparent: true, opacity: 0.75, depthWrite: false })); lm.userData.coreR = coreR;
+    beads.add(new THREE.Line(geo, lm));
   }
   group.add(beads);
 }
