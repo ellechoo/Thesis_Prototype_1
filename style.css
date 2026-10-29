@@ -1337,3 +1337,27 @@ body:is([data-phase="review"], [data-phase="processing"]) .rec-page :is(.review,
   .rec-page .countdown span { font-size: 80px; }
 }
 @media (hover: none), (max-width: 640px) { .rec-page .kbd-hint { display: none; } }
+
+/* ================================================================ Voiceprint page: the breakdown
+   Each part of the breakdown sits in its own box, styled like the portrait's box above (thin warm border, rounded
+   corners, black), with the same gap between boxes as between the box and the screen edge (--side). Inside, the
+   "How to read…" / "More about…" sections are divided by lines that run edge to edge, as in the Record box.
+   Section titles are bigger here than the site's usual section titles. */
+.portrait-data { max-width: none; margin: 0; padding-top: 0; display: grid; gap: var(--side, 20px); }
+.portrait-data .block, .portrait-data .block + .block { --pad: 32px; margin: 0; padding: 30px var(--pad) 30px; border: 1px solid #3d3a35; border-radius: 22px; background: #000; min-width: 0; }
+.portrait-data .section-title { font-size: clamp(30px, 3.2vw, 44px) !important; margin: 0 0 12px; }
+.portrait-data .chart-head { margin-bottom: 12px; }
+.portrait-data .chart-head .section-title { margin: 0; }
+.portrait-data .block-note { margin: 0 0 24px; }
+.portrait-data .listen { max-width: none; margin: -8px 0 24px; }
+.portrait-data .listen:not(:has(> :not([hidden]):not(:empty))) { display: none; }
+.portrait-data details { margin: 28px calc(-1 * var(--pad)) 0; padding: 20px var(--pad) 0; border-top: 1px solid #3d3a35; }
+.portrait-data details + details { margin-top: 20px; }
+.portrait-data .block > details:first-child { margin: 0; padding: 0; border-top: 0; }
+.portrait-data .block > details:last-child { margin-bottom: -6px; }
+.jump-foot { margin-top: var(--side, 20px); }
+@media (max-width: 899.98px) {
+  .portrait-data .block, .portrait-data .block + .block { --pad: 20px; padding: 24px var(--pad) 24px; border-radius: 16px; }
+  .portrait-data .section-title { font-size: clamp(28px, 8vw, 34px) !important; }
+  .portrait-data details { margin-top: 24px; padding-top: 18px; }
+}

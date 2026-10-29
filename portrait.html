@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..700,0..100,0..1;1,9..144,300..700,0..100,0..1&family=Geist:wght@300..700&display=swap" crossorigin="anonymous" /> <!-- crossorigin: lets the ID card download include this font -->
-  <link rel="stylesheet" href="style.css?v=92" />
+  <link rel="stylesheet" href="style.css?v=93" />
 </head>
 <body>
   <main class="wide">
@@ -57,18 +57,18 @@
 
       <p class="jump-row below-box"><button type="button" class="jump-btn to-breakdown" id="toBreakdown">See full breakdown <span aria-hidden="true">↓</span></button></p>
 
-      <!-- the voice in numbers (what used to be the Breakdown page) -->
+      <!-- the voice in numbers (what used to be the Breakdown page): each part in its own box, like the portrait's -->
       <div class="jump-up" id="breakdown"></div> <!-- where "See full breakdown" scrolls to (the way back is the button at the bottom) -->
-      <section class="listen" id="listen">
-        <p class="note device-note" id="deviceNote" hidden></p>
-        <p class="status error" id="saveNotice" hidden></p>
-        <audio id="player" controls preload="metadata"></audio>
-        <p class="note" id="audioNote"></p>
-      </section>
       <div class="page-main portrait-data">
         <section class="block">
           <h2 class="section-title">Measurements</h2>
           <p class="note block-note">Typical values across the whole reading.</p>
+          <section class="listen" id="listen">
+            <p class="note device-note" id="deviceNote" hidden></p>
+            <p class="status error" id="saveNotice" hidden></p>
+            <audio id="player" controls preload="metadata"></audio>
+            <p class="note" id="audioNote"></p>
+          </section>
           <div class="readouts stats">
             <div class="card" tabindex="0" data-tip="How high or low your voice is: how many times per second your vocal folds vibrate (hertz, Hz). This is your typical value across the reading."><span class="label">Pitch</span><span id="rPitch" class="value">–</span><span class="unit">Hz</span></div>
             <div class="card" tabindex="0" data-tip="The musical note closest to your typical pitch, as if your voice were a key on a piano."><span class="label">Note</span><span id="rNote" class="value">–</span><span class="unit">&nbsp;</span></div>
