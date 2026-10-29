@@ -106,7 +106,7 @@ export const MAP = {
   // longer and skinnier the spark's limbs; only the smoothest voices get rounded tips and corners (the same raspy ↔ smooth
   // dial as the core).
   // An exact tie for the strongest accent puts beads on every tied structure.
-  pauses: { free: { r: 1.0, y: 0.45 }, minSeconds: 0.2, size: 0.017, perSecond: 0.04, maxSize: 0.042, spark: 2.1, fewFor: 2, manyFor: 10, tie: 0.005 },
+  pauses: { free: { r: 1.0, y: 0.45, grow: 1.4 }, minSeconds: 0.2, size: 0.017, perSecond: 0.04, maxSize: 0.042, spark: 2.1, fewFor: 2, manyFor: 10, tie: 0.005 },
 };
 
 // ---------------------------------------------------------------- helpers
@@ -880,7 +880,9 @@ float behindCore() {
     if (!segsW.length) { const R = MAP.pauses.free; hits.push([dx * R.r, R.y - u * 2 * R.y, dz * R.r]); }
     if (!hits.length) continue;
     const want = yHi - u * (yHi - yLo), q = hits.reduce((best, h) => (Math.abs(h[1] - want) < Math.abs(best[1] - want) ? h : best)); // one bead per pause
-    const r = Math.min(P.maxSize, P.size + p.seconds * P.perSecond), m = new THREE.Sprite(mat);
+    // floating stars (no structure) grow the fewer there are: one pause, 1 + grow times as big; manyFor or more, normal size
+    const big = segsW.length ? 1 : 1 + P.free.grow * Math.max(0, Math.min(1, (P.manyFor - pauses.length) / (P.manyFor - 1)));
+    const r = Math.min(P.maxSize, P.size + p.seconds * P.perSecond) * big, m = new THREE.Sprite(mat);
     m.position.set(q[0], q[1], q[2]); m.scale.setScalar(r * 2 * P.spark * 2); m.userData.part = "pauses"; beads.add(m); // (the picture is twice the spark's size, leaving room for the glow)
     us.push(u);
   }
