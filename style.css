@@ -1295,7 +1295,7 @@ body:is([data-phase="countdown"], [data-phase="recording"]) .rec-page .passage {
 .rec-page .passage .w.done { color: var(--accent); }
 .rec-page .passage .w.current { background: var(--accent); color: var(--accent-text); box-shadow: 0 0 0 2px var(--accent); border-radius: 3px; }
 .rec-page .countdown { position: absolute; inset: -6px; display: grid; place-items: center; background: #000; border-radius: 0; pointer-events: none; }
-.rec-page .countdown span { font: 300 96px/1 var(--sans); color: var(--accent); }
+.rec-page .countdown span { font: 500 110px/1 var(--display); text-transform: uppercase; color: var(--accent); } /* 3, 2, 1, Go! in the heading font, mixed letter by letter like the headings (headings.js) */
 .rec-page #followNote { margin: 10px 0 0; }
 
 /* review and analysing, in the passage's place */
@@ -1334,7 +1334,7 @@ body:is([data-phase="review"], [data-phase="processing"]) .rec-page :is(.review,
   .rec-page .rec-steps { font-size: 14px; gap: 4px; }
   .rec-page .passage { font-size: 19px; line-height: 1.48; }
   body:is([data-phase="countdown"], [data-phase="recording"]) .rec-page .passage { font-size: 30px; line-height: 1.34; }
-  .rec-page .countdown span { font-size: 80px; }
+  .rec-page .countdown span { font-size: 92px; }
 }
 @media (hover: none), (max-width: 640px) { .rec-page .kbd-hint { display: none; } }
 
