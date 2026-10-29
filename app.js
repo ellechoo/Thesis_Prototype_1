@@ -2,7 +2,7 @@
 import { VoiceAnalyzer } from "./voice-analyzer.js";
 import { startRecording, resampleTo, encodeWav } from "./recorder.js";
 import { computeRhythm } from "./rhythm.js";
-import { checkTake, roomIsNoisy } from "./quality.js?v=1";
+import { checkTake, roomIsNoisy, measureGaps } from "./quality.js?v=2";
 import { nameIsBlocked } from "./name-check.js?v=1";
 import { makePassageTracker, canFollowWords } from "./progress.js?v=9";
 import { saveTake, newId, archiveIsShared } from "./store.js?v=2";
@@ -23,7 +23,7 @@ const ui = {
   session: $("session"), recDot: $("recDot"), timer: $("timer"), done: $("doneBtn"), cancel: $("cancelBtn"),
   meterFill: $("meterFill"), gateMark: $("gateMark"), active: $("activeDot"),
   processing: $("processing"), step: $("processingStep"),
-  review: $("review"), reviewAudio: $("reviewAudio"), reviewNote: $("reviewNote"), use: $("useBtn"), retry: $("retryBtn"), reviewWarn: $("reviewWarn"),
+  review: $("review"), reviewTitle: document.querySelector("#review .review-title"), reviewAudio: $("reviewAudio"), reviewNote: $("reviewNote"), use: $("useBtn"), retry: $("retryBtn"), reviewWarn: $("reviewWarn"),
   optFilters: $("optFilters"), optBrowserNS: $("optBrowserNS"), archiveNotice: $("archiveNotice"),
 };
 
@@ -219,6 +219,7 @@ function review(info, issues = []) {
   ui.reviewAudio.src = url;
   pending = { prepared, url };
   const warn = issues.length > 0;
+  ui.reviewTitle.textContent = "How did that sound?";
   ui.reviewWarn.hidden = !warn;
   ui.reviewWarn.innerHTML = warn ? `<p class="warn-title">This recording might not work well</p><ul>${issues.map((i) => `<li><b>${i.title}.</b> ${i.text}</li>`).join("")}</ul>` : "";
   ui.use.textContent = warn ? "Use it anyway" : "Use this recording";
@@ -233,17 +234,38 @@ function review(info, issues = []) {
 
 ui.use.addEventListener("click", async () => {
   if (!pending) return;
-  const { prepared, url } = pending;
+  const { prepared, url, take: ready } = pending;
   pending = null;
   ui.reviewAudio.pause();
+  if (ready) { URL.revokeObjectURL(url); ui.reviewAudio.removeAttribute("src"); setPhase("processing"); await saveAndOpen(ready); return; } // "Continue anyway"
   setPhase("processing");
   step("Finishing the analysis…");
   let take;
   try { take = await prepared; }
-  catch (e) { setPhase("idle"); setStatus(`Couldn't analyze the recording: ${e.message}`, true); return; }
-  finally { URL.revokeObjectURL(url); ui.reviewAudio.removeAttribute("src"); }
+  catch (e) { URL.revokeObjectURL(url); ui.reviewAudio.removeAttribute("src"); setPhase("idle"); setStatus(`Couldn't analyze the recording: ${e.message}`, true); return; }
+  // some parts couldn't be measured: ask before adding it to the archive (record again, or continue anyway)
+  const gaps = measureGaps(take);
+  if (gaps.length) { askAboutGaps(take, url, gaps); return; }
+  URL.revokeObjectURL(url); ui.reviewAudio.removeAttribute("src");
   await saveAndOpen(take);
 });
+
+// After the analysis, when something (accent, timbre, vowels, pitch) couldn't be measured: the review panel again,
+// listing what's missing. Recording again is the main button; "Continue anyway" saves the take as it is.
+function askAboutGaps(take, url, gaps) {
+  pending = { take, url };
+  ui.reviewTitle.textContent = gaps.length === 1 ? "One part couldn't be measured" : "Some parts couldn't be measured";
+  ui.reviewWarn.hidden = false;
+  ui.reviewWarn.innerHTML = `<ul>${gaps.map((g) => `<li><b>${g.title}.</b> ${g.text}</li>`).join("")}</ul>`;
+  ui.use.textContent = "Continue anyway";
+  ui.use.classList.remove("primary");
+  ui.retry.classList.add("primary");
+  ui.retry.textContent = "Record again";
+  ui.reviewNote.textContent = "Recording again in a quiet spot, reading the whole passage clearly, usually fixes this. Or continue and your Voiceprint is made without these parts.";
+  setPhase("review");
+  setStatus("");
+  ui.retry.focus();
+}
 
 ui.retry.addEventListener("click", () => {
   if (!pending) return;

@@ -86,3 +86,26 @@ export function checkTake({ frames, seconds, noiseFloor }) {
   }
   return { block: false, issues };
 }
+
+/**
+ * After the analysis: which parts of the Voiceprint couldn't be measured from this take (and so will be left blank or
+ * neutral on the portrait). take: the finished take from prepareTake. Returns [{ key, title, text }]; empty when all is well.
+ * The minimums match what the portrait needs (voice-orb.js: MAP.timbre.minFrames, MAP.vowels; breakdown.js).
+ */
+export function measureGaps(take) {
+  const frames = take.frames || [], gaps = [];
+  const add = (key, title, text) => gaps.push({ key, title, text });
+  const voiced = frames.filter((f) => f.pitch).length;
+  if (!take.summary?.pitchHz || voiced < 10)
+    add("pitch", "Note & pitch", "We couldn't find a clear pitch, so your color and note are a guess.");
+  const timbre = frames.filter((f) => f.active && f.pitch && f.centroidHz).length;
+  if (!take.summary?.timbre && timbre < 40)
+    add("timbre", "Bright, breathy & raspy", "There wasn't enough clear voice to read the texture of your voice, so these are left in the middle.");
+  const vowels = frames.filter((f) => f.f1 && f.f2 && f.f1 >= 200 && f.f1 <= 1100 && f.f2 >= 600 && f.f2 <= 3200).length;
+  if (vowels < 8) add("vowels", "Vowel space", "We couldn't pick out enough vowels, so the vowel colors on the core are missing.");
+  if (!take.accent?.results?.length)
+    add("accent", "Accent", /too short|needs at least/.test(take.accentNote || "")
+      ? "The recording was too short for the accent check, so there's no accent structure."
+      : "The accent check didn't work this time, so there's no accent structure.");
+  return gaps;
+}
