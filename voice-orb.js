@@ -147,14 +147,14 @@ export function traits(take) {
   const famOf = (label) => Object.keys(MAP.accent.families).find((k) => MAP.accent.families[k].labels.includes(label));
   let accents = (take.accent?.results || []).filter((r) => famOf(r.label) && r.score > 0).map((r) => ({ label: r.label, name: r.name || r.label, family: famOf(r.label), w: r.score }));
   let tot = accents.reduce((a, x) => a + x.w, 0);
-  if (!tot) { accents = [{ label: "us", name: "United States", family: "americas", w: 1 }]; tot = 1; }
+  if (!tot) { accents = []; tot = 1; } // no accent result: no structure at all (there is no default accent)
   accents = accents.map((x) => ({ ...x, w: x.w / tot })).filter((x) => x.w >= MAP.accent.minShare);
   tot = accents.reduce((a, x) => a + x.w, 0);
   accents = accents.map((x) => ({ ...x, w: x.w / tot })).sort((a, b) => b.w - a.w);
   const timbre = timbreOf(take, frames);
   const vowels = vowelsOf(frames);
   return { vowels, pitch, note: s.note || noteOf(pitch), lo: q(0.08), hi: q(0.92), rangeSt: 12 * Math.log2(q(0.92) / q(0.08)), accents, timbre,
-    accentTop: take.accent?.top || null, hasAccent: !!take.accent, rand: rng(take.id || take.name || "voice"), trand: rng((take.id || take.name || "voice") + "/timbre"), grand: rng((take.id || take.name || "voice") + "/glass") };
+    accentTop: take.accent?.top || null, hasAccent: !!take.accent && accents.length > 0, rand: rng(take.id || take.name || "voice"), trand: rng((take.id || take.name || "voice") + "/timbre"), grand: rng((take.id || take.name || "voice") + "/glass") };
 }
 // vowel space: the frames that land on the vowel chart, evenly sampled, with this voice's own range (log Hz)
 function vowelsOf(frames) {
@@ -894,7 +894,7 @@ export function legendFor(T) {
   const mix = T.accents.map((a) => `${MAP.accent.families[a.family].structure}, ${MAP.accent.variants[a.label] || ""} (${a.name}, ${Math.round(a.w * 100)}%)`).join("; layered with ");
   return [
     { key: "accent", tier: 1, data: "Accent", value: T.accentTop ? T.accentTop.name : "Not measured",
-      visual: T.hasAccent ? `The structure around the core, in a very light tint of the core's color: ${mix}. Each accent family has its own kind of structure, and each of the 16 accents its own variation; mixed accents layer theirs, smaller shares fainter.` : "No accent result, so the structure defaults to the prism shell." },
+      visual: T.hasAccent ? `The structure around the core, in a very light tint of the core's color: ${mix}. Each accent family has its own kind of structure, and each of the 16 accents its own variation; mixed accents layer theirs, smaller shares fainter.` : "No accent result, so there is no structure around the core." },
     { key: "core", tier: 1, data: "Note & pitch", value: `${T.note} · ${Math.round(T.pitch)} Hz`, visual: `The color of the glowing core. The note picks the hue (the 12 notes go round the color wheel, C = red); the pitch picks how deep or pale it is — lower voices richer, higher voices lighter (scale stretched to this archive, ${MAP.color.lowHz}–${MAP.color.highHz} Hz).` },
     { key: "timbre", tier: 1, data: "Timbre", value: timbreWords(T.timbre), visual: T.timbre.enough
         ? "The core's surroundings, edge and shape. Bright voices shine like a sun (rays in the core's colour); dark voices pull in a swirl of their own colour, like water down a drain. Breathy voices have a cloudy edge, clean ones a crisp edge. Raspy voices grow small spikes; smooth ones turn glossy, like polished glass, with crisp highlights and a bright rim. Each is as strong as it is in the voice, compared with the rest of the archive."
