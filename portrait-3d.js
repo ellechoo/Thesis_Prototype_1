@@ -12,7 +12,7 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { getTake, archiveIsShared } from "./store.js?v=2";
 import { currentTakeId } from "./nav.js?v=8";
 import { formatDate, slug, download } from "./shared.js?v=3";
-import { buildOrb, MAP } from "./voice-orb.js?v=42";
+import { buildOrb, MAP, traits, voiceColor } from "./voice-orb.js?v=42";
 import { renderIdCard } from "./id-card.js?v=47";
 import { renderBreakdown } from "./breakdown.js?v=37";
 const esc = (x) => String(x ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -47,10 +47,30 @@ async function load() {
     $("subtitle").textContent = wideQuery.matches ? `Recorded ${formatDate(take.createdAt)}` : formatDate(take.createdAt);
   };
   showTitle(); wideQuery.addEventListener("change", showTitle);
+  try { useVoiceAccent(take); } catch (e) { console.warn("Couldn't use the voice's colour:", e); }
   setUpScene();
   requestAnimationFrame(() => requestAnimationFrame(() => document.body.classList.remove("arriving"))); // (after its first frames)
   try { renderBreakdown(take); } catch (e) { console.warn("Couldn't show the measurements:", e); }
   wireIdCard();
+}
+// Each Voiceprint page uses the voice's own colour (the colour of its typical note, as on the portrait's core) in place of
+// the site's red: buttons and highlights, the charts, the breakdown's headings, the "See full breakdown" strip. Very dark
+// colours are lightened just enough to read on black.
+function useVoiceAccent(take) {
+  const T = traits(take), col = voiceColor(T.pitch, T.note), hsl = {}; col.getHSL(hsl);
+  const lum = (c) => { const h = c.getHexString(), ch = (i) => { const v = parseInt(h.slice(i, i + 2), 16) / 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+    return 0.2126 * ch(0) + 0.7152 * ch(2) + 0.0722 * ch(4); };
+  while (lum(col) < 0.18 && hsl.l < 0.92) { hsl.l += 0.02; col.setHSL(hsl.h, hsl.s, hsl.l); } // (contrast with black of at least 4.6 : 1)
+  const hex = "#" + col.getHexString(), onIt = lum(col) > 0.3 ? "#111111" : "#ffffff";
+  document.documentElement.style.setProperty("--accent", hex);
+  document.documentElement.style.setProperty("--accent-text", onIt);
+  // a few things draw the red directly (the nav tabs' hover fill is an SVG picture): copy those rules with this colour
+  const reds = [/%23e5352d/gi, /#e5352d/gi, /rgb\(229, 53, 45\)/g], to = [`%23${hex.slice(1)}`, hex, hex];
+  const swap = (t) => reds.reduce((s, re, i) => s.replace(re, to[i]), t), has = (t) => reds.some((re) => (re.lastIndex = 0, re.test(t)));
+  const copy = (rules) => [...rules].map((r) => r.cssRules && r.conditionText ? (() => { const inner = copy(r.cssRules); return inner ? `@media ${r.conditionText} { ${inner} }` : ""; })() : has(r.cssText) ? swap(r.cssText) : "").filter(Boolean).join("\n");
+  let css = "";
+  for (const sh of document.styleSheets) { try { css += copy(sh.cssRules); } catch {} } // (other sites' stylesheets can't be read; they have no red)
+  const st = document.createElement("style"); st.id = "voiceAccent"; st.textContent = css; document.head.append(st);
 }
 function empty(msg) { $("empty").hidden = false; if (msg) $("emptyText").textContent = msg; }
 
