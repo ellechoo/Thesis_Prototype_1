@@ -8,7 +8,7 @@ import { makePassageTracker, canFollowWords } from "./progress.js?v=8";
 import { saveTake, newId, archiveIsShared } from "./store.js?v=2";
 import {
   RATE, MIN_ACCENT_SECONDS, summarize, drawPitchTrace, warmUpAccentModel, classifyAccent,
-  noteName, clock, toDb, dbToPct, round2, describeDevice } from "./shared.js?v=2";
+  noteName, clock, toDb, dbToPct, round2, describeDevice } from "./shared.js?v=3";
 
 const COUNTDOWN = 3;             // seconds; the room-noise check runs during it
 const CALIBRATE_MS = 1500;
