@@ -41,10 +41,12 @@ async function load() {
   document.body.classList.add("arriving"); document.body.classList.toggle("from-archive", fromArchive);
   $("content").hidden = false;
   document.title = `${take.name}'s Voiceprint`;
-  // the heading: "Name's Voiceprint" on computers; on phones just the name, to save room over the portrait
-  const showTitle = () => { $("title").textContent = wideQuery.matches ? `${take.name}'s Voiceprint` : take.name; };
+  // the heading: "Name's Voiceprint" and "Recorded <date>" on computers; on phones just the name and the date, to save room
+  const showTitle = () => {
+    $("title").textContent = wideQuery.matches ? `${take.name}'s Voiceprint` : take.name;
+    $("subtitle").textContent = wideQuery.matches ? `Recorded ${formatDate(take.createdAt)}` : formatDate(take.createdAt);
+  };
   showTitle(); wideQuery.addEventListener("change", showTitle);
-  $("subtitle").textContent = `Recorded ${formatDate(take.createdAt)}`;
   setUpScene();
   requestAnimationFrame(() => requestAnimationFrame(() => document.body.classList.remove("arriving"))); // (after its first frames)
   try { renderBreakdown(take); } catch (e) { console.warn("Couldn't show the measurements:", e); }
