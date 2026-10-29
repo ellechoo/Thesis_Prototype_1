@@ -1,0 +1,56 @@
+// headings.js — every heading on the site is set in Fraunces, one letter at a time: each letter gets its own softness,
+// "wonk", optical size and weight, and now and then an italic. The mix is worked out from the heading's own words, so
+// the same heading (or the same person's name) always starts out looking the same. Then, every STEP_MS, one letter in
+// each visible heading changes to a new mix, so the headings shimmer gently. Capitals and sizes come from style.css.
+// Headings that change later (a name filled in, an ID card opened) are picked up automatically.
+// Screen readers get the plain text; people who ask for reduced motion get still letters.
+const SELECTOR = "h1, h2, .section-title, .review-title, .processing-title, .id-brand";
+const STEP_MS = 150;
+const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function rng(seed) { let h = 2166136261; for (const c of seed) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return () => { h = Math.imul(h ^ (h >>> 15), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909); return ((h ^= h >>> 16) >>> 0) / 4294967296; }; }
+// one letter's look
+const letterStyle = (r) => `font-weight:${Math.round(320 + r() * 380)};font-style:${r() < 0.25 ? "italic" : "normal"};font-variation-settings:'SOFT' ${Math.round(r() * 100)},'WONK' ${r() < 0.5 ? 1 : 0},'opsz' ${Math.round(24 + r() * 120)}`;
+const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+const mixed = new Set(), visible = new Set();
+const seen = new IntersectionObserver((entries) => { for (const e of entries) e.isIntersecting ? visible.add(e.target) : visible.delete(e.target); });
+
+function mix(el) {
+  if (el.classList.contains("visually-hidden")) return;
+  const text = (el.textContent || "").replace(/\s+/g, " ").trim();
+  if (!text) return;
+  const r = rng(text);
+  // the plain words for screen readers, then the letters (hidden from them), each word kept together on its line
+  el.innerHTML = `<span class="mx-sr">${esc(text)}</span><span class="mx" aria-hidden="true">${text.split(" ").map((w) =>
+    `<span class="mx-w">${[...w].map((ch) => `<span class="mx-l" style="${letterStyle(r)}">${esc(ch)}</span>`).join("")}</span>`).join(" ")}</span>`;
+  el.dataset.mixFull = el.textContent; // (if anything else changes the text later, it no longer matches, and it's mixed again)
+  el._letters = [...el.querySelectorAll(".mx-l")];
+  if (!mixed.has(el)) { mixed.add(el); seen.observe(el); }
+}
+function scan(root = document) {
+  const list = root.nodeType === 1 && root.matches?.(SELECTOR) ? [root] : [];
+  for (const el of [...list, ...(root.querySelectorAll?.(SELECTOR) || [])]) if (el.dataset.mixFull !== el.textContent) mix(el);
+}
+
+scan();
+// headings added or rewritten later
+new MutationObserver((records) => {
+  const touched = new Set();
+  for (const rec of records) {
+    let n = rec.target.nodeType === 1 ? rec.target : rec.target.parentElement;
+    const h = n?.closest?.(SELECTOR); if (h) touched.add(h);
+    for (const a of rec.addedNodes) if (a.nodeType === 1) touched.add(a);
+  }
+  for (const n of touched) if (n.isConnected) scan(n);
+  for (const el of mixed) if (!el.isConnected) { mixed.delete(el); visible.delete(el); seen.unobserve(el); }
+}).observe(document.body, { childList: true, subtree: true, characterData: true });
+
+// the shimmer: one letter per visible heading, every STEP_MS (paused while the tab is hidden)
+if (!still) setInterval(() => {
+  if (document.hidden) return;
+  for (const el of visible) {
+    const ls = el._letters; if (!ls?.length) continue;
+    ls[Math.floor(Math.random() * ls.length)].style.cssText = letterStyle(Math.random);
+  }
+}, STEP_MS);
