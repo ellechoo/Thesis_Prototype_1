@@ -1415,3 +1415,8 @@ body:is([data-phase="review"], [data-phase="processing"]) .rec-page :is(.review,
 @keyframes arrow-down { 0%, 100% { transform: translateY(-2px); } 50% { transform: translateY(4px); } }
 @keyframes arrow-up { 0%, 100% { transform: translateY(2px); } 50% { transform: translateY(-4px); } }
 @media (prefers-reduced-motion: reduce) { .explore .jump-btn.in-box .jump-arrow, .portrait-data .foot-strip .jump-arrow { animation: none; } }
+
+/* Join page, computers: "Only takes about a minute!" sits right beside the button, with a small clock */
+.home-block .home-actions { justify-content: flex-start; align-items: center; gap: 16px; }
+.home-block .home-actions .home-small { display: inline-flex; align-items: center; gap: 7px; }
+.home-clock { width: 15px; height: 15px; flex: none; }
