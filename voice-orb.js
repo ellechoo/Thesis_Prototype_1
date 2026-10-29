@@ -814,12 +814,15 @@ function sparkPicture(glow, edge) {
   const c = document.createElement("canvas"); c.width = c.height = 256;
   const g = c.getContext("2d"), m = 128;
   if (k > 0) { const gr = g.createRadialGradient(m, m, 0, m, m, m); gr.addColorStop(0, `rgba(255,255,255,${0.75 * k})`); gr.addColorStop(0.3, `rgba(255,255,255,${0.32 * k})`); gr.addColorStop(0.6, `rgba(255,255,255,${0.1 * k})`); gr.addColorStop(1, "rgba(255,255,255,0)"); g.fillStyle = gr; g.fillRect(0, 0, 256, 256); }
-  const sharp = (e + 1) / 2, round = 1 - sharp; // 1 = raspiest, 0 = smoothest
-  const w = 30 * round;                          // rounding: a thick round-cornered outline drawn over the fill
-  const outer = 62 - w / 2, inner = 20 + 9 * round - w / 2;
-  g.fillStyle = g.strokeStyle = "#fff"; g.lineJoin = "round"; g.lineWidth = w; g.beginPath();
-  for (let i = 0; i < 8; i++) { const r = i % 2 ? inner : outer, a = (i / 8) * Math.PI * 2 - Math.PI / 2; g.lineTo(m + Math.cos(a) * r, m + Math.sin(a) * r); }
-  g.closePath(); g.fill(); if (w > 0.5) g.stroke();
+  const round = 1 - (e + 1) / 2; // 1 = smoothest, 0 = raspiest
+  // the eight corners (four tips, four inner corners), each rounded off with an arc: the smoother the voice, the rounder
+  // both the tips and the inner corners
+  const outer = 62, inner = 20 + 5 * round, rTip = 9 * round, rIn = 16 * round;
+  const pts = []; for (let i = 0; i < 8; i++) { const r = i % 2 ? inner : outer, a = (i / 8) * Math.PI * 2 - Math.PI / 2; pts.push([m + Math.cos(a) * r, m + Math.sin(a) * r]); }
+  g.fillStyle = "#fff"; g.beginPath();
+  const mid = (p, q) => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2], start = mid(pts[7], pts[0]); g.moveTo(start[0], start[1]);
+  for (let i = 0; i < 8; i++) { const p = pts[i], n = mid(p, pts[(i + 1) % 8]); g.arcTo(p[0], p[1], n[0], n[1], i % 2 ? rIn : rTip); }
+  g.closePath(); g.fill();
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
   return (SPARKS[key] = t);
 }
