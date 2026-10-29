@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..700,0..100,0..1;1,9..144,300..700,0..100,0..1&family=Geist:wght@300..700&display=swap" crossorigin="anonymous" /> <!-- crossorigin: lets the ID card download include this font -->
-  <link rel="stylesheet" href="style.css?v=93" />
+  <link rel="stylesheet" href="style.css?v=94" />
 </head>
 <body>
   <main class="wide">
@@ -64,7 +64,6 @@
           <h2 class="section-title">Measurements</h2>
           <p class="note block-note">Typical values across the whole reading.</p>
           <section class="listen" id="listen">
-            <p class="note device-note" id="deviceNote" hidden></p>
             <p class="status error" id="saveNotice" hidden></p>
             <audio id="player" controls preload="metadata"></audio>
             <p class="note" id="audioNote"></p>
@@ -81,6 +80,7 @@
             <div class="meter-label"><span>Pitch over the whole recording</span><span>shaded: pauses</span></div>
             <canvas id="trace" height="180"></canvas>
           </div>
+          <p class="note device-note" id="deviceNote" hidden></p>
         </section>
 
         <section class="block">

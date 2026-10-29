@@ -1349,6 +1349,7 @@ body:is([data-phase="review"], [data-phase="processing"]) .rec-page :is(.review,
 .portrait-data .chart-head { margin-bottom: 12px; }
 .portrait-data .chart-head .section-title { margin: 0; }
 .portrait-data .block-note { margin: 0 0 24px; }
+.portrait-data .device-note { margin: 18px 0 0; }
 .portrait-data .listen { max-width: none; margin: -8px 0 24px; }
 .portrait-data .listen:not(:has(> :not([hidden]):not(:empty))) { display: none; }
 .portrait-data details { margin: 28px calc(-1 * var(--pad)) 0; padding: 20px var(--pad) 0; border-top: 1px solid #3d3a35; }
