@@ -12,9 +12,9 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { getTake, archiveIsShared } from "./store.js?v=2";
 import { currentTakeId } from "./nav.js?v=8";
 import { formatDate, slug, download } from "./shared.js?v=3";
-import { buildOrb, MAP, traits, voiceColor } from "./voice-orb.js?v=51";
-import { renderIdCard } from "./id-card.js?v=56";
-import { renderBreakdown } from "./breakdown.js?v=46";
+import { buildOrb, MAP, traits, voiceColor } from "./voice-orb.js?v=52";
+import { renderIdCard } from "./id-card.js?v=57";
+import { renderBreakdown } from "./breakdown.js?v=47";
 const esc = (x) => String(x ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 const $ = (id) => document.getElementById(id);
@@ -263,8 +263,8 @@ function buildFeatures() {
   const has = { sun: ok && tb.bright >= F, swirl: ok && -tb.bright >= F, spikes: ok && tb.raspy >= MAP.timbre.spikes.from, gloss: ok && tb.raspy <= -MAP.timbre.glass.from, vowels: T.vowels.pts.length > 0 };
   const shares = T.hasAccent ? `<div class="fv-bars">${T.accents.slice(0, 3).map((a) => `<div class="fv-bar"><span>${esc(a.name)}</span><span class="fv-bar-track"><i style="width:${Math.round(a.w * 100)}%"></i></span><span class="fv-num">${Math.round(a.w * 100)}%</span></div>`).join("")}</div>` : "";
   feats = [
-    { key: "accent", name: "Accent", value: byKey.accent?.value || "", spot: true,
-      text: T.hasAccent ? "The accent group the voice sounds closest to. Each group has its own structure; a mix of accents layers them." : "No accent result, so the structure is the default prism shell.",
+    { key: "accent", name: "Accent", value: byKey.accent?.value || "", spot: T.hasAccent, lines: T.hasAccent,
+      text: T.hasAccent ? "The accent group the voice sounds closest to. Each group has its own structure; a mix of accents layers them." : "No accent result, so there is no structure around the core.",
       visual: shares },
     { key: "color", name: "Note, pitch & range", value: `${T.note} · ${Math.round(T.pitch)} Hz`, spot: true,
       text: "The note picks the color and the pitch how deep it is. The top and bottom shade to the highest and lowest notes.",
