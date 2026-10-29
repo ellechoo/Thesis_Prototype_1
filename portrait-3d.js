@@ -41,7 +41,9 @@ async function load() {
   document.body.classList.add("arriving"); document.body.classList.toggle("from-archive", fromArchive);
   $("content").hidden = false;
   document.title = `${take.name}'s Voiceprint`;
-  $("title").textContent = `${take.name}'s Voiceprint`;
+  // the heading: "Name's Voiceprint" on computers; on phones just the name, to save room over the portrait
+  const showTitle = () => { $("title").textContent = wideQuery.matches ? `${take.name}'s Voiceprint` : take.name; };
+  showTitle(); wideQuery.addEventListener("change", showTitle);
   $("subtitle").textContent = `Recorded ${formatDate(take.createdAt)}`;
   setUpScene();
   requestAnimationFrame(() => requestAnimationFrame(() => document.body.classList.remove("arriving"))); // (after its first frames)
