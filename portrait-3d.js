@@ -140,7 +140,8 @@ function resize() {
   render();
 }
 const wrapEl = () => document.querySelector(".stage-wrap");
-const isWide = () => wrapEl().clientWidth >= WIDE;
+const wideQuery = matchMedia(`(min-width: ${WIDE}px)`);
+const isWide = () => wideQuery.matches; // (the same test as the page's layout, which goes by the window's width, not the box's)
 function fit() {
   const vFov = THREE.MathUtils.degToRad(camera.fov) / 2, hFov = Math.atan(Math.tan(vFov) * camera.aspect);
   const d = (isWide() ? VIEW_RADIUS_WIDE : VIEW_RADIUS) / Math.sin(Math.min(vFov, hFov));
