@@ -103,7 +103,8 @@ export const MAP = {
   // first word to the bottom at the last, so the beads also read in order. Longer pauses give bigger beads.
   // Each bead is a small, plump four-pointed spark. The fewer pauses a reading has, the more its sparks glow (a soft halo
   // round each): at fewFor pauses or fewer, the full glow; at manyFor or more, plain sparks. The raspier the voice, the
-  // sharper the spark's points; the smoother, the rounder its tips and sides (the same raspy ↔ smooth dial as the core).
+  // longer and skinnier the spark's limbs; only the smoothest voices get rounded tips and corners (the same raspy ↔ smooth
+  // dial as the core).
   // An exact tie for the strongest accent puts beads on every tied structure.
   pauses: { minSeconds: 0.2, size: 0.017, perSecond: 0.04, maxSize: 0.042, spark: 2.1, fewFor: 2, manyFor: 10, tie: 0.005 },
 };
@@ -814,10 +815,10 @@ function sparkPicture(glow, edge) {
   const c = document.createElement("canvas"); c.width = c.height = 256;
   const g = c.getContext("2d"), m = 128;
   if (k > 0) { const gr = g.createRadialGradient(m, m, 0, m, m, m); gr.addColorStop(0, `rgba(255,255,255,${0.75 * k})`); gr.addColorStop(0.3, `rgba(255,255,255,${0.32 * k})`); gr.addColorStop(0.6, `rgba(255,255,255,${0.1 * k})`); gr.addColorStop(1, "rgba(255,255,255,0)"); g.fillStyle = gr; g.fillRect(0, 0, 256, 256); }
-  const round = 1 - (e + 1) / 2; // 1 = smoothest, 0 = raspiest
-  // the eight corners (four tips, four inner corners), each rounded off with an arc: the smoother the voice, the rounder
-  // both the tips and the inner corners
-  const outer = 62, inner = 20 + 5 * round, rTip = 9 * round, rIn = 16 * round;
+  // the raspier the voice, the longer and skinnier the spark's four limbs; only the smoothest voices (the last fifth of the
+  // dial) get rounded tips and inner corners, everyone else a sharp spark
+  const sharp = (e + 1) / 2, round = Math.max(0, Math.min(1, (-0.6 - e) / 0.4));
+  const outer = 56 + 18 * sharp, inner = 24 - 13 * sharp + 2 * round, rTip = 9 * round, rIn = 16 * round;
   const pts = []; for (let i = 0; i < 8; i++) { const r = i % 2 ? inner : outer, a = (i / 8) * Math.PI * 2 - Math.PI / 2; pts.push([m + Math.cos(a) * r, m + Math.sin(a) * r]); }
   g.fillStyle = "#fff"; g.beginPath();
   const mid = (p, q) => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2], start = mid(pts[7], pts[0]); g.moveTo(start[0], start[1]);
