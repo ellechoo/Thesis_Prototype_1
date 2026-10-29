@@ -1363,3 +1363,7 @@ body:is([data-phase="review"], [data-phase="processing"]) .rec-page :is(.review,
   .portrait-data .chart-head { margin-bottom: 18px; }
   .portrait-data details { margin-top: 24px; padding-top: 18px; }
 }
+
+/* nav tab labels a touch bigger (they were 12.5px on computers and 10.5–11.5px on phones) */
+@media (min-width: 641px) { .tabs a, .tabs a.nav-pill { font-size: 13.5px !important; } }
+@media (max-width: 640px) { .tabs a, .tabs a.nav-pill { font-size: 11.5px !important; } }
