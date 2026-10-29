@@ -558,6 +558,8 @@ function wireIdCard() {
   dlg.addEventListener("click", (e) => { if (e.target === dlg) dlg.close(); }); // a click on the dimmed backdrop
   btn.addEventListener("click", async () => {
     const card = view.querySelector(".id-card"); if (!card) return;
+    // wait for the card's headings to finish settling (headings.js), so the picture has their final letters
+    for (let i = 0; i < 60 && card.querySelector("[data-settling]"); i++) await new Promise((r) => setTimeout(r, 50));
     const label = btn.textContent; btn.disabled = true; btn.textContent = "Preparing…";
     try {
       const { toPng } = await import("https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/+esm");
