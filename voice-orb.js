@@ -96,6 +96,11 @@ export const MAP = {
   // the structure's color: a very light tint of the core's own hue (its note), at this saturation and lightness for
   // every voice, so it reads as nearly white with a hint of the core's color, whatever the core's depth
   shell: { sat: 0.85, light: 0.84 },
+  // TALKING & PAUSES → beads on the strongest accent's structure. The reading's timeline (first word to last) wraps once
+  // around the vertical axis; at every pause longer than minSeconds, a flat, soft-edged bead in the voice's colour sits on
+  // each line of that structure passing that angle (like beads threaded on string). Longer pauses give bigger beads.
+  // An exact tie for the strongest accent puts beads on every tied structure.
+  pauses: { minSeconds: 0.2, size: 0.017, perSecond: 0.04, maxSize: 0.042, feather: 1.7, spacing: 0.15, tie: 0.005 },
 };
 
 // ---------------------------------------------------------------- helpers
@@ -783,14 +788,60 @@ export function buildOrb(take) {
   darkSwirl(T, group, color);
   CORE_R = size; CORE_COL = color;
   const top = T.accents[0]?.w || 1, lift = (w) => (T.accents.length > 1 ? Math.min(1, MAP.accent.mixLift + (1 - MAP.accent.mixLift) * (w / top)) : w);
-  for (const a of T.accents) group.add(STRUCT[a.family](T, lift(a.w), a.label)); // (the share only sets how solid each layer is)
+  const structs = T.accents.map((a) => { const st = STRUCT[a.family](T, lift(a.w), a.label); group.add(st); return st; }); // (the share only sets how solid each layer is)
   CORE_R = null; CORE_COL = null;
   // the structure takes a very light tint of the core's color (the shading of the metal rings and the line weights stay as they are)
   const hsl = {}; color.getHSL(hsl);
   const shell = new THREE.Color().setHSL(hsl.h, MAP.shell.sat, MAP.shell.light);
   group.children.forEach((o) => { if (o.userData.part === "core" || o.userData.screenOnly) return;
     o.traverse((m) => { for (const mt of m.material ? [].concat(m.material) : []) if (mt.color) mt.color.copy(shell); }); });
+  pauseBeads(take.rhythm, T, structs, group, color);
   return { group, traits: T, legend: legendFor(T), coreColor: color, shellColor: shell };
+}
+
+// ---- talking & pauses: beads threaded on the strongest accent's lines (see MAP.pauses)
+let BEAD = null;
+function softBead() { // a solid round middle that fades out softly at the edge
+  if (BEAD) return BEAD;
+  const c = document.createElement("canvas"); c.width = c.height = 128;
+  const g = c.getContext("2d"), gr = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+  gr.addColorStop(0, "rgba(255,255,255,1)"); gr.addColorStop(0.42, "rgba(255,255,255,1)"); gr.addColorStop(0.7, "rgba(255,255,255,0.45)"); gr.addColorStop(1, "rgba(255,255,255,0)");
+  g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
+  BEAD = new THREE.CanvasTexture(c); BEAD.colorSpace = THREE.SRGBColorSpace;
+  return BEAD;
+}
+function pauseBeads(rhythm, T, structs, group, color) {
+  const P = MAP.pauses, t0 = rhythm?.start, t1 = rhythm?.end ?? (t0 != null && rhythm?.totalSeconds ? t0 + rhythm.totalSeconds : null);
+  const pauses = (rhythm?.pauses || []).filter((p) => p.seconds >= P.minSeconds);
+  if (!pauses.length || t0 == null || !(t1 > t0) || !structs.length) return;
+  const top = T.accents[0]?.w || 1, keep = structs.filter((_, i) => T.accents[i] && Math.abs(T.accents[i].w - top) < P.tie);
+  // every bit of line in those structures, as segments in the portrait's own frame
+  group.updateMatrixWorld(true);
+  const segsW = [], a = new THREE.Vector3(), b = new THREE.Vector3();
+  for (const st of keep) st.traverse((o) => {
+    if (o.userData.part !== "accent" || !o.geometry?.attributes?.position) return;
+    const pos = o.geometry.attributes.position, idx = o.geometry.index, n = idx ? idx.count : pos.count, get = (k) => (idx ? idx.getX(k) : k);
+    const push = (i, j) => { a.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld); b.fromBufferAttribute(pos, j).applyMatrix4(o.matrixWorld); segsW.push(a.x, a.y, a.z, b.x, b.y, b.z); };
+    if (o.isLineSegments) for (let k = 0; k + 1 < n; k += 2) push(get(k), get(k + 1));
+    else if (o.isLine) for (let k = 0; k + 1 < n; k++) push(get(k), get(k + 1));
+    else if (o.isMesh) for (let k = 0; k + 2 < n; k += 3) { push(get(k), get(k + 1)); push(get(k + 1), get(k + 2)); }
+  });
+  const mat = new THREE.SpriteMaterial({ map: softBead(), color: color.clone(), transparent: true, depthWrite: false, toneMapped: false });
+  const beads = new THREE.Group(); beads.userData.screenOnly = true;
+  for (const p of pauses) {
+    const u = ((p.start + p.end) / 2 - t0) / (t1 - t0), th = (u - 0.5) * 2 * Math.PI; // (0 … 1 around, from the first word to the last)
+    const nx = -Math.sin(th), nz = Math.cos(th), dx = Math.cos(th), dz = Math.sin(th), hits = [];
+    for (let k = 0; k < segsW.length; k += 6) { // where each line crosses the half-plane at this angle
+      const s0 = segsW[k] * nx + segsW[k + 2] * nz, s1 = segsW[k + 3] * nx + segsW[k + 5] * nz;
+      if ((s0 > 0) === (s1 > 0) || s0 === s1) continue;
+      const f = s0 / (s0 - s1), x = segsW[k] + (segsW[k + 3] - segsW[k]) * f, y = segsW[k + 1] + (segsW[k + 4] - segsW[k + 1]) * f, z = segsW[k + 2] + (segsW[k + 5] - segsW[k + 2]) * f;
+      if (x * dx + z * dz > 0.05) hits.push([x, y, z]);
+    }
+    const placed = [], r = Math.min(P.maxSize, P.size + p.seconds * P.perSecond);
+    for (const q of hits) if (!placed.some((h) => Math.hypot(h[0] - q[0], h[1] - q[1], h[2] - q[2]) < P.spacing)) placed.push(q);
+    for (const q of placed) { const m = new THREE.Sprite(mat); m.position.set(q[0], q[1], q[2]); m.scale.setScalar(r * 2 * P.feather); beads.add(m); }
+  }
+  group.add(beads);
 }
 
 // e.g. "Bright, slightly breathy" — the words for the three timbre dials (only the ones that stand out)
