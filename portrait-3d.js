@@ -272,9 +272,6 @@ function buildFeatures() {
     { key: "vowels", name: "Vowel space", value: has.vowels ? `${T.vowels.n} vowel moments` : "Not enough to map", lines: has.vowels, spot: has.vowels,
       text: has.vowels ? "Each glowing spot is a vowel sound. Vowels like “ee” glow in one color, vowels like “oo” in the other." : "Too few vowels were measured to map them.",
       visual: has.vowels && u.vFront ? `<div class="fv-sws">${swatch(u.vFront.value, "“ee” vowels")}${swatch(u.vBack.value, "“oo” vowels")}</div>` : "" },
-    { key: "pauses", name: "Talking & pauses", value: pauseSparks.length ? `${pauseSparks.length} pause${pauseSparks.length === 1 ? "" : "s"}` : "No long pauses", lines: pauseSparks.length > 0, spot: pauseSparks.length > 0,
-      text: pauseSparks.length ? "Each spark is a pause in the reading. The fewer the pauses, the more the sparks glow." : "No pause was longer than 0.2 seconds, so there are no sparks.",
-      visual: rhythmBar() },
     { key: "bright", name: "Bright ↔ dark", value: ok ? dial(tb.bright, "bright", "dark") : "Not measured", lines: has.sun || has.swirl, spot: has.sun || has.swirl,
       text: !ok ? none : has.sun ? "Bright voices shine with sun rays around the core." : has.swirl ? "Dark voices pull in a swirl of color, like water down a drain." : "Near the middle, so neither sun rays nor a swirl.",
       visual: ok ? scale(tb.bright, "Bright", "Dark") : "" },
@@ -284,6 +281,9 @@ function buildFeatures() {
     { key: "raspy", name: "Raspy ↔ smooth", value: ok ? dial(tb.raspy, "raspy", "smooth", MAP.timbre.spikes.from) : "Not measured", lines: ok, spot: has.spikes || has.gloss,
       text: !ok ? none : has.spikes ? "Raspy voices grow small spikes all over the core." : has.gloss ? "Smooth voices look like polished glass." : "Near the middle, so the surface is plain.",
       visual: ok ? scale(tb.raspy, "Raspy", "Smooth") : "" },
+    { key: "pauses", name: "Talking & pauses", value: pauseSparks.length ? `${pauseSparks.length} pause${pauseSparks.length === 1 ? "" : "s"}` : "No long pauses", lines: pauseSparks.length > 0, spot: pauseSparks.length > 0,
+      text: pauseSparks.length ? "Each spark is a pause in the reading. The fewer the pauses, the more the sparks glow." : "No pause was longer than 0.2 seconds, so there are no sparks.",
+      visual: rhythmBar() },
   ];
 }
 
