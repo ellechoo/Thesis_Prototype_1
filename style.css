@@ -968,7 +968,8 @@ body:is([data-phase="countdown"], [data-phase="recording"]) .record-page #status
    (home.js draws the bubble's outline; before it does, the block is a plain off-white box so the dark text still reads) */
 .bub-shape { display: none; }
 @media (min-width: 641px) {
-  .home-block { position: relative; isolation: isolate; align-items: flex-start; text-align: left; background: var(--text); border-radius: 34px; padding: 44px 60px 42px; }
+  .home-block { position: relative; isolation: isolate; align-items: flex-start; text-align: left; background: var(--text); border-radius: 34px; padding: 44px 48px 42px 60px; }
+  .home-block .nowrap { display: block; white-space: nowrap; } /* "Just the data." starts its own line */
   .home-block.bubbled { background: transparent; }
   .home-block .bub-shape { display: block; position: absolute; left: 0; top: 0; z-index: -1; overflow: visible; pointer-events: none; }
   .home-block .bub-shape path { fill: var(--text); pointer-events: auto; }
