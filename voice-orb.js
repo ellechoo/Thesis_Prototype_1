@@ -106,7 +106,7 @@ export const MAP = {
   // longer and skinnier the spark's limbs; only the smoothest voices get rounded tips and corners (the same raspy ↔ smooth
   // dial as the core).
   // An exact tie for the strongest accent puts beads on every tied structure.
-  pauses: { minSeconds: 0.2, size: 0.017, perSecond: 0.04, maxSize: 0.042, spark: 2.1, fewFor: 2, manyFor: 10, tie: 0.005 },
+  pauses: { free: { r: 1.0, y: 0.45 }, minSeconds: 0.2, size: 0.017, perSecond: 0.04, maxSize: 0.042, spark: 2.1, fewFor: 2, manyFor: 10, tie: 0.005 },
 };
 
 // ---------------------------------------------------------------- helpers
@@ -830,7 +830,7 @@ function sparkPicture(glow, edge) {
 function pauseBeads(rhythm, T, structs, group, color, coreR) {
   const P = MAP.pauses, t0 = rhythm?.start, t1 = rhythm?.end ?? (t0 != null && rhythm?.totalSeconds ? t0 + rhythm.totalSeconds : null);
   const pauses = (rhythm?.pauses || []).filter((p) => p.seconds >= P.minSeconds);
-  if (!pauses.length || t0 == null || !(t1 > t0) || !structs.length) return;
+  if (!pauses.length || t0 == null || !(t1 > t0)) return;
   const top = T.accents[0]?.w || 1, keep = structs.filter((_, i) => T.accents[i] && Math.abs(T.accents[i].w - top) < P.tie);
   // every bit of line in those structures, as segments in the portrait's own frame
   group.updateMatrixWorld(true);
@@ -874,6 +874,9 @@ float behindCore() {
       const f = s0 / (s0 - s1), x = segsW[k] + (segsW[k + 3] - segsW[k]) * f, y = segsW[k + 1] + (segsW[k + 4] - segsW[k + 1]) * f, z = segsW[k + 2] + (segsW[k + 5] - segsW[k + 2]) * f;
       if (x * dx + z * dz > 0.05) hits.push([x, y, z]);
     }
+    // no structure to sit on (no accent result): the star floats where the structure would be, on a gentle path that
+    // winds once round the core from above it (first word) to below it (last word)
+    if (!segsW.length) { const R = MAP.pauses.free; hits.push([dx * R.r, R.y - u * 2 * R.y, dz * R.r]); }
     if (!hits.length) continue;
     const want = yHi - u * (yHi - yLo), q = hits.reduce((best, h) => (Math.abs(h[1] - want) < Math.abs(best[1] - want) ? h : best)); // one bead per pause
     const r = Math.min(P.maxSize, P.size + p.seconds * P.perSecond), m = new THREE.Sprite(mat);
