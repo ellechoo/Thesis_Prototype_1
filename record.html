@@ -7,106 +7,106 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..700,0..100,0..1;1,9..144,300..700,0..100,0..1&display=swap" />
-  <link rel="stylesheet" href="style.css?v=87" />
+  <link rel="stylesheet" href="style.css?v=88" />
 </head>
 <body data-phase="idle">
-  <main class="record-page wide">
+  <main class="rec-page wide">
+    <!-- the Record tab shows here only -->
     <nav class="tabs">
       <a href="index.html" class="nav-home">Join</a>
       <a href="record.html" class="nav-pill nav-record" aria-current="page">Record</a>
       <a href="portrait.html">Voiceprint</a>
       <a href="archive.html" class="nav-right nav-pill nav-archive">Archive</a>
     </nav>
+    <h1 class="visually-hidden">Record your voice</h1>
 
-    <div class="rec-grid">
-    <div class="rec-left">
-    <header class="rec-head">
-      <h1 class="rec-title">Read one short passage aloud</h1>
-      <ol class="rec-steps">
-        <li>Find a quiet place.</li>
-        <li>Enter your name and tap <b>Start</b><span class="kbd-hint"> (or press the space bar)</span>.</li>
-        <li>After the countdown, read the passage at your usual pace, then tap <b>Done</b>.</li>
-      </ol>
-    </header>
+    <!-- one box, like the Voiceprint page's. Computers: a left third (name and Start, how it works, settings) and the
+         passage on the right two-thirds, where the review appears afterwards. Phones: everything stacked in that order. -->
+    <div class="rec-box">
+      <section class="rec-panel">
+        <section class="start-card" id="startCard">
+          <label for="nameInput" class="field-label">Your name or a nickname</label>
+          <div class="start-row">
+            <input type="text" id="nameInput" maxlength="24" autocomplete="off" placeholder="e.g. Momo's biggest fan" />
+            <div class="btn-stack">
+              <button id="startBtn" class="primary big"><svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="8.5" y="2.5" width="7" height="12" rx="3.5" fill="currentColor"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5M8.5 21.5h7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Start</button>
+              <button id="cancelBtn" class="big cancel-btn" hidden>Cancel</button>
+              <button id="doneBtn" class="primary big" hidden disabled>Done</button>
+            </div>
+          </div>
+          <p id="status" class="status" aria-live="polite"></p>
+        </section>
 
-      <section id="session" class="session" hidden>
-        <div class="rec-row">
-          <span class="rec-dot" id="recDot"></span>
-          <span id="timer" class="timer">0:00</span>
-          <span id="activeDot" class="hearing"></span>
-        </div>
-        <div class="meter" aria-hidden="true"><div id="meterFill" class="fill"></div><div id="gateMark" class="gate"></div></div>
-      </section>
+        <section id="session" class="session" hidden>
+          <div class="rec-row">
+            <span class="rec-dot" id="recDot"></span>
+            <span id="timer" class="timer">0:00</span>
+            <span id="activeDot" class="hearing"></span>
+          </div>
+          <div class="meter" aria-hidden="true"><div id="meterFill" class="fill"></div><div id="gateMark" class="gate"></div></div>
+        </section>
 
-    </div>
-
-    <div class="rec-right">
-    <section class="passage-wrap">
-      <p class="passage-label">You'll read this <button type="button" class="why-btn" popovertarget="whyPassage" aria-label="Why this passage?">?</button></p>
-      <div id="whyPassage" class="why-pop" popover>
-        <h2>Why this passage?</h2>
-        <dl>
-          <dt>Everyone reads the same words</dt>
-          <dd>So the archive compares voices, not sentences. When two portraits differ, it's because of how two people speak, not what they said. The accent check listens to sound rather than words, and the same text keeps that comparison fair.</dd>
-          <dt>It holds every main English vowel</dt>
-          <dd>From the “ee” in <i>she</i> and the “i” in <i>milk</i> to the “oo” in <i>poodle</i> and the “ur” in <i>fur</i>. Your vowels, and how you shape each one, are among the clearest clues to where you learned English. They become the spots on your portrait and the points on your vowel chart.</dd>
-          <dt>Its length is known</dt>
-          <dd>It has exactly 42 syllables, so dividing by your reading time gives your speaking rate.</dd>
-          <dt>It's plain and quick</dt>
-          <dd>Everyday words, nothing hard to pronounce, and under ten seconds to read. Researchers who collect accents work the same way: the Speech Accent Archive has every speaker read one shared paragraph.</dd>
-        </dl>
-        <button type="button" class="why-close" popovertarget="whyPassage" popovertargetaction="hide">Got it</button>
-      </div>
-      <div class="passage-box">
-        <p class="passage" id="passage" data-syllables="42">Momo is a small poodle and she is the color of milk chocolate. She has fluffy fur, a good nose for snacks, and she barks at every red truck that passes our house.</p>
-        <div class="countdown" id="countdown" hidden><span id="countNum">3</span></div>
-      </div>
-      <p class="note" id="followNote" hidden></p>
-    </section>
-
-    <section class="start-card" id="startCard">
-      <label for="nameInput" class="field-label">Your name or a nickname</label>
-      <div class="start-row">
-        <input type="text" id="nameInput" maxlength="24" autocomplete="off" placeholder="e.g. Momo's biggest fan" />
-        <div class="btn-stack">
-          <button id="startBtn" class="primary big"><svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="8.5" y="2.5" width="7" height="12" rx="3.5" fill="currentColor"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5M8.5 21.5h7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Start</button>
-        <button id="cancelBtn" class="big cancel-btn" hidden>Cancel</button>
-          <button id="doneBtn" class="primary big" hidden disabled>Done</button>
-        </div>
-      </div>
-      <p class="fine" id="archiveNotice"></p>
-    </section>
-
-    <p id="status" class="status" aria-live="polite"></p>
-
-
-    <section class="review" id="review" hidden>
-      <p class="review-title">How did that sound?</p>
-      <div class="review-warn" id="reviewWarn" role="status" hidden></div>
-      <audio id="reviewAudio" controls preload="auto"></audio>
-      <p class="note" id="reviewNote">Listen back if you like. Choosing “Use this recording” adds your name and voice data to the archive. The recording itself is never kept.</p>
-      <div class="controls">
-        <button id="useBtn" class="primary">Use this recording</button>
-        <button id="retryBtn">Try again</button>
-      </div>
-    </section>
-
-    <section class="processing" id="processing" hidden>
-      <div class="spinner" aria-hidden="true"></div>
-      <p class="processing-title">Analyzing your voice…</p>
-      <p class="note" id="processingStep"></p>
-    </section>
-
+        <section class="rec-how">
+          <p class="rec-label">How it works</p>
+          <ol class="rec-steps">
+            <li>Find a quiet place.</li>
+            <li>Enter your name and tap <b>Start</b><span class="kbd-hint"> (or press the space bar)</span>.</li>
+            <li>After the countdown, read the passage at your usual pace, then tap <b>Done</b>.</li>
+          </ol>
+          <p class="fine" id="archiveNotice"></p>
+        </section>
 
         <details class="settings-box">
-      <summary>Settings</summary>
-      <div class="settings">
-        <label><input type="checkbox" id="optFilters" checked /> Filter rumble &amp; hiss (80 Hz – 8 kHz)</label>
-        <label><input type="checkbox" id="optBrowserNS" /> Browser noise suppression (cleaner, but alters the voice)</label>
-        <p class="hint">Settings apply to the next recording. The accent check always uses the unfiltered audio.</p>
-      </div>
-    </details>
-    </div>
+          <summary>Settings</summary>
+          <div class="settings">
+            <label><input type="checkbox" id="optFilters" checked /> Filter rumble &amp; hiss (80 Hz – 8 kHz)</label>
+            <label><input type="checkbox" id="optBrowserNS" /> Browser noise suppression (cleaner, but alters the voice)</label>
+            <p class="hint">Settings apply to the next recording. The accent check always uses the unfiltered audio.</p>
+          </div>
+        </details>
+      </section>
+
+      <section class="rec-stage">
+        <section class="passage-wrap">
+          <p class="rec-label passage-label">You'll read this <button type="button" class="why-btn" popovertarget="whyPassage" aria-label="Why this passage?">?</button></p>
+          <div id="whyPassage" class="why-pop" popover>
+            <h2>Why this passage?</h2>
+            <dl>
+              <dt>Everyone reads the same words</dt>
+              <dd>So the archive compares voices, not sentences. When two portraits differ, it's because of how two people speak, not what they said. The accent check listens to sound rather than words, and the same text keeps that comparison fair.</dd>
+              <dt>It holds every main English vowel</dt>
+              <dd>From the “ee” in <i>she</i> and the “i” in <i>milk</i> to the “oo” in <i>poodle</i> and the “ur” in <i>fur</i>. Your vowels, and how you shape each one, are among the clearest clues to where you learned English. They become the spots on your portrait and the points on your vowel chart.</dd>
+              <dt>Its length is known</dt>
+              <dd>It has exactly 42 syllables, so dividing by your reading time gives your speaking rate.</dd>
+              <dt>It's plain and quick</dt>
+              <dd>Everyday words, nothing hard to pronounce, and under ten seconds to read. Researchers who collect accents work the same way: the Speech Accent Archive has every speaker read one shared paragraph.</dd>
+            </dl>
+            <button type="button" class="why-close" popovertarget="whyPassage" popovertargetaction="hide">Got it</button>
+          </div>
+          <div class="passage-box">
+            <p class="passage" id="passage" data-syllables="42">Momo is a small poodle and she is the color of milk chocolate. She has fluffy fur, a good nose for snacks, and she barks at every red truck that passes our house.</p>
+            <div class="countdown" id="countdown" hidden><span id="countNum">3</span></div>
+          </div>
+          <p class="note" id="followNote" hidden></p>
+        </section>
+
+        <section class="review" id="review" hidden>
+          <p class="review-title">How did that sound?</p>
+          <div class="review-warn" id="reviewWarn" role="status" hidden></div>
+          <audio id="reviewAudio" controls preload="auto"></audio>
+          <p class="note" id="reviewNote">Listen back if you like. Choosing “Use this recording” adds your name and voice data to the archive. The recording itself is never kept.</p>
+          <div class="controls">
+            <button id="useBtn" class="primary">Use this recording</button>
+            <button id="retryBtn">Try again</button>
+          </div>
+        </section>
+
+        <section class="processing" id="processing" hidden>
+          <div class="spinner" aria-hidden="true"></div>
+          <p class="processing-title">Analyzing your voice…</p>
+          <p class="note" id="processingStep"></p>
+        </section>
+      </section>
     </div>
   </main>
   <script type="module" src="nav.js?v=8"></script>
