@@ -9,7 +9,7 @@
 // While that's happening the heading carries data-settling (the download waits for it to go).
 // A heading marked data-steady-width (the Join page's headline, which the speech bubble wraps around) is held at the
 // width of its widest possible mix, so the letters changing never resize what's around it.
-const SELECTOR = "h1, h2, .section-title, .review-title, .processing-title, .id-brand";
+const SELECTOR = "h1, h2, .section-title, .review-title, .processing-title, .id-brand, .countdown > span"; // (also the Record page's 3, 2, 1, Go!)
 const STEP_MS = 150;
 const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
