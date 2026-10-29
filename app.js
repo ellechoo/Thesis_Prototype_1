@@ -261,7 +261,7 @@ function askAboutGaps(take, url, gaps) {
   ui.use.classList.remove("primary");
   ui.retry.classList.add("primary");
   ui.retry.textContent = "Record again";
-  ui.reviewNote.textContent = "Recording again somewhere quiet and reading the whole passage clearly usually fixes this. Or continue, and your Voiceprint is made without these parts.";
+  ui.reviewNote.textContent = "Recording again somewhere quiet and speaking closer to the mic of your device usually fixes this. Or continue, and your Voiceprint is made without these parts.";
   setPhase("review");
   setStatus("");
   ui.retry.focus();
