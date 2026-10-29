@@ -383,12 +383,14 @@ function layoutSheet() {
   if (isWide()) { wrap.style.height = stage.style.height = ""; if ($("featureSheet")) $("featureSheet").style.top = ""; return; }
   const was = wrap.style.height; wrap.style.transition = "none"; wrap.style.height = "";
   const base = wrap.getBoundingClientRect().height; wrap.style.height = was; void wrap.offsetHeight; wrap.style.transition = "";
-  stage.style.height = base + "px";
-  const need = box ? base * (1 - SHEET_COVER) + box.offsetHeight + 12 : base;
+  // the "See full breakdown" strip runs along the bottom of the frame: the portrait and the box stay above it
+  const strip = document.querySelector(".explore .jump-btn.in-box")?.offsetHeight || 0, area = base - strip;
+  stage.style.height = area + "px";
+  const need = box ? area * (1 - SHEET_COVER) + box.offsetHeight + 12 + strip : base;
   wrap.style.height = Math.max(base, need) + "px";
   // the box goes straight to its place (measured from the top, so it doesn't ride down as the frame grows below it)
   const sheet = $("featureSheet");
-  if (sheet) sheet.style.top = box ? Math.max(base * (1 - SHEET_COVER), base - 12 - box.offsetHeight) + "px" : "";
+  if (sheet) sheet.style.top = box ? Math.max(area * (1 - SHEET_COVER), area - 12 - box.offsetHeight) + "px" : "";
 }
 const keepHit = (f) => f.hit && (f.core ? { local: coreMesh.worldToLocal(f.hit.clone()) } : f.hit); // (a spot on the core is kept in the core's own frame: it keeps turning)
 

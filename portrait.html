@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..700,0..100,0..1;1,9..144,300..700,0..100,0..1&family=Geist:wght@300..700&display=swap" crossorigin="anonymous" /> <!-- crossorigin: lets the ID card download include this font -->
-  <link rel="stylesheet" href="style.css?v=99" />
+  <link rel="stylesheet" href="style.css?v=100" />
 </head>
 <body>
   <main class="wide">
@@ -36,7 +36,7 @@
               <p class="sub" id="subtitle"></p>
             </header>
             <div class="feature-list" id="featureList" role="region" aria-label="What shapes this portrait"></div>
-            <button type="button" class="jump-btn in-box to-breakdown">See full breakdown <span aria-hidden="true">↓</span></button>
+            <button type="button" class="jump-btn in-box to-breakdown"><span class="jump-label">See full breakdown</span> <span class="jump-arrow" aria-hidden="true">↓</span></button> <!-- the box's bottom strip (phones: along the bottom of the portrait) -->
           </div>
           <button type="button" class="download-btn" id="downloadBtn" aria-haspopup="dialog" aria-label="Download" title="Download">
             <svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10.5l5 5 5-5M5 19.5h14"/></g></svg>
@@ -55,7 +55,6 @@
         </div>
       </div>
 
-      <p class="jump-row below-box"><button type="button" class="jump-btn to-breakdown" id="toBreakdown">See full breakdown <span aria-hidden="true">↓</span></button></p>
 
       <!-- the voice in numbers (what used to be the Breakdown page): each part in its own box, like the portrait's -->
       <div class="jump-up" id="breakdown"></div> <!-- where "See full breakdown" scrolls to (the way back is the button at the bottom) -->
@@ -179,14 +178,14 @@
           </details>
         </section>
 
-        <section class="block">
+        <section class="block last-block">
           <details>
             <summary>What's in each frame?</summary>
             <pre id="lastFrame"></pre>
           </details>
+          <button type="button" class="jump-btn to-portrait foot-strip"><span class="jump-label">Back to the portrait</span> <span class="jump-arrow" aria-hidden="true">↑</span></button> <!-- the last box's bottom strip -->
         </section>
       </div>
-      <p class="jump-row jump-foot"><button type="button" class="jump-btn to-portrait"><span aria-hidden="true">↑</span> Back to the portrait</button></p>
     </div>
 
     <dialog class="id-dialog" id="idDialog" aria-label="Download: voice ID card">
@@ -207,6 +206,6 @@
   </script>
   <script type="module" src="nav.js?v=8"></script>
   <script type="module" src="headings.js?v=4"></script> <!-- headings: Fraunces, mixed letter by letter --> <!-- first, so the tabs start in the right state before the page script loads -->
-  <script type="module" src="portrait-3d.js?v=83"></script>
+  <script type="module" src="portrait-3d.js?v=84"></script>
 </body>
 </html>
