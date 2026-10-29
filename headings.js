@@ -33,6 +33,7 @@ function mix(el) {
   el._letters = [...el.querySelectorAll(".mx-l")];
   if (!mixed.has(el)) { mixed.add(el); seen.observe(el); }
   if (el.hasAttribute("data-steady-width")) holdWidth(el);
+  if (el.hasAttribute("data-steady-words")) holdWords(el);
   el._settle = !!el.closest(".id-card");
   if (el._settle && !still) settle(el);
 }
@@ -64,8 +65,23 @@ function holdWidth(el) {
   ls.forEach((l, i) => (l.style.cssText = keep[i]));
   if (w) { el.style.minWidth = Math.ceil(w + 2) + "px"; el.style.width = el.style.minWidth; }
 }
+// A heading marked data-steady-words (the Voiceprint page's name) holds each word at its widest possible mix instead,
+// so the line breaks are decided as if every letter were at its widest: a word near the right edge moves down to the
+// next line and stays there, instead of jumping back and forth as its letters change.
+// (the widest look the shimmer can actually give a letter: boldest, upright, at the smallest optical size it uses)
+const WIDEST_MIX = "font-weight:700;font-style:normal;font-variation-settings:'SOFT' 0,'WONK' 0,'opsz' 24";
+function holdWords(el) {
+  for (const w of el.querySelectorAll(".mx-w")) {
+    const ls = [...w.querySelectorAll(".mx-l")], keep = ls.map((l) => l.style.cssText);
+    w.style.minWidth = "";
+    ls.forEach((l) => (l.style.cssText = WIDEST_MIX));
+    const width = w.getBoundingClientRect().width;
+    ls.forEach((l, i) => (l.style.cssText = keep[i]));
+    if (width) w.style.minWidth = Math.ceil(width) + "px";
+  }
+}
 addEventListener("resize", () => { for (const el of mixed) if (el.hasAttribute("data-steady-width")) holdWidth(el); });
-document.fonts?.ready.then(() => { for (const el of mixed) if (el.hasAttribute("data-steady-width")) holdWidth(el); }); // (once the font has loaded)
+document.fonts?.ready.then(() => { for (const el of mixed) { if (el.hasAttribute("data-steady-width")) holdWidth(el); if (el.hasAttribute("data-steady-words")) holdWords(el); } }); // (once the font has loaded)
 function scan(root = document) {
   const list = root.nodeType === 1 && root.matches?.(SELECTOR) ? [root] : [];
   for (const el of [...list, ...(root.querySelectorAll?.(SELECTOR) || [])]) if (el.dataset.mixFull !== el.textContent) mix(el);
