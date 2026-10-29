@@ -1245,8 +1245,8 @@ h2, .section-title { font-size: var(--h2) !important; }
    space above the tabs. In order of importance: name + Start, how it works, the passage, settings & privacy. While
    recording, the timer and Cancel / Done replace the name and Start, and everything but the passage steps aside.
    The passage stays the same size throughout. The review and analysing steps take the passage's place afterwards. */
-main.rec-page { max-width: 1400px; display: flex; flex-direction: column; min-height: calc(100svh - 110px); box-sizing: border-box; }
-.rec-box { width: 100%; max-width: 620px; margin: auto; box-sizing: border-box; padding: 30px 32px 22px; border: 1px solid #3d3a35; border-radius: 22px; background: #000; display: flex; flex-direction: column; gap: 22px; }
+main.rec-page { --side: min(33px, calc((100cqw - min(1360px, 100cqw - 40px)) / 2)); max-width: 1400px; }
+.rec-box { width: 100%; max-width: 620px; margin: calc(var(--side) - 4px) auto 0; box-sizing: border-box; padding: 30px 32px 22px; border: 1px solid #3d3a35; border-radius: 22px; background: #000; display: flex; flex-direction: column; gap: 22px; }
 .rec-label { margin: 0 0 10px; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 
 /* name + Start */
@@ -1287,8 +1287,9 @@ main.rec-page { max-width: 1400px; display: flex; flex-direction: column; min-he
 .rec-page .passage-wrap { margin: 0; padding-top: 20px; border-top: 1px solid #2a2824; }
 .rec-page .passage-label { display: flex; align-items: center; }
 .rec-page .passage-box { position: relative; }
-.rec-page .passage { margin: 0; padding: 0; background: none; border: 0; border-radius: 0; font: 400 21px/1.5 var(--sans); color: #b3afa7; text-wrap: pretty; transition: color .3s ease; }
-body:is([data-phase="countdown"], [data-phase="recording"]) .rec-page .passage { color: var(--text); }
+.rec-page .passage { margin: 0; padding: 0; background: none; border: 0; border-radius: 0; font: 400 21px/1.5 var(--sans); color: #b3afa7; text-wrap: pretty; }
+/* while reading: bigger and white (the switch happens under the 3, 2, 1, so it isn't seen growing) */
+body:is([data-phase="countdown"], [data-phase="recording"]) .rec-page .passage { color: var(--text); font-size: 30px; line-height: 1.4; }
 .rec-page .passage .w.done { color: var(--accent); }
 .rec-page .passage .w.current { background: var(--accent); color: var(--accent-text); box-shadow: 0 0 0 2px var(--accent); border-radius: 3px; }
 .rec-page .countdown { position: absolute; inset: -6px; display: grid; place-items: center; background: #000; border-radius: 0; pointer-events: none; }
@@ -1314,22 +1315,23 @@ body:is([data-phase="countdown"], [data-phase="recording"]) .rec-page :is(.field
 body:is([data-phase="countdown"], [data-phase="recording"]) .rec-page .start-row { justify-content: flex-end; }
 body:is([data-phase="countdown"], [data-phase="recording"]) .rec-page .btn-stack { flex: 1; }
 body:is([data-phase="countdown"], [data-phase="recording"]) .rec-page .btn-stack button { flex: 1; }
+/* computers: the passage first, then the timer and the buttons; phones: the passage, the timer, then the buttons */
+body:is([data-phase="countdown"], [data-phase="recording"]) .rec-page .passage-wrap { order: -2; padding-top: 0; border-top: 0; }
 body:is([data-phase="countdown"], [data-phase="recording"]) .rec-page .session { order: -1; }
+body:is([data-phase="countdown"], [data-phase="recording"]) .rec-page .start-card { padding-top: 4px; }
 body:is([data-phase="review"], [data-phase="processing"]) .rec-page :is(.start-card, .passage-wrap, .rec-steps, .settings-box) { display: none; }
 body:is([data-phase="review"], [data-phase="processing"]) .rec-page :is(.review, .processing) { padding-top: 0; border-top: 0; }
 
 /* phones: the same box, a little tighter; Start under the name; the passage first while reading */
 @media (max-width: 899.98px) {
-  main.rec-page { min-height: calc(100svh - 130px); }
-  .rec-box { padding: 22px 20px 16px; gap: 18px; border-radius: 16px; margin: 4px auto auto; }
+  .rec-box { padding: 22px 20px 16px; gap: 18px; border-radius: 16px; }
   .rec-page .start-row { flex-wrap: wrap; }
   .rec-page .start-row input { flex-basis: 100%; }
   .rec-page .btn-stack { flex: 1 1 100%; }
   .rec-page .btn-stack button { flex: 1; }
   .rec-page .rec-steps { font-size: 14px; gap: 4px; }
   .rec-page .passage { font-size: 19px; line-height: 1.48; }
-  body:is([data-phase="countdown"], [data-phase="recording"]) .rec-page .passage-wrap { order: -2; padding-top: 0; border-top: 0; }
+  body:is([data-phase="countdown"], [data-phase="recording"]) .rec-page .passage { font-size: 25px; line-height: 1.4; }
   .rec-page .countdown span { font-size: 80px; }
 }
 @media (hover: none), (max-width: 640px) { .rec-page .kbd-hint { display: none; } }
-@media (prefers-reduced-motion: reduce) { .rec-page .passage { transition: none; } }
