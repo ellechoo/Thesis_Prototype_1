@@ -106,11 +106,11 @@ export const MAP = {
   // wraps round more than once), the bead goes on the one nearest a height that moves from the top of the structure at the
   // first word to the bottom at the last, so the beads also read in order. Longer pauses give bigger beads.
   // Each bead is a small, plump four-pointed spark. The fewer pauses a reading has, the more its sparks glow (a soft halo
-  // round each): at fewFor pauses or fewer, the full glow; at manyFor or more, plain sparks. The raspier the voice, the
+  // round each): at fewFor pauses or fewer, the full glow; at manyFor or more, plain sparks. Fewer pauses also mean bigger sparks (shellGrow; free.grow when there's no structure). The raspier the voice, the
   // longer and skinnier the spark's limbs; only the smoothest voices get rounded tips and corners (the same raspy ↔ smooth
   // dial as the core).
   // An exact tie for the strongest accent puts beads on every tied structure.
-  pauses: { free: { r: 1.0, y: 0.45, grow: 1.4 }, minSeconds: 0.2, size: 0.017, perSecond: 0.04, maxSize: 0.042, spark: 2.1, fewFor: 2, manyFor: 10, tie: 0.005 },
+  pauses: { free: { r: 1.0, y: 0.45, grow: 1.9 }, shellGrow: 0.45, minSeconds: 0.2, size: 0.017, perSecond: 0.04, maxSize: 0.042, spark: 2.1, fewFor: 2, manyFor: 12, tie: 0.005 },
 };
 
 // ---------------------------------------------------------------- helpers
@@ -826,7 +826,7 @@ function sparkPicture(glow, edge) {
   if (SPARKS[key]) return SPARKS[key];
   const c = document.createElement("canvas"); c.width = c.height = 256;
   const g = c.getContext("2d"), m = 128;
-  if (k > 0) { const gr = g.createRadialGradient(m, m, 0, m, m, m); gr.addColorStop(0, `rgba(255,255,255,${0.75 * k})`); gr.addColorStop(0.3, `rgba(255,255,255,${0.32 * k})`); gr.addColorStop(0.6, `rgba(255,255,255,${0.1 * k})`); gr.addColorStop(1, "rgba(255,255,255,0)"); g.fillStyle = gr; g.fillRect(0, 0, 256, 256); }
+  if (k > 0) { const gr = g.createRadialGradient(m, m, 0, m, m, m); gr.addColorStop(0, `rgba(255,255,255,${0.95 * k})`); gr.addColorStop(0.3, `rgba(255,255,255,${0.46 * k})`); gr.addColorStop(0.6, `rgba(255,255,255,${0.17 * k})`); gr.addColorStop(1, "rgba(255,255,255,0)"); g.fillStyle = gr; g.fillRect(0, 0, 256, 256); }
   // the raspier the voice, the longer and skinnier the spark's four limbs; only the smoothest voices (the last fifth of the
   // dial) get rounded tips and inner corners, everyone else a sharp spark
   const sharp = (e + 1) / 2, round = Math.max(0, Math.min(1, (-0.6 - e) / 0.4));
@@ -892,8 +892,9 @@ float behindCore() {
     if (!segsW.length) { const R = MAP.pauses.free; hits.push([dx * R.r, R.y - u * 2 * R.y, dz * R.r]); }
     if (!hits.length) continue;
     const want = yHi - u * (yHi - yLo), q = hits.reduce((best, h) => (Math.abs(h[1] - want) < Math.abs(best[1] - want) ? h : best)); // one bead per pause
-    // floating stars (no structure) grow the fewer there are: one pause, 1 + grow times as big; manyFor or more, normal size
-    const big = segsW.length ? 1 : 1 + P.free.grow * Math.max(0, Math.min(1, (P.manyFor - pauses.length) / (P.manyFor - 1)));
+    // stars grow the fewer there are: one pause, 1 + grow times as big; manyFor or more, normal size. Floating stars (no
+    // structure) grow a lot (free.grow); stars on an accent structure only a little (shellGrow)
+    const big = 1 + (segsW.length ? P.shellGrow : P.free.grow) * Math.max(0, Math.min(1, (P.manyFor - pauses.length) / (P.manyFor - 1)));
     const r = Math.min(P.maxSize, P.size + p.seconds * P.perSecond) * big, m = new THREE.Sprite(mat);
     m.position.set(q[0], q[1], q[2]); m.scale.setScalar(r * 2 * P.spark * 2); m.userData.part = "pauses"; beads.add(m); // (the picture is twice the spark's size, leaving room for the glow)
     us.push(u);
