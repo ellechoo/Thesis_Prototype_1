@@ -705,9 +705,9 @@ main { padding-bottom: calc(104px + env(safe-area-inset-bottom)); }
   .tabs a, .tabs a.nav-pill, .tabs.collapsed a.nav-record, .tabs a[aria-current="page"] { filter: none; }
 }
 
-/* FOLDER TABS — HOVER: hovering an inactive tab turns its label red (the secondary colour) (the tab you're
+/* FOLDER TABS — HOVER: hovering an inactive tab fills it red (the secondary colour), label and outline staying white (the tab you're
    on stays white). No lift on hover any more. */
-.tabs a:hover:not([aria-current="page"]):not([aria-disabled="true"]) { border-image-source: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2252%22%20height%3D%2251%22%20viewBox%3D%220%200%2052%2051%22%3E%3Cpath%20d%3D%22M0.75%2051%20L0.75%2027%20A11.25%2011.25%200%200%200%2012%2015.75%20L12.75%2015.75%20L12.75%2013%20A12.25%2012.25%200%200%201%2025%200.75%20L27%200.75%20A12.25%2012.25%200%200%201%2039.25%2013%20L39.25%2015.75%20L40%2015.75%20A11.25%2011.25%200%200%200%2051.25%2027%20L51.25%2051%22%20fill%3D%22%23000%22%20stroke%3D%22%23ecebe7%22%20stroke-width%3D%221.5%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E"); color: var(--accent); transform: none; }
+.tabs a:hover:not([aria-current="page"]):not([aria-disabled="true"]) { border-image-source: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2252%22%20height%3D%2251%22%20viewBox%3D%220%200%2052%2051%22%3E%3Cpath%20d%3D%22M0.75%2051%20L0.75%2027%20A11.25%2011.25%200%200%200%2012%2015.75%20L12.75%2015.75%20L12.75%2013%20A12.25%2012.25%200%200%201%2025%200.75%20L27%200.75%20A12.25%2012.25%200%200%201%2039.25%2013%20L39.25%2015.75%20L40%2015.75%20A11.25%2011.25%200%200%200%2051.25%2027%20L51.25%2051%22%20fill%3D%22%23e5352d%22%20stroke%3D%22%23ecebe7%22%20stroke-width%3D%221.5%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E"); color: var(--text); transform: none; }
 .tabs a:hover { transform: none; }
 /* desktop: every tab the same width, with the label centred in the part you can see (the left
    14px of each tab sits under the tab in front of it), so there's equal room on both sides */
@@ -718,7 +718,7 @@ main { padding-bottom: calc(104px + env(safe-area-inset-bottom)); }
   .tabs.collapsed a[data-href] { width: 0; flex-basis: 0; max-width: 0; padding-left: 0; padding-right: 0; }
 }
 @media (max-width: 640px) {
-  .tabs a:hover:not([aria-current="page"]):not([aria-disabled="true"]) { border-image-source: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2238%22%20height%3D%2244%22%20viewBox%3D%220%200%2038%2044%22%3E%3Cpath%20d%3D%22M0.75%2044%20L0.75%2020%20A6.25%206.25%200%200%200%207%2013.75%20L7.75%2013.75%20L7.75%2011%20A10.25%2010.25%200%200%201%2018%200.75%20L20%200.75%20A10.25%2010.25%200%200%201%2030.25%2011%20L30.25%2013.75%20L31%2013.75%20A6.25%206.25%200%200%200%2037.25%2020%20L37.25%2044%22%20fill%3D%22%23000%22%20stroke%3D%22%23ecebe7%22%20stroke-width%3D%221.5%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E"); }
+  .tabs a:hover:not([aria-current="page"]):not([aria-disabled="true"]) { border-image-source: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2238%22%20height%3D%2244%22%20viewBox%3D%220%200%2038%2044%22%3E%3Cpath%20d%3D%22M0.75%2044%20L0.75%2020%20A6.25%206.25%200%200%200%207%2013.75%20L7.75%2013.75%20L7.75%2011%20A10.25%2010.25%200%200%201%2018%200.75%20L20%200.75%20A10.25%2010.25%200%200%201%2030.25%2011%20L30.25%2013.75%20L31%2013.75%20A6.25%206.25%200%200%200%2037.25%2020%20L37.25%2044%22%20fill%3D%22%23e5352d%22%20stroke%3D%22%23ecebe7%22%20stroke-width%3D%221.5%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E"); }
 }
 
 /* no tab ever moves on hover (including the current page's tab) */
