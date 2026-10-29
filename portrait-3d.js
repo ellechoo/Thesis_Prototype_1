@@ -12,9 +12,9 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { getTake, archiveIsShared } from "./store.js?v=2";
 import { currentTakeId } from "./nav.js?v=8";
 import { formatDate, slug, download } from "./shared.js?v=3";
-import { buildOrb, MAP, traits, voiceColor } from "./voice-orb.js?v=49";
-import { renderIdCard } from "./id-card.js?v=54";
-import { renderBreakdown } from "./breakdown.js?v=44";
+import { buildOrb, MAP, traits, voiceColor } from "./voice-orb.js?v=50";
+import { renderIdCard } from "./id-card.js?v=55";
+import { renderBreakdown } from "./breakdown.js?v=45";
 const esc = (x) => String(x ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 const $ = (id) => document.getElementById(id);
@@ -236,7 +236,14 @@ function wireCallouts() {
 // where the lines aim when there's a choice: wide screens, the upper left (toward the list); narrower ones, down (toward the box)
 const aim = () => (isWide() ? Math.PI * 0.86 : -Math.PI / 2);
 let feats = [], pinned = null, pinnedHit = null, hovered = null, hoverHit = null, hoverAng = null, shownKey = null, picks = {};
-let sunMesh = null, swirlMesh = null, accentPts = [], vowelSpots = [], vImg = null, vTilt = null, vTiltT = null;
+let sunMesh = null, swirlMesh = null, accentPts = [], vowelSpots = [], vImg = null, vTilt = null, vTiltT = null, pauseSparks = [];
+// talking & pauses, as a small bar: the reading from first word to last, talking in the voice's colour, pauses dark
+function rhythmBar() {
+  const r = take.rhythm, segs = r?.segments || [], t0 = r?.start, t1 = r?.end;
+  if (!segs.length || t0 == null || !(t1 > t0)) return "";
+  return `<div class="fv-rhythm" role="img" aria-label="Talking and pausing, start to finish">${segs.filter((s) => s.end > t0 && s.start < t1)
+    .map((s) => `<i class="${s.talking ? "t" : "p"}" style="flex:${Math.max(0.001, Math.min(s.end, t1) - Math.max(s.start, t0)).toFixed(3)}"></i>`).join("")}</div>`;
+}
 
 const cap = (t) => t[0].toUpperCase() + t.slice(1);
 // a timbre dial in words, using the same cut-off as the portrait (anything this close to the middle draws nothing)
@@ -250,6 +257,7 @@ const swatch = (c, label) => `<span class="fv-sw"><i style="background:${hex(c)}
 const scale = (v, pos, neg) => `<div class="fv-scale" role="img" aria-label="${esc(dial(v, pos.toLowerCase(), neg.toLowerCase()))}, on a scale from ${esc(pos)} to ${esc(neg)}">
     <span>${esc(pos)}</span><span class="fv-track" style="--v:${((1 - Math.max(-1, Math.min(1, v))) / 2).toFixed(3)}"><i></i></span><span>${esc(neg)}</span></div>`;
 function buildFeatures() {
+  pauseSparks = orbInfo.group.children.find((o) => o.userData.pauses)?.children || [];
   const T = orbInfo.traits, tb = T.timbre, ok = tb.enough, F = MAP.timbre.from, u = coreMesh?.material?.uniforms || {};
   const none = "Too little clear voice to read this, so the core is left plain.";
   const has = { sun: ok && tb.bright >= F, swirl: ok && -tb.bright >= F, spikes: ok && tb.raspy >= MAP.timbre.spikes.from, gloss: ok && tb.raspy <= -MAP.timbre.glass.from, vowels: T.vowels.pts.length > 0 };
@@ -264,6 +272,9 @@ function buildFeatures() {
     { key: "vowels", name: "Vowel space", value: has.vowels ? `${T.vowels.n} vowel moments` : "Not enough to map", lines: has.vowels, spot: has.vowels,
       text: has.vowels ? "Each glowing spot is a vowel sound. Vowels like “ee” glow in one color, vowels like “oo” in the other." : "Too few vowels were measured to map them.",
       visual: has.vowels && u.vFront ? `<div class="fv-sws">${swatch(u.vFront.value, "“ee” vowels")}${swatch(u.vBack.value, "“oo” vowels")}</div>` : "" },
+    { key: "pauses", name: "Talking & pauses", value: pauseSparks.length ? `${pauseSparks.length} pause${pauseSparks.length === 1 ? "" : "s"}` : "No long pauses", lines: pauseSparks.length > 0, spot: pauseSparks.length > 0,
+      text: pauseSparks.length ? "Each spark is a pause in the reading. The fewer the pauses, the more the sparks glow." : "No pause was longer than 0.2 seconds, so there are no sparks.",
+      visual: rhythmBar() },
     { key: "bright", name: "Bright ↔ dark", value: ok ? dial(tb.bright, "bright", "dark") : "Not measured", lines: has.sun || has.swirl, spot: has.sun || has.swirl,
       text: !ok ? none : has.sun ? "Bright voices shine with sun rays around the core." : has.swirl ? "Dark voices pull in a swirl of color, like water down a drain." : "Near the middle, so neither sun rays nor a swirl.",
       visual: ok ? scale(tb.bright, "Bright", "Dark") : "" },
@@ -326,7 +337,7 @@ function setUpFeatures() {
       b.addEventListener("click", () => { pinned = b.dataset.key; pinnedHit = null; hovered = null; setShown(); });
     });
   }
-  for (const k of ["accent", "vowels", "bright"]) pickFor(k, null);
+  for (const k of ["accent", "vowels", "bright", "pauses"]) pickFor(k, null);
   // the eye button (narrower screens): hides the points, and with them tapping the portrait for its boxes, so it can be
   // looked at on its own; any open box closes. Pressing it again brings them back.
   $("spotsBtn")?.addEventListener("click", (e) => {
@@ -473,6 +484,16 @@ function pickFor(key, pref) {
       return best;
     }).filter(Boolean);
   }
+  if (key === "pauses" && pauseSparks.length) { // the spark facing the viewer and clear of the core, nearest the list (or the box)
+    let best = null, bs = Infinity;
+    for (const sp of pauseSparks) {
+      const p = sp.getWorldPosition(new THREE.Vector3()); if (p.dot(B.toCam) < 0.05) continue;
+      const [x, y] = toScreen(p); if (Math.hypot(x - c.x, y - c.y) < c.r * 1.05) continue;
+      const score = wide ? x : -y; // toward the list (wide screens); else the lowest, toward the box
+      if (score < bs) { bs = score; best = sp; }
+    }
+    picks.pauses = best;
+  }
   if (key === "vowels" && vowelSpots.length) { // the most crowded front ("ee") and back ("oo") spots facing the viewer
     const toCamLocal = coreMesh.worldToLocal(camera.position.clone()).normalize();
     picks.vowels = [true, false].map((front) => {
@@ -500,6 +521,10 @@ function anchorsFor(key, spot = false) {
       { const spot = (d) => coreMesh.localToWorld(d.clone().multiplyScalar(coreR * 0.98));
         if (!picks.vowels || picks.vowels.length < 2 || picks.vowels.some((d) => spot(d).normalize().dot(B.toCam) < 0.3)) pickFor("vowels", null);
         return (picks.vowels || []).map(spot); }
+    case "pauses": // a spark facing the viewer, clear of the core (swapped for another as it turns away)
+      if (hit) return [hit];
+      if (!picks.pauses || picks.pauses.getWorldPosition(new THREE.Vector3()).dot(B.toCam) < 0.05) pickFor("pauses", null);
+      return picks.pauses ? [picks.pauses.getWorldPosition(new THREE.Vector3())] : [];
     case "breathy": return [around(hang ?? (isWide() ? aim() + 0.25 : Math.PI * 1.12), R * 0.97, B)]; // (narrower screens: the left edge, clear of the other points)                                     // the edge
     case "raspy":
       if (u?.gloss.value > 0) return [onSurface(u.gw1.value.x, u.gw1.value.y, B), onSurface(u.gw2.value.x, u.gw2.value.y, B)]; // the highlight and the glint
@@ -515,6 +540,7 @@ function anchorsFor(key, spot = false) {
 // what's under the pointer (client coordinates; first: what the ray hit)
 function whatsAt(clientX, clientY, h) {
   if (h?.part === "accent") return { key: "accent", hit: h.point };
+  if (h?.part === "pauses") return { key: "pauses", hit: h.point };
   const w = wrapEl().getBoundingClientRect(), c = coreOnScreen(), px = clientX - w.left, py = clientY - w.top;
   const x = (px - c.x) / c.r, y = -(py - c.y) / c.r, r = Math.hypot(x, y), ang = Math.atan2(y, x), u = coreMesh.material.uniforms;
   const tb = orbInfo.traits.timbre, ok = tb.enough;
