@@ -97,10 +97,12 @@ export const MAP = {
   // every voice, so it reads as nearly white with a hint of the core's color, whatever the core's depth
   shell: { sat: 0.85, light: 0.84 },
   // TALKING & PAUSES → beads on the strongest accent's structure. The reading's timeline (first word to last) wraps once
-  // around the vertical axis; at every pause longer than minSeconds, a flat, soft-edged bead in the voice's colour sits on
-  // each line of that structure passing that angle (like beads threaded on string). Longer pauses give bigger beads.
+  // around the vertical axis; at every pause longer than minSeconds, one flat, soft-edged bead in the voice's colour sits on
+  // a line of that structure at that angle (like a bead threaded on string). Where several lines pass that angle (a coil
+  // wraps round more than once), the bead goes on the one nearest a height that moves from the top of the structure at the
+  // first word to the bottom at the last, so the beads also read in order. Longer pauses give bigger beads.
   // An exact tie for the strongest accent puts beads on every tied structure.
-  pauses: { minSeconds: 0.2, size: 0.017, perSecond: 0.04, maxSize: 0.042, feather: 1.7, spacing: 0.15, tie: 0.005 },
+  pauses: { minSeconds: 0.2, size: 0.017, perSecond: 0.04, maxSize: 0.042, feather: 1.7, tie: 0.005 },
 };
 
 // ---------------------------------------------------------------- helpers
@@ -828,6 +830,7 @@ function pauseBeads(rhythm, T, structs, group, color) {
   });
   const mat = new THREE.SpriteMaterial({ map: softBead(), color: color.clone(), transparent: true, depthWrite: false, toneMapped: false });
   const beads = new THREE.Group(); beads.userData.screenOnly = true;
+  let yLo = Infinity, yHi = -Infinity; for (let k = 1; k < segsW.length; k += 3) { yLo = Math.min(yLo, segsW[k]); yHi = Math.max(yHi, segsW[k]); }
   for (const p of pauses) {
     const u = ((p.start + p.end) / 2 - t0) / (t1 - t0), th = (u - 0.5) * 2 * Math.PI; // (0 … 1 around, from the first word to the last)
     const nx = -Math.sin(th), nz = Math.cos(th), dx = Math.cos(th), dz = Math.sin(th), hits = [];
@@ -837,9 +840,10 @@ function pauseBeads(rhythm, T, structs, group, color) {
       const f = s0 / (s0 - s1), x = segsW[k] + (segsW[k + 3] - segsW[k]) * f, y = segsW[k + 1] + (segsW[k + 4] - segsW[k + 1]) * f, z = segsW[k + 2] + (segsW[k + 5] - segsW[k + 2]) * f;
       if (x * dx + z * dz > 0.05) hits.push([x, y, z]);
     }
-    const placed = [], r = Math.min(P.maxSize, P.size + p.seconds * P.perSecond);
-    for (const q of hits) if (!placed.some((h) => Math.hypot(h[0] - q[0], h[1] - q[1], h[2] - q[2]) < P.spacing)) placed.push(q);
-    for (const q of placed) { const m = new THREE.Sprite(mat); m.position.set(q[0], q[1], q[2]); m.scale.setScalar(r * 2 * P.feather); beads.add(m); }
+    if (!hits.length) continue;
+    const want = yHi - u * (yHi - yLo), q = hits.reduce((best, h) => (Math.abs(h[1] - want) < Math.abs(best[1] - want) ? h : best)); // one bead per pause
+    const r = Math.min(P.maxSize, P.size + p.seconds * P.perSecond), m = new THREE.Sprite(mat);
+    m.position.set(q[0], q[1], q[2]); m.scale.setScalar(r * 2 * P.feather); beads.add(m);
   }
   group.add(beads);
 }
