@@ -7,7 +7,7 @@
 import { getTake, archiveIsShared } from "./store.js?v=2";
 import { currentTakeId } from "./nav.js?v=8";
 import { portraitSVG } from "./portrait.js?v=27";
-import { download, slug, formatDate } from "./shared.js?v=2";
+import { download, slug, formatDate } from "./shared.js?v=3";
 
 const $ = (id) => document.getElementById(id);
 const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");

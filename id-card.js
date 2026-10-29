@@ -3,7 +3,7 @@
 // the "signature" is the voice's own pitch line; the bottom has a passport-style code line.
 // Every value comes from the stored measurements, so cards always match the data.
 import { snapshot } from "./orb-snapshot.js?v=40";
-import { formatDate, pct, deviceText } from "./shared.js?v=2";
+import { formatDate, pct, deviceText } from "./shared.js?v=3";
 import { makePreview } from "./store.js?v=2";
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));

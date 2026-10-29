@@ -68,7 +68,7 @@ export function drawPitchTrace(canvas, frames, { windowSeconds = null, pauses = 
   const y = (hz) => h - ((Math.log(hz) - lo) / (hi - lo)) * (h - pad * 2) - pad;
 
   if (grid) {
-    g.font = "11px system-ui, sans-serif";
+    g.font = "11px Geist, system-ui, sans-serif";
     g.textBaseline = "middle";
     g.lineWidth = 1;
     for (const hz of [100, 200, 400]) {

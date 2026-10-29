@@ -64,7 +64,7 @@ export function drawVowelChart(canvas, { cloud = [], trail = [], ref = null } = 
   const y = (f1) => pad.t + ((lg(f1) - lg(F1_RANGE[0])) / (lg(F1_RANGE[1]) - lg(F1_RANGE[0]))) * (H - pad.t - pad.b);
 
   // grid + axis labels
-  g.font = "11px system-ui, sans-serif";
+  g.font = "11px Geist, system-ui, sans-serif";
   g.strokeStyle = line;
   g.fillStyle = muted;
   g.lineWidth = 1;
@@ -82,7 +82,7 @@ export function drawVowelChart(canvas, { cloud = [], trail = [], ref = null } = 
     g.fillText(f1, pad.l - 6, y(f1));
   }
   // plain-language axis titles
-  g.font = "12px system-ui, sans-serif";
+  g.font = "12px Geist, system-ui, sans-serif";
   g.fillStyle = muted;
   g.textAlign = "center";
   g.textBaseline = "bottom";
@@ -95,7 +95,7 @@ export function drawVowelChart(canvas, { cloud = [], trail = [], ref = null } = 
   g.restore();
 
   // corner hints: where the three extreme vowels live
-  g.font = "600 13px system-ui, sans-serif";
+  g.font = "600 13px Geist, system-ui, sans-serif";
   g.fillStyle = muted;
   g.globalAlpha = 0.8;
   g.textBaseline = "top";
@@ -130,7 +130,7 @@ export function drawVowelChart(canvas, { cloud = [], trail = [], ref = null } = 
     g.closePath();
     g.stroke();
     g.restore();
-    g.font = "12px system-ui, sans-serif";
+    g.font = "12px Geist, system-ui, sans-serif";
     g.textAlign = "left";
     g.textBaseline = "top";
     g.strokeStyle = refc;
