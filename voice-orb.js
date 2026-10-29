@@ -797,7 +797,7 @@ export function buildOrb(take) {
   const shell = new THREE.Color().setHSL(hsl.h, MAP.shell.sat, MAP.shell.light);
   group.children.forEach((o) => { if (o.userData.part === "core" || o.userData.screenOnly) return;
     o.traverse((m) => { for (const mt of m.material ? [].concat(m.material) : []) if (mt.color) mt.color.copy(shell); }); });
-  pauseBeads(take.rhythm, T, structs, group, color);
+  pauseBeads(take.rhythm, T, structs, group, color, size);
   return { group, traits: T, legend: legendFor(T), coreColor: color, shellColor: shell };
 }
 
@@ -812,7 +812,7 @@ function softBead() { // a solid round middle that fades out softly at the edge
   BEAD = new THREE.CanvasTexture(c); BEAD.colorSpace = THREE.SRGBColorSpace;
   return BEAD;
 }
-function pauseBeads(rhythm, T, structs, group, color) {
+function pauseBeads(rhythm, T, structs, group, color, coreR) {
   const P = MAP.pauses, t0 = rhythm?.start, t1 = rhythm?.end ?? (t0 != null && rhythm?.totalSeconds ? t0 + rhythm.totalSeconds : null);
   const pauses = (rhythm?.pauses || []).filter((p) => p.seconds >= P.minSeconds);
   if (!pauses.length || t0 == null || !(t1 > t0) || !structs.length) return;
@@ -829,6 +829,24 @@ function pauseBeads(rhythm, T, structs, group, color) {
     else if (o.isMesh) for (let k = 0; k + 2 < n; k += 3) { push(get(k), get(k + 1)); push(get(k + 1), get(k + 2)); }
   });
   const mat = new THREE.SpriteMaterial({ map: softBead(), color: color.clone(), transparent: true, depthWrite: false, toneMapped: false });
+  // hidden behind the core, exactly as the structure's own lines are (fadeBehindCore): checked at each bead's centre
+  mat.onBeforeCompile = (sh) => {
+    sh.uniforms.coreR = { value: coreR || MAP.core.radius };
+    sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nvarying vec3 vWorldP;")
+      .replace("void main() {", "void main() {\n  vWorldP = (modelMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;");
+    sh.fragmentShader = sh.fragmentShader.replace("#include <common>", `#include <common>
+varying vec3 vWorldP; uniform float coreR;
+float behindCore() {
+  vec3 rd = vWorldP - cameraPosition; float dist = length(rd); rd /= dist;
+  float b = dot(cameraPosition, rd), c = dot(cameraPosition, cameraPosition) - coreR * coreR, h = b * b - c;
+  if (h <= 0.0) return 1.0;
+  float t = -b - sqrt(h);
+  if (t <= 0.0 || t >= dist) return 1.0;
+  float face = clamp(dot(normalize(cameraPosition + rd * t), -rd), 0.0, 1.0);
+  return 1.0 - smoothstep(0.0, ${MAP.core.solid.toFixed(3)}, face);
+}`).replace("#include <opaque_fragment>", "#include <opaque_fragment>\ngl_FragColor.a *= behindCore();");
+  };
+  mat.customProgramCacheKey = () => "beadBehindCore";
   const beads = new THREE.Group(); beads.userData.screenOnly = true;
   let yLo = Infinity, yHi = -Infinity; for (let k = 1; k < segsW.length; k += 3) { yLo = Math.min(yLo, segsW[k]); yHi = Math.max(yHi, segsW[k]); }
   for (const p of pauses) {
