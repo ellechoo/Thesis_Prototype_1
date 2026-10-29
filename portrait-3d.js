@@ -12,9 +12,9 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { getTake, archiveIsShared } from "./store.js?v=2";
 import { currentTakeId } from "./nav.js?v=8";
 import { formatDate, slug, download } from "./shared.js?v=3";
-import { buildOrb, MAP, traits, voiceColor } from "./voice-orb.js?v=52";
-import { renderIdCard } from "./id-card.js?v=57";
-import { renderBreakdown } from "./breakdown.js?v=47";
+import { buildOrb, MAP, traits, voiceColor } from "./voice-orb.js?v=53";
+import { renderIdCard } from "./id-card.js?v=58";
+import { renderBreakdown } from "./breakdown.js?v=48";
 const esc = (x) => String(x ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 const $ = (id) => document.getElementById(id);
@@ -487,8 +487,8 @@ function pickFor(key, pref) {
   if (key === "pauses" && pauseSparks.length) { // the spark facing the viewer and clear of the core, nearest the list (or the box)
     let best = null, bs = Infinity;
     for (const sp of pauseSparks) {
-      const p = sp.getWorldPosition(new THREE.Vector3()); if (p.dot(B.toCam) < 0.05) continue;
-      const [x, y] = toScreen(p); if (Math.hypot(x - c.x, y - c.y) < c.r * 1.05) continue;
+      const p = sp.getWorldPosition(new THREE.Vector3());
+      const [x, y] = toScreen(p); if (Math.hypot(x - c.x, y - c.y) < c.r * 1.05) continue; // (clear of the core, so never hidden by it)
       const score = wide ? x : -y; // toward the list (wide screens); else the lowest, toward the box
       if (score < bs) { bs = score; best = sp; }
     }
@@ -523,7 +523,8 @@ function anchorsFor(key, spot = false) {
         return (picks.vowels || []).map(spot); }
     case "pauses": // a spark facing the viewer, clear of the core (swapped for another as it turns away)
       if (hit) return [hit];
-      if (!picks.pauses || picks.pauses.getWorldPosition(new THREE.Vector3()).dot(B.toCam) < 0.05) pickFor("pauses", null);
+      { const c = coreOnScreen(), [x, y] = picks.pauses ? toScreen(picks.pauses.getWorldPosition(new THREE.Vector3())) : [0, 0];
+        if (!picks.pauses || Math.hypot(x - c.x, y - c.y) < c.r * 1.05) pickFor("pauses", null); }
       return picks.pauses ? [picks.pauses.getWorldPosition(new THREE.Vector3())] : [];
     case "breathy": return [around(hang ?? (isWide() ? aim() + 0.25 : Math.PI * 1.12), R * 0.97, B)]; // (narrower screens: the left edge, clear of the other points)                                     // the edge
     case "raspy":
