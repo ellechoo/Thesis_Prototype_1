@@ -13,6 +13,7 @@
 import * as THREE from "three";
 import { listTakes, getTake } from "./store.js?v=2";
 import { buildOrb } from "./voice-orb.js?v=55";
+import { spreadOut } from "./spread.js?v=1"; // (voiceprints that look alike aren't placed next to each other)
 
 const MAX_VOICES = 48;       // the newest ones; plenty to fill the field without a long download
 const DRIFT = [0.016, 0.01]; // pixels per millisecond: right-to-left and bottom-to-top, a slow diagonal
@@ -38,7 +39,7 @@ const still = matchMedia("(prefers-reduced-motion: reduce)").matches; // then th
 }
 
 let people = [];
-try { people = (await listTakes()).slice(0, MAX_VOICES); } catch (e) { console.warn("Couldn't load the archive:", e); }
+try { people = spreadOut((await listTakes()).slice(0, MAX_VOICES)); } catch (e) { console.warn("Couldn't load the archive:", e); }
 const N = people.length;
 document.querySelectorAll(".home-count").forEach((el) => {
   el.textContent = N ? `${N === MAX_VOICES ? `${N}+` : N} voice${N === 1 ? "" : "s"} so far` : "Be the first voice";

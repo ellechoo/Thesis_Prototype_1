@@ -16,6 +16,7 @@
 import * as THREE from "three";
 import { listTakes, getTake } from "./store.js?v=2";
 import { buildOrb } from "./voice-orb.js?v=55";
+import { spreadOut } from "./spread.js?v=1"; // (voiceprints that look alike aren't placed next to each other)
 import { renderIdCard } from "./id-card.js?v=60";
 
 const $ = (id) => document.getElementById(id);
@@ -31,7 +32,7 @@ async function load() {
   try { takes = await listTakes(); }
   catch (e) { $("status").textContent = `Couldn't open the archive: ${e.message}`; $("status").classList.add("error"); return; }
   $("empty").hidden = takes.length > 0;
-  if (takes.length) gallery(takes);
+  if (takes.length) gallery(spreadOut(takes));
 }
 
 // ---------- the gallery ----------
