@@ -4,7 +4,7 @@ import { startRecording, resampleTo, encodeWav } from "./recorder.js";
 import { computeRhythm } from "./rhythm.js";
 import { checkTake, roomIsNoisy } from "./quality.js?v=1";
 import { nameIsBlocked } from "./name-check.js?v=1";
-import { makePassageTracker, canFollowWords } from "./progress.js?v=8";
+import { makePassageTracker, canFollowWords } from "./progress.js?v=9";
 import { saveTake, newId, archiveIsShared } from "./store.js?v=2";
 import {
   RATE, MIN_ACCENT_SECONDS, summarize, drawPitchTrace, warmUpAccentModel, classifyAccent,
@@ -38,7 +38,6 @@ let session = 0; // bumps on every Start, so a cancelled countdown can never car
 
 const passage = makePassageTracker($("passage"));
 const PASSAGE_SYLLABLES = Number($("passage").dataset.syllables) || passage.syllables;
-if (!canFollowWords) showFollowNote("Word highlighting isn't available in this browser (try Chrome or Safari). Everything else works.");
 
 // The name field starts empty for each visitor (shared computers). Clear any name an older version remembered.
 ui.name.value = "";
@@ -270,6 +269,7 @@ function stopMic() {
 
 // ---------- live display ----------
 function onLiveFrame(f) {
+  if (phase === "recording") passage.hear(f); // the highlight can follow the voice itself (progress.js)
   // only the volume is shown while recording: enough to tell the person they're being heard
   ui.active.textContent = f.calibrating ? "Measuring the room…" : f.active ? "Hearing you" : "Listening…";
   ui.active.classList.toggle("on", f.active && !f.calibrating);

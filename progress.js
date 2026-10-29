@@ -2,12 +2,16 @@
 // Uses the browser's built-in speech recognition (Web Speech API) to hear the words.
 // Only the highlighting uses it; every measurement still runs on this device.
 // In Chrome, the recognizer sends audio to Google; Safari can run it on the device.
-// Browsers without it (e.g. Firefox) just show the passage without highlighting.
+// When recognition isn't available or hears nothing (common on phones, where it can't share the microphone with the
+// recording), the highlight follows the voice itself instead: each syllable-like beat in the loudness moves it on by
+// one syllable of the passage (see hear()). Rougher than recognition, but it keeps up with the reader.
 
 const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 export const canFollowWords = !!Recognition;
 
 const LOOKAHEAD = 4; // how many passage words a heard word may skip ahead to find its match
+const FALLBACK_AFTER = 2.5; // seconds of voice with no words from recognition before following the beats instead
+const BEATS_TO_SYLLABLES = 1.25; // the beat count runs about 20% under the true syllables (checked on archive readings), so it's scaled up
 
 /** Rough English syllable count for one word (used for speaking rate). */
 export function syllablesIn(word) {
@@ -34,7 +38,13 @@ export function makePassageTracker(el) {
   });
   const syllables = words.reduce((a, w) => a + syllablesIn(w.span.textContent), 0);
 
+  // syllables up to the end of each word, for following the beats
+  const ends = []; words.reduce((a, w) => (ends.push(a + syllablesIn(w.span.textContent)), ends[ends.length - 1]), 0);
+
   let reached = 0, active = false;
+  // the beat follower's state
+  let beats = 0, last = [], dip = Infinity, lastBeat = -1, voiceFrom = null, gotWords = false, byBeats = false;
+  const resetBeats = () => { beats = 0; last = []; dip = Infinity; lastBeat = -1; voiceFrom = null; gotWords = false; byBeats = false; };
   function show() {
     words.forEach((w, i) => {
       w.span.classList.toggle("done", active && i < reached);
@@ -59,9 +69,31 @@ export function makePassageTracker(el) {
   return {
     syllables,
     /** Clear all highlighting. */
-    reset() { reached = 0; active = false; show(); },
+    reset() { reached = 0; active = false; resetBeats(); show(); },
     /** Recording has begun: point at the first word. */
-    start() { reached = 0; active = true; show(); },
+    start() { reached = 0; active = true; resetBeats(); show(); },
+    /**
+     * A live voice frame ({ t, db, active }) while recording. If recognition hasn't produced any words after
+     * FALLBACK_AFTER seconds of voice (or isn't available), the highlight follows syllable-like beats instead:
+     * peaks in the smoothed loudness, at least 90 ms apart and 3 dB above the dip before them (as in quality.js).
+     */
+    hear(f) {
+      if (!active || f.calibrating) return;
+      last.push(f.active ? f.db : -120); if (last.length > 5) last.shift();
+      if (last.length === 5) {
+        // smoothed loudness around the three middle frames; a beat is a peak in the middle one
+        const S1 = (last[0] + last[1] + last[2]) / 3, S2 = (last[1] + last[2] + last[3]) / 3, S3 = (last[2] + last[3] + last[4]) / 3;
+        dip = Math.min(dip, S2);
+        if (last[2] > -120 && S2 >= S1 && S2 > S3 && S2 - dip >= 3 && f.t - lastBeat >= 0.09) { beats++; lastBeat = f.t; dip = S2; }
+      }
+      if (f.active && voiceFrom === null) voiceFrom = f.t;
+      if (!gotWords && voiceFrom !== null && f.t - voiceFrom >= FALLBACK_AFTER) byBeats = true;
+      if (byBeats) {
+        const syl = beats * BEATS_TO_SYLLABLES;
+        let i = ends.findIndex((e) => e > syl); if (i < 0) i = words.length - 1;
+        if (i > reached) { reached = i; show(); }
+      }
+    },
     /** Recording stopped: words reached stay highlighted. */
     finish() { if (active) { words.forEach((w, i) => w.span.classList.remove("current")); } },
     /**
@@ -69,8 +101,8 @@ export function makePassageTracker(el) {
      * onProblem(message) is called if recognition stops working.
      */
     follow(onProblem = () => {}) {
-      if (!Recognition) return null;
-      let stopped = false, earlier = "", rec = null;
+      if (!Recognition) { byBeats = true; return () => {}; } // no recognition at all: follow the beats from the start
+      let stopped = false, earlier = "", rec = null, fails = 0;
       const begin = () => {
         rec = new Recognition();
         rec.lang = "en-US";
@@ -82,19 +114,25 @@ export function makePassageTracker(el) {
           for (let i = 0; i < e.results.length; i++) session += " " + e.results[i][0].transcript;
           const heard = (earlier + " " + session).split(/\s+/).map(norm).filter(Boolean);
           const p = progressFor(heard);
+          if (p > 0) gotWords = true;
           if (p > reached) { reached = p; show(); }
         };
         rec.onerror = (e) => {
-          if (e.error === "not-allowed" || e.error === "service-not-allowed") { stopped = true; onProblem("Word highlighting isn't allowed in this browser, but recording still works."); }
-          else if (e.error === "network") { stopped = true; onProblem("Word highlighting needs an internet connection in this browser, but recording still works."); }
+          // can't use recognition here: quietly follow the beats instead
+          if (e.error === "not-allowed" || e.error === "service-not-allowed" || e.error === "network" || e.error === "audio-capture") { stopped = true; byBeats = true; }
         };
+        let began = performance.now();
         rec.onend = () => { // recognizers stop after a while; keep going until recording ends
           earlier += " " + session;
-          if (!stopped) { try { begin(); } catch {} }
+          // ...but not in a tight loop: a recognizer that keeps ending at once (it can't get the microphone) is given up on,
+          // and the beats take over
+          fails = performance.now() - began < 1500 ? fails + 1 : 0;
+          if (fails >= 3) { stopped = true; byBeats = true; return; }
+          if (!stopped) { try { begin(); } catch { byBeats = true; } }
         };
         rec.start();
       };
-      try { begin(); } catch { return null; }
+      try { begin(); } catch { byBeats = true; }
       return () => { stopped = true; try { rec?.stop(); } catch {} };
     },
   };
