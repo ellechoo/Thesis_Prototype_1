@@ -256,7 +256,8 @@ ui.use.addEventListener("click", async () => {
 function askAboutGaps(take, url, gaps) {
   pending = { take, url };
   ui.review.classList.add("gaps"); // the title turns red (style.css)
-  ui.reviewTitle.textContent = gaps.length === 1 ? "One part couldn't be measured" : "Some parts couldn't be measured";
+  // phones: just "Warning"; computers: the full sentence ("be" starts the second line, see style.css)
+  ui.reviewTitle.textContent = matchMedia("(max-width: 640px)").matches ? "Warning" : gaps.length === 1 ? "One part couldn't be measured" : "Some parts couldn't be measured";
   ui.reviewWarn.hidden = false;
   ui.reviewWarn.innerHTML = `<ul>${gaps.map((g) => `<li><b>${g.title}.</b> ${g.text}</li>`).join("")}</ul>`;
   ui.use.textContent = "Continue anyway";
