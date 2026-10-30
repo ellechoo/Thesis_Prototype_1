@@ -33,7 +33,7 @@ function mix(el) {
   el._letters = [...el.querySelectorAll(".mx-l")];
   if (!mixed.has(el)) { mixed.add(el); seen.observe(el); }
   if (el.hasAttribute("data-steady-width")) holdWidth(el);
-  if (el.hasAttribute("data-steady-words")) holdWords(el);
+  if (el.hasAttribute("data-steady-words")) { holdWords(el); watchWidth(el); }
   el._settle = !!el.closest(".id-card");
   if (el._settle && !still) settle(el);
 }
@@ -65,22 +65,42 @@ function holdWidth(el) {
   ls.forEach((l, i) => (l.style.cssText = keep[i]));
   if (w) { el.style.minWidth = Math.ceil(w + 2) + "px"; el.style.width = el.style.minWidth; }
 }
-// A heading marked data-steady-words (the Voiceprint page's name) holds each word at its widest possible mix instead,
-// so the line breaks are decided as if every letter were at its widest: a word near the right edge moves down to the
-// next line and stays there, instead of jumping back and forth as its letters change.
-// (the widest look the shimmer can actually give a letter: boldest, upright, at the smallest optical size it uses)
-const WIDEST_MIX = "font-weight:700;font-style:normal;font-variation-settings:'SOFT' 0,'WONK' 0,'opsz' 24";
-function holdWords(el) {
-  for (const w of el.querySelectorAll(".mx-w")) {
-    const ls = [...w.querySelectorAll(".mx-l")], keep = ls.map((l) => l.style.cssText);
-    w.style.minWidth = "";
-    ls.forEach((l) => (l.style.cssText = WIDEST_MIX));
-    const width = w.getBoundingClientRect().width;
-    ls.forEach((l, i) => (l.style.cssText = keep[i]));
-    if (width) w.style.minWidth = Math.ceil(width) + "px";
-  }
+// A heading marked data-steady-words (the Voiceprint page's name) decides its line breaks as if every letter were at its
+// widest possible mix, then fixes them with explicit breaks: a word near the right edge moves down to the next line
+// and stays there, instead of jumping back and forth as its letters change. The words themselves keep their natural
+// width, so words sharing a line keep the normal space between them.
+// (and again whenever the heading's width changes: it may not be laid out yet when its text first arrives)
+const widthSeen = new WeakMap(), widthWatch = new ResizeObserver((entries) => {
+  for (const e of entries) { const w = Math.round(e.contentRect.width); if (w && w !== widthSeen.get(e.target)) { widthSeen.set(e.target, w); holdWords(e.target); } }
+});
+function watchWidth(el) { if (!widthSeen.has(el)) { widthSeen.set(el, 0); widthWatch.observe(el); } }
+// the widest a letter can get in any mix the shimmer can give it (every combination of the extremes, measured once per
+// letter and size)
+const LETTER_W = new Map(), EXTREMES = [];
+for (const wt of [320, 700]) for (const it of ["normal", "italic"]) for (const soft of [0, 100]) for (const wonk of [0, 1]) for (const op of [24, 144])
+  EXTREMES.push(`font-weight:${wt};font-style:${it};font-variation-settings:'SOFT' ${soft},'WONK' ${wonk},'opsz' ${op}`);
+function widestLetter(l, host = l.parentElement, ch = l.textContent) {
+  const key = ch + "|" + getComputedStyle(host).fontSize; if (LETTER_W.has(key)) return LETTER_W.get(key);
+  const probe = document.createElement("span"); probe.textContent = ch; probe.style.display = "inline-block"; host.appendChild(probe);
+  let max = 0; for (const st of EXTREMES) { probe.style.cssText = st + ";display:inline-block"; max = Math.max(max, probe.getBoundingClientRect().width); }
+  probe.remove(); LETTER_W.set(key, max); return max;
 }
-addEventListener("resize", () => { for (const el of mixed) if (el.hasAttribute("data-steady-width")) holdWidth(el); });
+function holdWords(el) {
+  const inner = el.querySelector(".mx"); if (!inner) return;
+  inner.querySelectorAll("br.mx-br").forEach((b) => b.remove());
+  const words = [...inner.querySelectorAll(".mx-w")]; if (words.length < 2) return;
+  const cs = getComputedStyle(el), avail = el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  if (!(avail > 0)) return;
+  const widest = words.map((w) => [...w.querySelectorAll(".mx-l")].reduce((sum, l) => sum + widestLetter(l), 0));
+  const space = widestLetter(null, inner, "\u00a0");
+  let line = 0;
+  words.forEach((w, i) => {
+    const need = (line ? space : 0) + widest[i];
+    if (line && line + need > avail) { const br = document.createElement("br"); br.className = "mx-br"; w.before(br); line = widest[i]; }
+    else line += need;
+  });
+}
+addEventListener("resize", () => { for (const el of mixed) { if (el.hasAttribute("data-steady-width")) holdWidth(el); if (el.hasAttribute("data-steady-words")) holdWords(el); } });
 document.fonts?.ready.then(() => { for (const el of mixed) { if (el.hasAttribute("data-steady-width")) holdWidth(el); if (el.hasAttribute("data-steady-words")) holdWords(el); } }); // (once the font has loaded)
 function scan(root = document) {
   const list = root.nodeType === 1 && root.matches?.(SELECTOR) ? [root] : [];
