@@ -110,6 +110,12 @@ export const MAP = {
   // longer and skinnier the spark's limbs; only the smoothest voices get rounded tips and corners (the same raspy ↔ smooth
   // dial as the core).
   // An exact tie for the strongest accent puts beads on every tied structure.
+  // SPEAKING RATE → a thick, wavy band of small flat rocks circling the core, inside the accent structure, in the colour
+  // opposite the core's on the colour wheel. Tipped by `tilt` (radians round x and z). The faster the reading (syllables a
+  // second, from `slow` to `fast`), the more rocks (count), the smaller they are (size), the longer the streak behind each
+  // (streak) and the quicker the band turns on the Voiceprint page (spin, radians a second). The band rises and falls in
+  // one wave per syllable a second (rounded, at least 2). r0 … r1: how far out the band sits; thick: its height.
+  rate: { slow: 2.4, fast: 5.6, r0: 0.74, r1: 0.9, thick: 0.11, wave: 0.13, tilt: [0.62, -0.25], count: [115, 375], size: [0.025, 0.0137], streak: 0.75, spin: [0.15, 1.05] },
   pauses: { free: { r: 1.0, y: 0.45, grow: 1.9 }, shellGrow: 0.45, minSeconds: 0.2, size: 0.017, perSecond: 0.04, maxSize: 0.042, spark: 2.1, fewFor: 2, manyFor: 12, tie: 0.005 },
 };
 
@@ -158,6 +164,7 @@ export function traits(take) {
   const timbre = timbreOf(take, frames);
   const vowels = vowelsOf(frames);
   return { vowels, pitch, note: s.note || noteOf(pitch), lo: q(0.08), hi: q(0.92), rangeSt: 12 * Math.log2(q(0.92) / q(0.08)), accents, timbre,
+    rate: Number.isFinite(take.rhythm?.speechRate) && take.rhythm.speechRate > 0 ? take.rhythm.speechRate : null, seed: take.id || take.name || "voice",
     accentTop: take.accent?.top || null, hasAccent: !!take.accent && accents.length > 0, rand: rng(take.id || take.name || "voice"), trand: rng((take.id || take.name || "voice") + "/timbre"), grand: rng((take.id || take.name || "voice") + "/glass") };
 }
 // vowel space: the frames that land on the vowel chart, evenly sampled, with this voice's own range (log Hz)
@@ -357,7 +364,7 @@ function fadeBehindCore(mat) {
   mat.onBeforeCompile = (sh) => {
     sh.uniforms.coreR = { value: mat.userData.coreR || MAP.core.radius };
     sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nvarying vec3 vWorldP;")
-      .replace("#include <project_vertex>", "#include <project_vertex>\nvWorldP = (modelMatrix * vec4(transformed, 1.0)).xyz;");
+      .replace("#include <project_vertex>", "#include <project_vertex>\nvWorldP = (modelMatrix * vec4(transformed, 1.0)).xyz;\n#ifdef USE_INSTANCING\nvWorldP = (modelMatrix * instanceMatrix * vec4(transformed, 1.0)).xyz;\n#endif");
     sh.fragmentShader = sh.fragmentShader.replace("#include <common>", `#include <common>
 varying vec3 vWorldP; uniform float coreR;
 float behindCore() {
@@ -814,7 +821,61 @@ export function buildOrb(take) {
   group.children.forEach((o) => { if (o.userData.part === "core" || o.userData.screenOnly) return;
     o.traverse((m) => { for (const mt of m.material ? [].concat(m.material) : []) if (mt.color) mt.color.copy(shell); }); });
   pauseBeads(take.rhythm, T, structs, group, color, size);
+  rateBelt(T, group, color, size);
   return { group, traits: T, legend: legendFor(T), coreColor: color, shellColor: shell };
+}
+
+// ---- speaking rate: a band of flat rocks round the core (see MAP.rate)
+let ROCK_GEOS = null;
+function rockGeos() { // three rough little rocks: icosahedra with their corners pushed in and out
+  if (ROCK_GEOS) return ROCK_GEOS;
+  return (ROCK_GEOS = [0, 1, 2].map((i) => {
+    const g = new THREE.IcosahedronGeometry(1, 0), p = g.attributes.position, r = rng("rock" + i), bump = new Map();
+    for (let k = 0; k < p.count; k++) { const key = `${p.getX(k).toFixed(3)},${p.getY(k).toFixed(3)},${p.getZ(k).toFixed(3)}`; if (!bump.has(key)) bump.set(key, 0.7 + r() * 0.55); const f = bump.get(key); p.setXYZ(k, p.getX(k) * f, p.getY(k) * f * 0.8, p.getZ(k) * f); }
+    return g;
+  }));
+}
+export const rateColor = (c) => { const h = {}; c.getHSL(h); return new THREE.Color().setHSL((h.h + 0.5) % 1, Math.max(0.65, h.s), 0.6); }; // opposite the core's colour
+function rateBelt(T, group, coreColor, coreR) {
+  if (T.rate == null) return;
+  const R = MAP.rate, t = Math.max(0, Math.min(1, (T.rate - R.slow) / (R.fast - R.slow))), lerp = ([a, b]) => a + (b - a) * t;
+  const count = Math.round(lerp(R.count)), size = lerp(R.size), streak = Math.max(0, (t - 0.15) / 0.85) * R.streak, waves = Math.max(2, Math.round(T.rate));
+  const r = rng((T.seed || "") + "/rate" + T.rate.toFixed(2)), col = rateColor(coreColor), per = [[], [], []];
+  for (let i = 0; i < count; i++) {
+    const a = r() * Math.PI * 2, v = r() * 2 - 1, u = r() * 2 - 1;
+    per[i % 3].push({ a, rad: R.r0 + (R.r1 - R.r0) * (0.5 + v * 0.2), y: Math.sin(a * waves) * R.wave + u * R.thick / 2, s: size * (0.55 + r() * 0.9), spin: r() * 6 });
+  }
+  const spinner = new THREE.Group(), m4 = new THREE.Matrix4(), up = new THREE.Vector3(0, 1, 0), trail = [], cols = [];
+  const mat = fadeBehindCore(new THREE.MeshBasicMaterial({ color: col, toneMapped: false, transparent: true })); mat.userData.coreR = coreR;
+  per.forEach((list, k) => {
+    const inst = new THREE.InstancedMesh(rockGeos()[k], mat, list.length); inst.userData.part = "rate";
+    list.forEach((q, i) => {
+      const x = Math.cos(q.a) * q.rad, z = Math.sin(q.a) * q.rad;
+      // each rock turned its own way, and stretched along its path when fast (the path's direction: −sin a, 0, cos a)
+      const along = new THREE.Vector3(-Math.sin(q.a), 0, Math.cos(q.a)), basis = new THREE.Matrix4().makeBasis(along, up, new THREE.Vector3().crossVectors(along, up));
+      m4.compose(new THREE.Vector3(x, q.y, z), new THREE.Quaternion().setFromRotationMatrix(basis), new THREE.Vector3(q.s * (1 + streak * 1.6), q.s, q.s))
+        .multiply(new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(q.spin, -q.a, q.spin * 0.7)));
+      inst.setMatrixAt(i, m4);
+      if (streak > 0.05) { // a streak back along the path, fading out
+        const arc = streak * 0.55 / q.rad, steps = 8;
+        for (let s2 = 0; s2 < steps; s2++) {
+          const t0 = s2 / steps, t1 = (s2 + 1) / steps, a0 = q.a - arc * t0, a1 = q.a - arc * t1, c0 = (1 - t0) * 0.7, c1 = (1 - t1) * 0.7;
+          trail.push(Math.cos(a0) * q.rad, q.y, Math.sin(a0) * q.rad, Math.cos(a1) * q.rad, q.y, Math.sin(a1) * q.rad);
+          cols.push(col.r * c0, col.g * c0, col.b * c0, col.r * c1, col.g * c1, col.b * c1);
+        }
+      }
+    });
+    spinner.add(inst);
+  });
+  if (trail.length) {
+    const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.Float32BufferAttribute(trail, 3)); geo.setAttribute("color", new THREE.Float32BufferAttribute(cols, 3));
+    const lm = fadeBehindCore(new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })); lm.userData.coreR = coreR;
+    spinner.add(new THREE.LineSegments(geo, lm));
+  }
+  spinner.userData.spin = lerp(R.spin); // (the Voiceprint page turns it; still pictures show it as it is)
+  const belt = new THREE.Group(); belt.add(spinner); belt.quaternion.setFromEuler(new THREE.Euler(R.tilt[0], 0, R.tilt[1]));
+  belt.userData.screenOnly = true; belt.userData.rate = true; belt.userData.spinner = spinner; // (the Voiceprint page finds it by this)
+  group.add(belt);
 }
 
 // ---- talking & pauses: beads threaded on the strongest accent's lines (see MAP.pauses)
@@ -931,6 +992,8 @@ export function legendFor(T) {
     { key: "vowels", tier: 1, data: "Vowel space", value: T.vowels.pts.length ? `${T.vowels.n} vowel moments` : "Not enough to map",
       visual: T.vowels.pts.length ? "The soft glowing spots in the core's surface. Every vowel this voice made is one spot, placed where it sits on the vowel chart and wrapped all the way round the core: front vowels like “ee” one way, back vowels like “oo” the other (they meet at the back), closed vowels toward the top and open ones like “ah” toward the bottom. Each voice is stretched to fill the whole core, so the pattern shows the shape of its own vowel space. The spots come in the core's two neighbouring colors on the color wheel: front vowels like “ee” in one and back vowels like “oo” in the other. Where vowels crowd together they overlap into solid patches."
         : "Too few vowel moments were measured in this recording to map them." },
+    { key: "rate", tier: 1, data: "Speaking rate", value: T.rate == null ? "Not measured" : `${T.rate.toFixed(1)} syllables a second`,
+      visual: T.rate == null ? "No speaking rate, so there is no band of rocks." : "The band of small rocks circling the core, in the colour opposite the core's. The faster the reading, the more rocks, the smaller they are, the longer their streaks, and the more waves in the band (one per syllable a second)." },
     { key: "range", tier: 2, data: "Pitch range", value: `${Math.round(T.lo)}–${Math.round(T.hi)} Hz`, visual: "The top and bottom of the core. The top is lighter the higher this voice climbs above its average; the bottom is darker the lower it drops. (The very highest and lowest moments are ignored, so one squeak or croak doesn't count.)" },
   ];
 }
