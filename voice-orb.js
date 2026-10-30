@@ -116,7 +116,7 @@ export const MAP = {
   // (streak) and the quicker the band turns on the Voiceprint page (spin, radians a second). The band rises and falls in
   // one wave per syllable a second (rounded, at least 2). r0 … r1: how far out the band sits; thick: its height.
   // The rocks' shape follows the raspy ↔ smooth dial: round pebbles for smooth voices, jagged shards for raspy ones.
-  rate: { slow: 2.4, fast: 5.6, r0: 0.68, r1: 0.84, thick: 0.11, wave: 0.13, tilt: [0.62, -0.25], // (mirrored to lean the other way when a British Isles ring is there)
+  rate: { slow: 2.4, fast: 5.6, r0: 0.64, r1: 0.8, thick: 0.11, wave: 0.13, tilt: [0.62, -0.25], // (mirrored to lean the other way when a British Isles ring is there)
     count: [115, 375], size: [0.025, 0.0137], streak: 0.75, opacity: 0.55, spin: [0.07, 1.6] },
   pauses: { free: { r: 1.0, y: 0.45, grow: 1.9 }, shellGrow: 0.45, minSeconds: 0.2, size: 0.017, perSecond: 0.04, maxSize: 0.042, spark: 2.1, fewFor: 2, manyFor: 12, tie: 0.005 },
 };
