@@ -1546,3 +1546,20 @@ p, li, dd, summary, .note, .hint, figcaption { text-wrap: pretty; }
 /* the filter bubble sits a little lower, leaving a gap under the button */
 .filter-panel { top: 94px; }
 @media (max-width: 640px) { .filter-panel { top: 86px; } }
+
+/* Archive, computers: the top controls (view switch, search, filter) sit in the top-right corner, in the same order */
+@media (min-width: 641px) {
+  .archive-stage .stage-filter-btn { left: auto; right: max(18px, env(safe-area-inset-right, 0px)); width: 124px; justify-content: center; }
+  .archive-stage .stage-search { left: auto; right: calc(max(18px, env(safe-area-inset-right, 0px)) + 134px); }
+  .archive-stage .view-switch { left: auto; right: calc(max(18px, env(safe-area-inset-right, 0px)) + 134px + 280px); }
+  .archive-stage .filter-panel { left: auto; right: max(18px, env(safe-area-inset-right, 0px)); }
+}
+/* Archive: the top controls outlined in white, turning red on hover, while pressed and while in use */
+.archive-stage .view-switch, .archive-stage .stage-search input, .archive-stage .stage-filter-btn { border-color: var(--text); transition: border-color .15s ease; }
+.archive-stage .view-switch:hover, .archive-stage .view-switch:active, .archive-stage .view-switch:focus-within,
+.archive-stage .stage-search input:hover, .archive-stage .stage-search input:focus, .archive-stage .stage-search input:active,
+.archive-stage .stage-filter-btn:hover, .archive-stage .stage-filter-btn:active, .archive-stage .stage-filter-btn[aria-expanded="true"], .archive-stage .stage-filter-btn.on { border-color: var(--accent); }
+@media (hover: none) { .archive-stage .view-switch:hover, .archive-stage .stage-search input:hover, .archive-stage .stage-filter-btn:hover:not([aria-expanded="true"]):not(.on) { border-color: var(--text); } }
+/* Archive: a voiceprint's name tag in very cloudy white glass, black text */
+.archive-stage .stage-tip { background: rgba(244, 243, 239, .88); -webkit-backdrop-filter: blur(18px) saturate(1.3); backdrop-filter: blur(18px) saturate(1.3); color: #0e0e0d; border: 1px solid rgba(255, 255, 255, .7); box-shadow: 0 6px 18px rgba(0, 0, 0, .4), inset 0 1px 0 rgba(255, 255, 255, .7); }
+.archive-stage .stage-tip::before { top: -9px; height: 9px; background: rgba(244, 243, 239, .88); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }
