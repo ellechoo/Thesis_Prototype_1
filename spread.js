@@ -4,7 +4,7 @@
 // it scores each neighbouring pair by how alike their voiceprints are (same accent structure, close colours, similar
 // timbre) and keeps swapping voices round while that makes the total smaller. The result is the same every time for the
 // same voices (no randomness between visits).
-import { traits } from "./voice-orb.js?v=61";
+import { traits } from "./voice-orb.js?v=62";
 
 const NOTES = ["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"];
 const noteIndex = (n) => NOTES.indexOf(String(n || "").replace("#", "♯").replace(/-?\d+$/, ""));
