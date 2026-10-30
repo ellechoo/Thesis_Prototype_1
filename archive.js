@@ -361,9 +361,11 @@ function gallery(people) {
       ${scale("bright", "Bright", "Dark")}${scale("breathy", "Breathy", "Clean")}${scale("raspy", "Raspy", "Smooth")}`;
   }
   // the note chips in each note's own colour (as on the cores: the 12 notes round the colour wheel, C = red)
-  const paintNotes = () => panel.querySelectorAll('.f-chip[data-g="note"]').forEach((b) => { const c = voiceColor(220, b.dataset.v), h = c.getHexString();
-    const lum = [0, 2, 4].map((i) => { const v = parseInt(h.slice(i, i + 2), 16) / 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
-    b.style.setProperty("--note", "#" + h); b.style.setProperty("--note-text", 0.2126 * lum[0] + 0.7152 * lum[1] + 0.0722 * lum[2] > 0.3 ? "#111" : "#fff"); });
+  const paintNotes = () => panel.querySelectorAll('.f-chip[data-g="note"]').forEach((b) => {
+    const c = voiceColor(220, b.dataset.v), hsl = {}; c.getHSL(hsl);
+    const lumOf = (col) => { const h = col.getHexString(); return [0, 2, 4].map((i) => { const v = parseInt(h.slice(i, i + 2), 16) / 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }).reduce((a, v, i) => a + v * [0.2126, 0.7152, 0.0722][i], 0); };
+    while (lumOf(c) < 0.18 && hsl.l < 0.92) { hsl.l += 0.02; c.setHSL(hsl.h, hsl.s, hsl.l); } // (readable on the black chip)
+    b.style.setProperty("--note", "#" + c.getHexString()); b.style.setProperty("--note-text", lumOf(c) > 0.3 ? "#111" : "#fff"); });
   const applyFilters = () => { refilter(); offX = offY = 0; zoom = 1; focus = null; fading = null; tween = null; hover = null; tip.hidden = true; vx = vy = 0; };
   panel.addEventListener("click", (e) => {
     const c = e.target.closest(".f-chip");
