@@ -1555,7 +1555,7 @@ p, li, dd, summary, .note, .hint, figcaption { text-wrap: pretty; }
   .archive-stage .filter-panel { left: auto; right: max(18px, env(safe-area-inset-right, 0px)); }
 }
 /* Archive: the top controls outlined in white, turning red on hover, while pressed and while in use */
-.archive-stage .view-switch, .archive-stage .stage-search input, .archive-stage .stage-filter-btn { border-color: var(--text); transition: border-color .15s ease; }
+.archive-stage .view-switch, .archive-stage .stage-search input, .archive-stage .stage-filter-btn { border-color: var(--text); }
 .archive-stage .view-switch:hover, .archive-stage .view-switch:active, .archive-stage .view-switch:focus-within,
 .archive-stage .stage-search input:hover, .archive-stage .stage-search input:focus, .archive-stage .stage-search input:active,
 .archive-stage .stage-filter-btn:hover, .archive-stage .stage-filter-btn:active, .archive-stage .stage-filter-btn[aria-expanded="true"], .archive-stage .stage-filter-btn.on { border-color: var(--accent); }
