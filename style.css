@@ -1527,7 +1527,7 @@ p, li, dd, summary, .note, .hint, figcaption { text-wrap: pretty; }
 /* Archive: "drag to explore" as a white hand swiping across the middle of the screen (no words); it fades away as soon
    as someone drags, swipes, scrolls or searches. Reduced motion: the hand stays still. */
 .archive-stage .stage-hint { top: 50%; left: 50%; width: 150px; height: 90px; margin: -45px 0 0 -75px; padding: 0; border-radius: 0; background: none; white-space: normal; pointer-events: none; transition: opacity .5s ease; }
-.archive-stage .stage-hint .hand { position: absolute; left: 50px; top: 14px; width: 54px; height: 54px; filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .6)); animation: hand-swipe 2.6s cubic-bezier(.45, 0, .25, 1) infinite; }
+.archive-stage .stage-hint .hand { position: absolute; left: 44px; top: 10px; width: 66px; height: 66px; filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .6)); animation: hand-swipe 2.6s cubic-bezier(.45, 0, .25, 1) infinite; }
 .archive-stage .stage-hint .hand-trail { position: absolute; top: 21px; height: 6px; left: 40px; width: 70px; border-radius: 999px; background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.55)); opacity: 0; animation: hand-trail 2.6s cubic-bezier(.45, 0, .25, 1) infinite; }
 @keyframes hand-swipe {
   0% { transform: translateX(40px) scale(1); opacity: 0; }
