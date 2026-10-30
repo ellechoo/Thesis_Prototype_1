@@ -17,7 +17,7 @@
 // portrait fades in when ready.
 import * as THREE from "three";
 import { listTakes, getTake } from "./store.js?v=3";
-import { buildOrb, turnBelt, traits } from "./voice-orb.js?v=69";
+import { buildOrb, turnBelt, traits, voiceColor } from "./voice-orb.js?v=69";
 import { spreadOut } from "./spread.js?v=15"; // (voiceprints that look alike aren't placed next to each other)
 import { renderIdCard } from "./id-card.js?v=75";
 
@@ -360,13 +360,17 @@ function gallery(people) {
       <div class="f-group"><p class="f-title">Note</p><div class="f-chips notes">${NOTES.map((n) => chip("note", n, n, count("note", n))).join("")}</div></div>
       ${scale("bright", "Bright", "Dark")}${scale("breathy", "Breathy", "Clean")}${scale("raspy", "Raspy", "Smooth")}`;
   }
+  // the note chips in each note's own colour (as on the cores: the 12 notes round the colour wheel, C = red)
+  const paintNotes = () => panel.querySelectorAll('.f-chip[data-g="note"]').forEach((b) => { const c = voiceColor(220, b.dataset.v), h = c.getHexString();
+    const lum = [0, 2, 4].map((i) => { const v = parseInt(h.slice(i, i + 2), 16) / 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
+    b.style.setProperty("--note", "#" + h); b.style.setProperty("--note-text", 0.2126 * lum[0] + 0.7152 * lum[1] + 0.0722 * lum[2] > 0.3 ? "#111" : "#fff"); });
   const applyFilters = () => { refilter(); offX = offY = 0; zoom = 1; focus = null; fading = null; tween = null; hover = null; tip.hidden = true; vx = vy = 0; };
   panel.addEventListener("click", (e) => {
     const c = e.target.closest(".f-chip");
     if (c) { const g = c.dataset.g, v = c.dataset.v; sel[g].has(v) ? sel[g].delete(v) : sel[g].add(v); c.setAttribute("aria-pressed", String(sel[g].has(v))); applyFilters(); return; }
     if (e.target.closest(".f-clear")) { GROUPS.forEach((g) => sel[g].clear()); panel.querySelectorAll(".f-chip").forEach((b) => b.setAttribute("aria-pressed", "false")); applyFilters(); }
   });
-  const openPanel = (on) => { if (on) buildPanel(); panel.hidden = !on; filterBtn.setAttribute("aria-expanded", String(on)); if (on) { closeResults(); refilter(); } };
+  const openPanel = (on) => { if (on) { buildPanel(); paintNotes(); } panel.hidden = !on; filterBtn.setAttribute("aria-expanded", String(on)); if (on) { closeResults(); refilter(); } };
   filterBtn.addEventListener("click", (e) => { e.stopPropagation(); openPanel(panel.hidden); });
   document.addEventListener("pointerdown", (e) => { if (!panel.hidden && !e.target.closest(".filter-panel, .stage-filter-btn")) openPanel(false); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !panel.hidden) { openPanel(false); filterBtn.focus(); } });
