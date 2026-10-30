@@ -2,6 +2,8 @@
 //   Flat:  an endless honeycomb that runs past the edges of the screen in every direction; drag (or swipe with two
 //          fingers on a trackpad) to explore. With only so many voices, the field repeats them as it goes.
 //   Globe: every voice once, spread over a slowly turning sphere; drag to spin it. Back portraits are smaller and fainter.
+// A filter button (next to the search box) narrows the gallery by accent, note and the three timbre scales; while any
+// filter is on, the flat view stops repeating: just the matching voices, spread out from the middle.
 // A search box finds a voice by name or nickname (ignoring capitals and accents): choosing one glides to it and zooms in
 // (on the globe, turns it to face you); dragging, Esc or clearing the search zooms back out.
 // Hovering a portrait shows the person's name and spins it faster; clicking zooms into it, then opens that voice's
@@ -15,7 +17,7 @@
 // portrait fades in when ready.
 import * as THREE from "three";
 import { listTakes, getTake } from "./store.js?v=3";
-import { buildOrb, turnBelt } from "./voice-orb.js?v=69";
+import { buildOrb, turnBelt, traits } from "./voice-orb.js?v=69";
 import { spreadOut } from "./spread.js?v=15"; // (voiceprints that look alike aren't placed next to each other)
 import { renderIdCard } from "./id-card.js?v=75";
 
@@ -51,11 +53,15 @@ function gallery(people) {
         role="combobox" aria-autocomplete="list" aria-controls="searchResults" aria-expanded="false" />
       <ul class="search-results" id="searchResults" role="listbox" aria-label="Matching voices" hidden></ul>
     </div>
+    <button type="button" class="stage-filter-btn" aria-expanded="false" aria-controls="filterPanel" aria-label="Filter voices"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span class="filter-label">Filter</span><span class="filter-count" hidden></span></button>
+    <div class="filter-panel" id="filterPanel" role="dialog" aria-label="Filter voices" hidden></div>
+    <p class="stage-none" hidden>No voices match these filters.</p>
     <p class="stage-hint" aria-hidden="true"></p>
     <span class="stage-tip" aria-hidden="true" hidden></span>
     <ul class="visually-hidden" aria-label="Voices in the archive"></ul>`;
   const view = grid.querySelector(".stage-canvas"), ctx = view.getContext("2d");
   const tip = grid.querySelector(".stage-tip"), hint = grid.querySelector(".stage-hint");
+  const filterBtn = grid.querySelector(".stage-filter-btn"), panel = grid.querySelector(".filter-panel"), none = grid.querySelector(".stage-none"), countBadge = grid.querySelector(".filter-count");
   const list = grid.querySelector("ul");
   for (const t of people) {
     const li = document.createElement("li"), a = document.createElement("a");
@@ -70,9 +76,10 @@ function gallery(people) {
   const rot = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), 0.35); // globe: its turn
   try {
     const spot = JSON.parse(store.get(SPOT, sessionStorage) || "null"); sessionStorage.removeItem(SPOT);
-    if (spot) { mode = spot.mode === "globe" ? "globe" : "flat"; offX = spot.offX || 0; offY = spot.offY || 0; if (spot.q) rot.fromArray(spot.q); }
+    if (spot) { mode = spot.mode === "globe" ? "globe" : "flat"; offX = spot.offX || 0; offY = spot.offY || 0; if (spot.q) rot.fromArray(spot.q); savedSel = spot.sel || null; }
   } catch {}
-  function remember() { store.set(SPOT, JSON.stringify({ mode, offX, offY, q: rot.toArray() }), sessionStorage); }
+  let savedSel = null;
+  function remember() { store.set(SPOT, JSON.stringify({ mode, offX, offY, q: rot.toArray(), sel: typeof sel === "undefined" ? null : Object.fromEntries(Object.entries(sel).map(([g, v]) => [g, [...v]])) }), sessionStorage); }
 
   const buttons = grid.querySelectorAll(".view-switch button");
   function setMode(m) {
@@ -96,6 +103,36 @@ function gallery(people) {
   cam.position.set(0, dd * 0.22, dd).setLength(dd); cam.lookAt(0, 0, 0);
   const scenes = new Array(N).fill(null), born = new Array(N).fill(0), spin = people.map((_, i) => (i * 2.399) % 6.283);
 
+  // ---- filters: accent (the strongest one), note (without its octave) and the three timbre scales (each: one side,
+  // typical, or the other side). Several picks in one group: any of them; picks in different groups: all of them.
+  const SIDES = (v) => (v > 0.2 ? "pos" : v < -0.2 ? "neg" : "mid"); // (the same cut-offs as the words on the Voiceprint page)
+  function attrOf(t) {
+    try { const T = traits({ ...t, frames: t.frames || [] }), tb = T.timbre;
+      return { accent: T.hasAccent ? T.accents[0].name : "No accent result", note: String(T.note || "").replace(/-?\d+$/, ""),
+        bright: tb.enough ? SIDES(tb.bright) : null, breathy: tb.enough ? SIDES(tb.breathy) : null, raspy: tb.enough ? SIDES(tb.raspy) : null };
+    } catch { return {}; }
+  }
+  const attrs = people.map(attrOf);
+  const GROUPS = ["accent", "note", "bright", "breathy", "raspy"];
+  const sel = Object.fromEntries(GROUPS.map((g) => [g, new Set()]));
+  const filtering = () => GROUPS.some((g) => sel[g].size);
+  let vis = people.map((_, p) => p), fpos = [], fpts = [], visAt = new Map(); // the matching voices, and where each sits
+  function refilter() {
+    vis = people.map((_, p) => p).filter((p) => GROUPS.every((g) => !sel[g].size || sel[g].has(attrs[p][g])));
+    visAt = new Map(vis.map((p, k) => [p, k]));
+    // flat: the nearest honeycomb spots to the middle, ring by ring; globe: the matching voices spread evenly over it
+    const M = vis.length, spots = [], rr = Math.ceil(Math.sqrt(M)) + 2;
+    for (let j = -rr; j <= rr; j++) for (let i = -rr; i <= rr; i++) { const x = i * S + (mod(j, 2) ? S / 2 : 0), y = j * DY; spots.push([x, y, Math.hypot(x, y), Math.atan2(y, x)]); }
+    spots.sort((a, b) => a[2] - b[2] || a[3] - b[3]);
+    fpos = spots.slice(0, M).map(([x, y]) => [x, y]);
+    if (M) { const mx = fpos.reduce((a, q) => a + q[0], 0) / M, my = fpos.reduce((a, q) => a + q[1], 0) / M; fpos = fpos.map(([x, y]) => [x - mx, y - my]); } // (the group's middle in the middle)
+    fpts = vis.map((_, k) => { const y = M > 1 ? 1 - (2 * (k + 0.5)) / M : 0, r = Math.sqrt(1 - y * y), th = k * 2.399963; return new THREE.Vector3(Math.cos(th) * r, y, Math.sin(th) * r); });
+    none.hidden = !(filtering() && M === 0);
+    countBadge.hidden = !filtering(); countBadge.textContent = GROUPS.reduce((a, g) => a + sel[g].size, 0);
+    filterBtn.classList.toggle("on", filtering());
+    const shown = panel.querySelector(".filter-shown"); if (shown) shown.textContent = filtering() ? `Showing ${M} of ${N} voices` : `All ${N} voices`;
+  }
+
   // each voice's full data, a few at a time; its portrait fades in when built
   let next = 0;
   const worker = async () => {
@@ -105,6 +142,7 @@ function gallery(people) {
         let t = people[i];
         if (!t.frames) t = people[i] = { ...t, ...(await getTake(t.id)) };
         const s = new THREE.Scene(); s.add(buildOrb({ ...t, frames: t.frames || [] }).group); scenes[i] = s; born[i] = performance.now();
+        attrs[i] = attrOf(people[i]); if (filtering() && (sel.bright.size || sel.breathy.size || sel.raspy.size)) refilter(); // (timbre is only known now)
       } catch (err) { console.warn(`Couldn't draw ${people[i]?.name}:`, err); }
     }
   };
@@ -120,7 +158,7 @@ function gallery(people) {
     GSIZE = Math.min(W < 640 ? 150 : 230, R * 3.9 / Math.sqrt(N));                      // globe: a front portrait's size
     CELL = Math.min(256, Math.round((mode === "globe" ? GSIZE * 1.2 : SIZE) * dpr));
   }
-  layout(); addEventListener("resize", layout);
+  layout(); addEventListener("resize", () => { layout(); refilter(); });
 
   // ---- where everything is this frame
   const mod = (a, n) => ((a % n) + n) % n;
@@ -130,6 +168,12 @@ function gallery(people) {
   const tileXY = (i, j) => [i * S + (mod(j, 2) ? S / 2 : 0), j * DY + DY / 2]; // a flat tile's place before dragging and zoom
   function items() {
     const cx = W / 2, cy = H / 2;
+    if (filtering()) { // only the matching voices: flat, spread out from the middle (no repeats); or once each on the globe
+      if (mode === "flat") return vis.map((p, k) => ({ key: `f${p}`, p, x: cx + (fpos[k][0] + offX) * zoom, y: cy + (fpos[k][1] + offY) * zoom, size: SIZE * zoom, dim: 1, z: 1 }));
+      const Rz = R * zoom;
+      return vis.map((p, k) => { const q = fpts[k].clone().applyQuaternion(rot), s = FOCAL / (FOCAL - q.z), front = (q.z + 1) / 2;
+        return { key: `g${p}`, p, x: cx + q.x * Rz * s, y: cy - q.y * Rz * s, z: q.z, size: Math.min(GSIZE * 1.6, R * 3.9 / Math.sqrt(Math.max(1, vis.length))) * zoom * s * (0.55 + 0.45 * front), dim: 0.25 + 0.75 * front ** 1.5 }; }).sort((a, b) => a.z - b.z);
+    }
     if (mode === "flat") { // the endless honeycomb: tile (i, j) shows voice (5i + 3j) mod N, so neighbours differ
       const out = [], m = SIZE, y0 = cy - cy / zoom - m, y1 = cy + cy / zoom + m, x0 = cx - cx / zoom - m, x1 = cx + cx / zoom + m;
       const j0 = Math.floor((y0 - offY - DY / 2) / DY), j1 = Math.ceil((y1 - offY - DY / 2) / DY);
@@ -262,8 +306,8 @@ function gallery(people) {
     // typing "recent" (or "newest", "latest") lists the five newest voices, newest first, with their dates
     const recent = ["recent", "newest", "latest"].includes(q);
     matches = recent
-      ? people.map((t, p) => ({ p, n: names[p], t: Date.parse(t.createdAt) || 0 })).sort((a, b) => b.t - a.t).slice(0, 5)
-      : names.map((n, p) => ({ p, at: n.indexOf(q), n })).filter((m) => m.at >= 0)
+      ? people.map((t, p) => ({ p, n: names[p], t: Date.parse(t.createdAt) || 0 })).filter((m) => !filtering() || visAt.has(m.p)).sort((a, b) => b.t - a.t).slice(0, 5)
+      : names.map((n, p) => ({ p, at: n.indexOf(q), n })).filter((m) => m.at >= 0 && (!filtering() || visAt.has(m.p)))
         .sort((a, b) => (a.at === 0) - (b.at === 0) ? (b.at === 0) - (a.at === 0) : a.n.localeCompare(b.n)).slice(0, 8);
     active = matches.length ? 0 : -1;
     results.innerHTML = "";
@@ -304,6 +348,31 @@ function gallery(people) {
   box.addEventListener("search", () => { if (!box.value) letGo(); }); // the box's own clear (×) button
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && e.target !== box && (focus !== null || tween)) letGo(); });
 
+  // ---- the filter panel
+  const count = (g, v) => attrs.filter((a) => a[g] === v).length;
+  function buildPanel() {
+    const accents = [...new Set(attrs.map((a) => a.accent).filter(Boolean))].sort((a, b) => count("accent", b) - count("accent", a) || a.localeCompare(b));
+    const NOTES = ["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"];
+    const chip = (g, v, label, n) => `<button type="button" class="f-chip" data-g="${g}" data-v="${v}" aria-pressed="${sel[g].has(v)}"${n === 0 ? " disabled" : ""}>${label}${n != null ? `<span class="f-n">${n}</span>` : ""}</button>`;
+    const scale = (g, lo, hi) => `<div class="f-group"><p class="f-title">${lo} ↔ ${hi}</p><div class="f-chips">${chip(g, "pos", lo)}${chip(g, "mid", "Typical")}${chip(g, "neg", hi)}</div></div>`;
+    panel.innerHTML = `<div class="f-head"><p class="f-shown filter-shown"></p><button type="button" class="f-clear">Clear all</button></div>
+      <div class="f-group"><p class="f-title">Accent</p><div class="f-chips">${accents.map((a) => chip("accent", a, a, count("accent", a))).join("")}</div></div>
+      <div class="f-group"><p class="f-title">Note</p><div class="f-chips notes">${NOTES.map((n) => chip("note", n, n, count("note", n))).join("")}</div></div>
+      ${scale("bright", "Bright", "Dark")}${scale("breathy", "Breathy", "Clean")}${scale("raspy", "Raspy", "Smooth")}`;
+  }
+  const applyFilters = () => { refilter(); offX = offY = 0; zoom = 1; focus = null; fading = null; tween = null; hover = null; tip.hidden = true; vx = vy = 0; };
+  panel.addEventListener("click", (e) => {
+    const c = e.target.closest(".f-chip");
+    if (c) { const g = c.dataset.g, v = c.dataset.v; sel[g].has(v) ? sel[g].delete(v) : sel[g].add(v); c.setAttribute("aria-pressed", String(sel[g].has(v))); applyFilters(); return; }
+    if (e.target.closest(".f-clear")) { GROUPS.forEach((g) => sel[g].clear()); panel.querySelectorAll(".f-chip").forEach((b) => b.setAttribute("aria-pressed", "false")); applyFilters(); }
+  });
+  const openPanel = (on) => { if (on) buildPanel(); panel.hidden = !on; filterBtn.setAttribute("aria-expanded", String(on)); if (on) { closeResults(); refilter(); } };
+  filterBtn.addEventListener("click", (e) => { e.stopPropagation(); openPanel(panel.hidden); });
+  document.addEventListener("pointerdown", (e) => { if (!panel.hidden && !e.target.closest(".filter-panel, .stage-filter-btn")) openPanel(false); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !panel.hidden) { openPanel(false); filterBtn.focus(); } });
+  if (savedSel) { for (const g of GROUPS) for (const v of savedSel[g] || []) sel[g].add(v); }
+  refilter();
+
   const ease = (x) => (x < 0.5 ? 4 * x * x * x : 1 - (-2 * x + 2) ** 3 / 2);
   function animate(to, dur = 1000) {
     const from = { offX, offY, zoom, q: rot.clone() };
@@ -322,7 +391,11 @@ function gallery(people) {
     // the globe zooms 1.5×; the flat view zooms by whatever makes the found voice the same size on screen as on the globe
     const GZOOM = 1.5, globeSize = GSIZE * GZOOM * FOCAL / (FOCAL - 1); // a front-facing globe portrait, zoomed
     const ZOOM = mode === "flat" ? Math.max(1.5, globeSize / SIZE) : GZOOM; zoomTo = ZOOM;
-    if (mode === "flat") { // the tile given, or else the copy of that voice nearest the middle of the screen
+    if (filtering()) {
+      const k = visAt.get(p); if (k === undefined) return;
+      if (mode === "flat") animate({ offX: -fpos[k][0], offY: -fpos[k][1], zoom: ZOOM });
+      else animate({ q: new THREE.Quaternion().setFromUnitVectors(fpts[k].clone().normalize(), new THREE.Vector3(0, 0, 1)), zoom: ZOOM });
+    } else if (mode === "flat") { // the tile given, or else the copy of that voice nearest the middle of the screen
       const ux = W / 2 - offX, uy = H / 2 - offY, jc = Math.round((uy - DY / 2) / DY), ic = Math.round(ux / S);
       let best = tile ? tileXY(tile[0], tile[1]) : null, bd = tile ? -1 : Infinity;
       for (let j = jc - N; j <= jc + N; j++) for (let i = ic - N; i <= ic + N; i++) {
@@ -343,7 +416,7 @@ function gallery(people) {
     opening = true; closeResults(); hint.classList.add("gone");
     const go = () => { remember(); location.href = `portrait.html?id=${encodeURIComponent(people[it.p].id)}`; };
     if (still) return go();
-    focusOn(it.p, mode === "flat" ? it.key.split(",").map(Number) : null);
+    focusOn(it.p, mode === "flat" && !filtering() ? it.key.split(",").map(Number) : null);
     // a moment on the zoomed-in voice, then the stage fades to black (still zooming in a little) and its Portrait page
     // fades in from black, carrying on the zoom (see "arriving" in portrait-3d.js)
     afterTween = () => setTimeout(() => { try { sessionStorage.setItem("arriveFrom", "archive"); } catch {} document.body.classList.add("leaving"); setTimeout(go, 280); }, 120);

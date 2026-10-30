@@ -1476,3 +1476,33 @@ p, li, dd, summary, .note, .hint, figcaption { text-wrap: pretty; }
 
 /* Join page, phones: the count and the lede in white; only "Only takes about a minute!" stays grey */
 .home-below .home-count, .home-below .home-lede { color: #fff; }
+
+/* Archive: the filter button (beside the search box) and its panel of chips */
+.stage-filter-btn { position: absolute; z-index: 4; top: 18px; left: calc(max(18px, env(safe-area-inset-left, 0px)) + 104px + 270px + 10px); height: 44px; display: inline-flex; align-items: center; gap: 8px; padding: 0 16px; border: 1px solid var(--line); border-radius: 999px; background: rgba(0, 0, 0, .9); color: var(--text); font: 500 15px Geist, system-ui, -apple-system, "Segoe UI", sans-serif; cursor: pointer; }
+.stage-filter-btn svg { width: 18px; height: 18px; }
+.stage-filter-btn:hover, .stage-filter-btn[aria-expanded="true"] { border-color: var(--text); }
+.stage-filter-btn.on { border-color: var(--accent); }
+.stage-filter-btn:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.filter-count { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: var(--accent); color: var(--accent-text); font-size: 12px; font-weight: 600; display: inline-grid; place-items: center; }
+.filter-panel { position: absolute; z-index: 5; top: 72px; left: calc(max(18px, env(safe-area-inset-left, 0px)) + 104px); width: min(470px, calc(100vw - 2 * max(18px, env(safe-area-inset-left, 0px)))); max-height: calc(100% - 180px); overflow: auto; padding: 18px 18px 20px; border: 1px solid var(--line); border-radius: 18px; background: var(--panel); box-shadow: 0 14px 34px rgba(0, 0, 0, .55); display: grid; gap: 18px; }
+.f-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.f-shown { margin: 0; font-size: 13px; color: var(--muted); }
+.f-clear { padding: 0; border: 0; background: none; color: var(--text); font: 500 13px Geist, system-ui, sans-serif; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.f-group { display: grid; gap: 9px; }
+.f-title { margin: 0; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.f-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.f-chip { display: inline-flex; align-items: center; gap: 7px; padding: 7px 13px; border: 1px solid var(--line); border-radius: 999px; background: #000; color: var(--text); font: 500 13.5px Geist, system-ui, sans-serif; cursor: pointer; }
+.f-chip .f-n { font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.f-chip:hover:not(:disabled) { border-color: var(--text); }
+.f-chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+.f-chip[aria-pressed="true"] .f-n { color: inherit; opacity: .75; }
+.f-chip:disabled { opacity: .35; cursor: default; }
+.f-chip:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.stage-none { position: absolute; z-index: 3; left: 50%; top: 50%; transform: translate(-50%, -50%); margin: 0; color: var(--muted); font-size: 15px; }
+@media (max-width: 640px) {
+  .stage-search { right: 64px; }
+  .stage-filter-btn { top: 12px; left: auto; right: 12px; width: 44px; padding: 0; justify-content: center; }
+  .stage-filter-btn .filter-label { display: none; }
+  .stage-filter-btn .filter-count { position: absolute; top: -4px; right: -4px; }
+  .filter-panel { top: 64px; left: 12px; right: 12px; width: auto; max-height: calc(100% - 150px); }
+}
