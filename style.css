@@ -1514,8 +1514,8 @@ p, li, dd, summary, .note, .hint, figcaption { text-wrap: pretty; }
 
 /* Archive filter panel: a cloudy white glass speech bubble, its tail pointing up at the Filter button (the buttons inside
    stay black). The tail is its own element so the panel can scroll. */
-.filter-panel { top: 84px; border: 1px solid rgba(255, 255, 255, .55); border-radius: 26px; background: rgba(240, 239, 235, .7); -webkit-backdrop-filter: blur(24px) saturate(1.4); backdrop-filter: blur(24px) saturate(1.4); box-shadow: 0 16px 40px rgba(0, 0, 0, .45), inset 0 1px 0 rgba(255, 255, 255, .6); }
-.filter-tail { position: absolute; z-index: 5; top: 63px; left: calc(max(18px, env(safe-area-inset-left, 0px)) + 104px + 270px + 10px + 30px); width: 44px; height: 22px; background: rgba(240, 239, 235, .7); -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px); clip-path: polygon(52% 0, 100% 100%, 0 100%); pointer-events: none; }
+.filter-panel { top: 84px; border: 1px solid rgba(255, 255, 255, .55); border-radius: 26px; background: rgba(240, 239, 235, .8); -webkit-backdrop-filter: blur(24px) saturate(1.4); backdrop-filter: blur(24px) saturate(1.4); box-shadow: 0 16px 40px rgba(0, 0, 0, .45), inset 0 1px 0 rgba(255, 255, 255, .6); }
+.filter-tail { position: absolute; z-index: 5; top: 63px; left: calc(max(18px, env(safe-area-inset-left, 0px)) + 104px + 270px + 10px + 30px); width: 44px; height: 22px; background: rgba(240, 239, 235, .8); -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px); clip-path: polygon(52% 0, 100% 100%, 0 100%); pointer-events: none; }
 .filter-panel .f-title { color: #1d1c19; }
 .filter-panel .f-clear { color: #111; }
 .filter-panel .f-shown { color: #c4161c; font-weight: 500; } /* (a deeper red, to read on the light glass) */
