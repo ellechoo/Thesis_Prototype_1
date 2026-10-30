@@ -12,9 +12,9 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { getTake, archiveIsShared } from "./store.js?v=2";
 import { currentTakeId } from "./nav.js?v=8";
 import { formatDate, slug, download } from "./shared.js?v=3";
-import { buildOrb, MAP, traits, voiceColor } from "./voice-orb.js?v=58";
-import { renderIdCard } from "./id-card.js?v=63";
-import { renderBreakdown } from "./breakdown.js?v=53";
+import { buildOrb, MAP, traits, voiceColor } from "./voice-orb.js?v=59";
+import { renderIdCard } from "./id-card.js?v=64";
+import { renderBreakdown } from "./breakdown.js?v=54";
 const esc = (x) => String(x ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 const $ = (id) => document.getElementById(id);
@@ -134,7 +134,10 @@ function setUpScene() {
     camera.position.copy(controls.target).add(off.setFromSpherical(sph));
     controls.update();
   }, { capture: true, passive: false });
+  const beltSpin = orbInfo.group.children.find((o) => o.userData.rate)?.userData.spinner; let lastT = performance.now();
   renderer.setAnimationLoop(() => {
+    const now = performance.now(), dt = Math.min(0.1, (now - lastT) / 1000); lastT = now;
+    if (beltSpin && !still) beltSpin.rotation.y -= beltSpin.userData.spin * dt; // the speaking-rate ring turns, faster for faster readers
     controls.autoRotateSpeed += (spinTarget - controls.autoRotateSpeed) * 0.06; // eases into the slower (or normal) speed
     controls.update(); render(); drawLines(); placeHotspots(); listFades();
   });
@@ -236,7 +239,7 @@ function wireCallouts() {
 // where the lines aim when there's a choice: wide screens, the upper left (toward the list); narrower ones, down (toward the box)
 const aim = () => (isWide() ? Math.PI * 0.86 : -Math.PI / 2);
 let feats = [], pinned = null, pinnedHit = null, hovered = null, hoverHit = null, hoverAng = null, shownKey = null, picks = {};
-let sunMesh = null, swirlMesh = null, accentPts = [], vowelSpots = [], vImg = null, vTilt = null, vTiltT = null, pauseSparks = [];
+let sunMesh = null, swirlMesh = null, accentPts = [], vowelSpots = [], vImg = null, vTilt = null, vTiltT = null, pauseSparks = [], rateRocks = [];
 // talking & pauses, as a small bar: the reading from first word to last, talking in the voice's colour, pauses dark
 function rhythmBar() {
   const r = take.rhythm, segs = r?.segments || [], t0 = r?.start, t1 = r?.end;
@@ -258,6 +261,7 @@ const scale = (v, pos, neg) => `<div class="fv-scale" role="img" aria-label="${e
     <span>${esc(pos)}</span><span class="fv-track" style="--v:${((1 - Math.max(-1, Math.min(1, v))) / 2).toFixed(3)}"><i></i></span><span>${esc(neg)}</span></div>`;
 function buildFeatures() {
   pauseSparks = (orbInfo.group.children.find((o) => o.userData.pauses)?.children || []).filter((o) => o.isSprite); // (not the line joining floating stars)
+  rateRocks = (orbInfo.group.children.find((o) => o.userData.rate)?.userData.spinner.children || []).filter((o) => o.isInstancedMesh);
   const T = orbInfo.traits, tb = T.timbre, ok = tb.enough, F = MAP.timbre.from, u = coreMesh?.material?.uniforms || {};
   const none = "Too little clear voice to read this, so the core is left plain.";
   const has = { sun: ok && tb.bright >= F, swirl: ok && -tb.bright >= F, spikes: ok && tb.raspy >= MAP.timbre.spikes.from, gloss: ok && tb.raspy <= -MAP.timbre.glass.from, vowels: T.vowels.pts.length > 0 };
@@ -281,6 +285,8 @@ function buildFeatures() {
     { key: "raspy", name: "Raspy ↔ smooth", value: ok ? dial(tb.raspy, "raspy", "smooth", MAP.timbre.spikes.from) : "Not measured", lines: ok, spot: has.spikes || has.gloss,
       text: !ok ? none : has.spikes ? "Raspy voices grow small spikes all over the core." : has.gloss ? "Smooth voices look like polished glass." : "Near the middle, so the surface is plain.",
       visual: ok ? scale(tb.raspy, "Raspy", "Smooth") : "" },
+    { key: "rate", name: "Speaking rate", value: T.rate == null ? "Not measured" : `${T.rate.toFixed(1)} syllables a second`, lines: rateRocks.length > 0, spot: rateRocks.length > 0,
+      text: T.rate == null ? "The speaking rate couldn't be measured, so there's no ring of rocks." : "The ring of rocks around the core. The faster the reading, the more rocks, the more waves in the ring, and the longer their streaks." },
     { key: "pauses", name: "Talking & pauses", value: pauseSparks.length ? `${pauseSparks.length} pause${pauseSparks.length === 1 ? "" : "s"}` : "No long pauses", lines: pauseSparks.length > 0, spot: pauseSparks.length > 0,
       text: pauseSparks.length ? "Each star is a pause in the reading. The fewer the pauses, the more the stars glow." : "No pause was longer than 0.2 seconds, so there are no stars.",
       visual: rhythmBar() },
@@ -337,7 +343,7 @@ function setUpFeatures() {
       b.addEventListener("click", () => { pinned = b.dataset.key; pinnedHit = null; hovered = null; setShown(); });
     });
   }
-  for (const k of ["accent", "vowels", "bright", "pauses"]) pickFor(k, null);
+  for (const k of ["accent", "vowels", "bright", "rate", "pauses"]) pickFor(k, null);
   // the eye button (narrower screens): hides the points, and with them tapping the portrait for its boxes, so it can be
   // looked at on its own; any open box closes. Pressing it again brings them back.
   $("spotsBtn")?.addEventListener("click", (e) => {
@@ -494,6 +500,16 @@ function pickFor(key, pref) {
     }
     picks.pauses = best;
   }
+  if (key === "rate" && rateRocks.length) { // a rock facing the viewer and clear of the core, nearest the list (or the box)
+    let best = null, bs = Infinity; const m4 = new THREE.Matrix4();
+    for (const mesh of rateRocks) for (let i = 0; i < mesh.count; i += 3) {
+      mesh.getMatrixAt(i, m4); const p = new THREE.Vector3().setFromMatrixPosition(m4).applyMatrix4(mesh.matrixWorld);
+      const [x, y] = toScreen(p); if (Math.hypot(x - c.x, y - c.y) < c.r * 1.05) continue;
+      const score = wide ? x : -y;
+      if (score < bs) { bs = score; best = { mesh, i }; }
+    }
+    picks.rate = best;
+  }
   if (key === "vowels" && vowelSpots.length) { // the most crowded front ("ee") and back ("oo") spots facing the viewer
     const toCamLocal = coreMesh.worldToLocal(camera.position.clone()).normalize();
     picks.vowels = [true, false].map((front) => {
@@ -521,6 +537,12 @@ function anchorsFor(key, spot = false) {
       { const spot = (d) => coreMesh.localToWorld(d.clone().multiplyScalar(coreR * 0.98));
         if (!picks.vowels || picks.vowels.length < 2 || picks.vowels.some((d) => spot(d).normalize().dot(B.toCam) < 0.3)) pickFor("vowels", null);
         return (picks.vowels || []).map(spot); }
+    case "rate": // a rock clear of the core (swapped for another as the ring turns it away)
+      if (hit) return [hit];
+      { const at = (pk) => { const m4 = new THREE.Matrix4(); pk.mesh.getMatrixAt(pk.i, m4); return new THREE.Vector3().setFromMatrixPosition(m4).applyMatrix4(pk.mesh.matrixWorld); };
+        const c = coreOnScreen(), [x, y] = picks.rate ? toScreen(at(picks.rate)) : [0, 0];
+        if (!picks.rate || Math.hypot(x - c.x, y - c.y) < c.r * 1.05) pickFor("rate", null);
+        return picks.rate ? [at(picks.rate)] : []; }
     case "pauses": // a spark facing the viewer, clear of the core (swapped for another as it turns away)
       if (hit) return [hit];
       { const c = coreOnScreen(), [x, y] = picks.pauses ? toScreen(picks.pauses.getWorldPosition(new THREE.Vector3())) : [0, 0];
@@ -542,6 +564,7 @@ function anchorsFor(key, spot = false) {
 function whatsAt(clientX, clientY, h) {
   if (h?.part === "accent") return { key: "accent", hit: h.point };
   if (h?.part === "pauses") return { key: "pauses", hit: h.point };
+  if (h?.part === "rate") return { key: "rate", hit: h.point };
   const w = wrapEl().getBoundingClientRect(), c = coreOnScreen(), px = clientX - w.left, py = clientY - w.top;
   const x = (px - c.x) / c.r, y = -(py - c.y) / c.r, r = Math.hypot(x, y), ang = Math.atan2(y, x), u = coreMesh.material.uniforms;
   const tb = orbInfo.traits.timbre, ok = tb.enough;

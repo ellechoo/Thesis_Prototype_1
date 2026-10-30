@@ -3,7 +3,7 @@
 // live 3D views per page, so these are drawn one at a time with a single shared renderer and
 // turned into images. The live, turnable version is on the Portrait page.
 import * as THREE from "three";
-import { buildOrb } from "./voice-orb.js?v=58";
+import { buildOrb } from "./voice-orb.js?v=59";
 
 let renderer = null;
 const VIEW_RADIUS = 1.4; // same framing as the Portrait page

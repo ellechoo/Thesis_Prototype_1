@@ -12,8 +12,8 @@
 // fades out the next fades in on another portrait that's fully on screen and well clear of the text.
 import * as THREE from "three";
 import { listTakes, getTake } from "./store.js?v=2";
-import { buildOrb } from "./voice-orb.js?v=58";
-import { spreadOut } from "./spread.js?v=4"; // (voiceprints that look alike aren't placed next to each other)
+import { buildOrb } from "./voice-orb.js?v=59";
+import { spreadOut } from "./spread.js?v=5"; // (voiceprints that look alike aren't placed next to each other)
 
 const MAX_VOICES = 48;       // the newest ones; plenty to fill the field without a long download
 const DRIFT = [0.016, 0.01]; // pixels per millisecond: right-to-left and bottom-to-top, a slow diagonal
