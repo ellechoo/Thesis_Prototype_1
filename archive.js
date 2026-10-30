@@ -54,6 +54,7 @@ function gallery(people) {
       <ul class="search-results" id="searchResults" role="listbox" aria-label="Matching voices" hidden></ul>
     </div>
     <button type="button" class="stage-filter-btn" aria-expanded="false" aria-controls="filterPanel" aria-label="Filter voices"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span class="filter-label">Filter</span><span class="filter-count" hidden></span></button>
+    <span class="filter-tail" aria-hidden="true" hidden></span>
     <div class="filter-panel" id="filterPanel" role="dialog" aria-label="Filter voices" hidden></div>
     <p class="stage-none" hidden>No voices match these filters.</p>
     <p class="stage-hint" aria-hidden="true"></p>
@@ -372,7 +373,8 @@ function gallery(people) {
     if (c) { const g = c.dataset.g, v = c.dataset.v; sel[g].has(v) ? sel[g].delete(v) : sel[g].add(v); c.setAttribute("aria-pressed", String(sel[g].has(v))); applyFilters(); return; }
     if (e.target.closest(".f-clear")) { GROUPS.forEach((g) => sel[g].clear()); panel.querySelectorAll(".f-chip").forEach((b) => b.setAttribute("aria-pressed", "false")); applyFilters(); }
   });
-  const openPanel = (on) => { if (on) { buildPanel(); paintNotes(); } panel.hidden = !on; filterBtn.setAttribute("aria-expanded", String(on)); if (on) { closeResults(); refilter(); } };
+  const tail = grid.querySelector(".filter-tail");
+  const openPanel = (on) => { if (on) { buildPanel(); paintNotes(); } panel.hidden = !on; tail.hidden = !on; filterBtn.setAttribute("aria-expanded", String(on)); if (on) { closeResults(); refilter(); } };
   filterBtn.addEventListener("click", (e) => { e.stopPropagation(); openPanel(panel.hidden); });
   document.addEventListener("pointerdown", (e) => { if (!panel.hidden && !e.target.closest(".filter-panel, .stage-filter-btn")) openPanel(false); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !panel.hidden) { openPanel(false); filterBtn.focus(); } });
