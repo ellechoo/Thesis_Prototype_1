@@ -40,9 +40,11 @@ export const countVowelFrames = (frames) => frames.filter(inRange).length;
 
 /**
  * cloud: frames to plot as dots; trail: the last few frames, drawn as a moving highlight;
- * ref: "m" | "w" | null.
+ * ref: "m" | "w" | null; front / back: the two vowel colours (as on the 3D core: front vowels, the "ee" side, in one
+ * neighbour of the note colour, back vowels, the "oo" side, in the other). The dots blend from one to the other.
+ * Drawn on the vowel trapezoid (the shape linguists use, roughly the mouth) instead of a grid, with big EE / OO / AH corners.
  */
-export function drawVowelChart(canvas, { cloud = [], trail = [], ref = null } = {}) {
+export function drawVowelChart(canvas, { cloud = [], trail = [], ref = null, front = null, back = null } = {}) {
   const dpr = window.devicePixelRatio || 1;
   const W = canvas.clientWidth, H = canvas.clientHeight;
   if (!W || !H) return;
@@ -56,92 +58,58 @@ export function drawVowelChart(canvas, { cloud = [], trail = [], ref = null } = 
 
   const css = getComputedStyle(document.documentElement);
   const col = (n) => css.getPropertyValue(n).trim();
-  const muted = col("--muted"), line = col("--line"), accent = col("--accent"), refc = col("--ref"), live = col("--live");
-
-  const pad = { l: 58, r: 14, t: 14, b: 50 };
-  const lg = Math.log;
-  const x = (f2) => pad.l + ((lg(F2_RANGE[0]) - lg(f2)) / (lg(F2_RANGE[0]) - lg(F2_RANGE[1]))) * (W - pad.l - pad.r);
-  const y = (f1) => pad.t + ((lg(f1) - lg(F1_RANGE[0])) / (lg(F1_RANGE[1]) - lg(F1_RANGE[0]))) * (H - pad.t - pad.b);
-
-  // grid + axis labels
-  g.font = "11px Geist, system-ui, sans-serif";
-  g.strokeStyle = line;
-  g.fillStyle = muted;
-  g.lineWidth = 1;
-  g.textAlign = "center";
-  g.textBaseline = "top";
+  const muted = col("--muted"), accent = col("--accent"), live = col("--live") || accent;
   const narrow = W < 500;
-  for (const f2 of narrow ? [3000, 2000, 1500, 1000, 700] : [3000, 2500, 2000, 1500, 1000, 700]) {
-    g.beginPath(); g.moveTo(x(f2), pad.t); g.lineTo(x(f2), H - pad.b); g.stroke();
-    g.fillText(f2, x(f2), H - pad.b + 6);
-  }
-  g.textAlign = "right";
-  g.textBaseline = "middle";
-  for (const f1 of [300, 400, 500, 700, 900]) {
-    g.beginPath(); g.moveTo(pad.l, y(f1)); g.lineTo(W - pad.r, y(f1)); g.stroke();
-    g.fillText(f1, pad.l - 6, y(f1));
-  }
-  // plain-language axis titles
-  g.font = "12px Geist, system-ui, sans-serif";
-  g.fillStyle = muted;
-  g.textAlign = "center";
-  g.textBaseline = "bottom";
-  g.fillText(narrow ? "← tongue forward · tongue back →" : "← tongue forward        F2 (Hz)        tongue back →", pad.l + (W - pad.l - pad.r) / 2, H - 4);
+  const pad = narrow ? { l: 16, r: 16, t: 50, b: 50 } : { l: 40, r: 40, t: 60, b: 58 };
+  const lg = Math.log;
+  let off = 0; // (shifts everything sideways so the trapezoid sits in the middle)
+  const x = (f2) => off + pad.l + ((lg(F2_RANGE[0]) - lg(f2)) / (lg(F2_RANGE[0]) - lg(F2_RANGE[1]))) * (W - pad.l - pad.r);
+  const y = (f1) => pad.t + ((lg(f1) - lg(F1_RANGE[0])) / (lg(F1_RANGE[1]) - lg(F1_RANGE[0]))) * (H - pad.t - pad.b);
+  const refSet = ref || "w", at = (ipa) => { const w = REFERENCE.find((v) => v.ipa === ipa)[refSet]; return [x(w[1]), y(w[0])]; };
+
+  // the frame: the vowel trapezoid through the corner vowels (ee, oo, ah-back, ah-front), a little larger than the average
+  // speaker's, with faint guides at a third and two thirds of the way down and one down the middle
+  const corners = () => { const c = ["i", "u", "ɑ", "æ"].map(at), cx = c.reduce((a, p) => a + p[0], 0) / 4, cy = c.reduce((a, p) => a + p[1], 0) / 4; return c.map((p) => [cx + (p[0] - cx) * 1.14, cy + (p[1] - cy) * 1.2]); };
+  { const o = corners(), xs = o.map((p) => p[0]); off = (W - Math.min(...xs) - Math.max(...xs)) / 2; }
+  const out = corners();
   g.save();
-  g.translate(14, pad.t + (H - pad.t - pad.b) / 2);
-  g.rotate(-Math.PI / 2);
-  g.textBaseline = "middle";
-  g.fillText(narrow ? "open ← mouth → closed" : "mouth open ←    F1 (Hz)    → mouth closed", 0, 0);
+  g.beginPath(); out.forEach((p, i) => (i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]))); g.closePath();
+  g.fillStyle = "rgba(255,255,255,0.02)"; g.fill(); g.strokeStyle = "#3d3a35"; g.lineWidth = 1.2; g.stroke();
+  g.strokeStyle = "#2a2926"; g.lineWidth = 1; g.setLineDash([2, 5]);
+  const along = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+  for (const t of [1 / 3, 2 / 3]) { const L = along(out[0], out[3], t), R = along(out[1], out[2], t); g.beginPath(); g.moveTo(L[0], L[1]); g.lineTo(R[0], R[1]); g.stroke(); }
+  { const T = along(out[0], out[1], 0.5), B = along(out[3], out[2], 0.5); g.beginPath(); g.moveTo(T[0], T[1]); g.lineTo(B[0], B[1]); g.stroke(); }
   g.restore();
 
-  // corner hints: where the three extreme vowels live
-  g.font = "600 13px Geist, system-ui, sans-serif";
-  g.fillStyle = muted;
-  g.globalAlpha = 0.8;
-  g.textBaseline = "top";
-  g.textAlign = "left";
-  g.fillText("“ee” as in she", pad.l + 8, pad.t + 6);
-  g.textAlign = "right";
-  g.fillText("“oo” as in poodle", W - pad.r - 8, pad.t + 6);
-  g.textAlign = "center";
-  g.textBaseline = "bottom";
-  g.fillText("“ah” as in chocolate", x(1300), H - pad.b - 8);
-  g.globalAlpha = 1;
-
-  // your cloud
-  const pts = cloud.filter(inRange);
-  const alpha = pts.length > 600 ? 0.14 : pts.length > 200 ? 0.22 : 0.35;
-  g.fillStyle = accent;
-  g.globalAlpha = alpha;
-  for (const f of pts) {
-    g.beginPath(); g.arc(x(f.f2), y(f.f1), 2.5, 0, Math.PI * 2); g.fill();
-  }
-  g.globalAlpha = 1;
-
-  // reference vowel shape
+  // the average speaker: a soft dashed outline
   if (ref) {
-    const at = (w) => [x(w[ref][1]), y(w[ref][0])];
-    g.save();
-    g.strokeStyle = refc;
-    g.lineWidth = 1.5;
-    g.setLineDash([5, 4]);
-    g.beginPath();
-    OUTLINE.map((ipa) => at(REFERENCE.find((w) => w.ipa === ipa))).forEach(([px, py], i) => (i ? g.lineTo(px, py) : g.moveTo(px, py)));
-    g.closePath();
-    g.stroke();
-    g.restore();
-    g.font = "12px Geist, system-ui, sans-serif";
-    g.textAlign = "left";
-    g.textBaseline = "top";
-    g.strokeStyle = refc;
-    g.fillStyle = refc;
-    g.lineWidth = 1.5;
-    for (const w of REFERENCE) {
-      const [px, py] = at(w);
-      g.beginPath(); g.arc(px, py, 3.5, 0, Math.PI * 2); g.stroke();
-      g.fillText(narrow ? w.ipa : w.word, px + 6, py + 2);
-    }
+    g.save(); g.strokeStyle = "#8a857c"; g.lineWidth = 1.2; g.lineJoin = "round"; g.setLineDash([3, 5]); g.beginPath();
+    OUTLINE.map(at).forEach((p, i) => (i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]))); g.closePath(); g.stroke(); g.restore();
   }
+
+  // your vowels: small dots with a faint halo, blending from the front colour to the back colour across the chart
+  const pts = cloud.filter(inRange), fc = front || accent, bc = back || accent;
+  const mix = (() => { // two colours → a blend at t (0 … 1), via a 1×2 canvas so any CSS colour works
+    const cv = document.createElement("canvas"); cv.width = 2; cv.height = 1; const cg = cv.getContext("2d"); cg.fillStyle = fc; cg.fillRect(0, 0, 1, 1); cg.fillStyle = bc; cg.fillRect(1, 0, 1, 1);
+    const d = cg.getImageData(0, 0, 2, 1).data; return (t) => `${Math.round(d[0] + (d[4] - d[0]) * t)},${Math.round(d[1] + (d[5] - d[1]) * t)},${Math.round(d[2] + (d[6] - d[2]) * t)}`;
+  })();
+  const halo = pts.length > 600 ? 0.1 : pts.length > 200 ? 0.16 : 0.24, dotA = pts.length > 600 ? 0.6 : 0.85, x0 = x(2200), x1 = x(1000);
+  for (const f of pts) {
+    const px = x(f.f2), py = y(f.f1), rgb = mix(Math.max(0, Math.min(1, (px - x0) / (x1 - x0))));
+    const gr = g.createRadialGradient(px, py, 0, px, py, 6); gr.addColorStop(0, `rgba(${rgb},${halo})`); gr.addColorStop(1, `rgba(${rgb},0)`);
+    g.fillStyle = gr; g.fillRect(px - 6, py - 6, 12, 12);
+    g.fillStyle = `rgba(${rgb},${dotA})`; g.beginPath(); g.arc(px, py, 1.7, 0, Math.PI * 2); g.fill();
+  }
+
+  // EE / OO / AH, big in the heading font, with the example words small underneath
+  const label = (t, sub, p, align, dy) => {
+    g.textAlign = align; g.textBaseline = "alphabetic";
+    g.fillStyle = "#ecebe7"; g.font = `500 ${narrow ? 20 : 28}px Fraunces, Georgia, serif`; g.fillText(t, p[0], p[1] + dy);
+    g.fillStyle = muted; g.font = `500 ${narrow ? 10.5 : 12}px Geist, system-ui, sans-serif`; g.fillText(sub, p[0], p[1] + dy + 15);
+  };
+  label("EE", "as in she", out[0], "left", -22);
+  label("OO", "as in poodle", out[1], "right", -22);
+  label("AH", "as in chocolate", [(out[2][0] + out[3][0]) / 2, Math.max(out[2][1], out[3][1])], "center", narrow ? 26 : 32);
 
   // live highlight
   const t = trail.filter(inRange);

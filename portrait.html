@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..700,0..100,0..1;1,9..144,300..700,0..100,0..1&family=Geist:wght@300..700&display=swap" crossorigin="anonymous" /> <!-- crossorigin: lets the ID card download include this font -->
-  <link rel="stylesheet" href="style.css?v=120" />
+  <link rel="stylesheet" href="style.css?v=121" />
 </head>
 <body>
   <main class="wide">
@@ -158,7 +158,9 @@
           </div>
           <canvas id="vowelChart" class="chart"></canvas>
           <p class="hint chart-caption">
-            <span class="legend-item"><span class="key cloud"></span>your voiced sounds (<span id="vowelCount">0</span>)</span>
+            <span class="legend-item"><span class="key cloud" id="keyFront"></span>front vowels</span>
+            <span class="legend-item"><span class="key cloud" id="keyBack"></span>back vowels</span>
+            <span class="legend-item"><span><span id="vowelCount">0</span> voiced moments</span></span>
             <span class="legend-item"><span class="key ref"></span>average American English speaker (Peterson &amp; Barney, 1952)</span>
           </p>
           <details class="look-for">
@@ -206,6 +208,6 @@
   </script>
   <script type="module" src="nav.js?v=8"></script>
   <script type="module" src="headings.js?v=8"></script> <!-- headings: Fraunces, mixed letter by letter --> <!-- first, so the tabs start in the right state before the page script loads -->
-  <script type="module" src="portrait-3d.js?v=123"></script>
+  <script type="module" src="portrait-3d.js?v=125"></script>
 </body>
 </html>
