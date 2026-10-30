@@ -101,10 +101,10 @@ export function drawVowelChart(canvas, { cloud = [], trail = [], ref = null, fro
     g.fillStyle = `rgba(${rgb},${dotA})`; g.beginPath(); g.arc(px, py, 1.7, 0, Math.PI * 2); g.fill();
   }
 
-  // EE / OO / AH, big in the heading font, with the example words small underneath
+  // EE / OO / AH, big in the body font, with the example words small underneath
   const label = (t, sub, p, align, dy) => {
     g.textAlign = align; g.textBaseline = "alphabetic";
-    g.fillStyle = "#ecebe7"; g.font = `500 ${narrow ? 20 : 28}px Fraunces, Georgia, serif`; g.fillText(t, p[0], p[1] + dy);
+    g.fillStyle = "#ecebe7"; g.font = `500 ${narrow ? 20 : 28}px Geist, system-ui, sans-serif`; g.fillText(t, p[0], p[1] + dy);
     g.fillStyle = muted; g.font = `500 ${narrow ? 10.5 : 12}px Geist, system-ui, sans-serif`; g.fillText(sub, p[0], p[1] + dy + 15);
   };
   label("EE", "as in she", out[0], "left", -22);

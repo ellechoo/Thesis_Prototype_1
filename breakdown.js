@@ -2,8 +2,8 @@
 // (it used to be its own Breakdown page). portrait-3d.js loads the recording and calls renderBreakdown(take).
 // Downloads are off for now.
 import { forgetLocalAudio, archiveIsShared } from "./store.js?v=3";
-import { drawVowelChart, pickReference, countVowelFrames } from "./vowel-chart.js?v=4";
-import { traits, timbreWords, voiceColor, MAP } from "./voice-orb.js?v=68";
+import { drawVowelChart, pickReference, countVowelFrames } from "./vowel-chart.js?v=5";
+import { traits, timbreWords, voiceColor, MAP } from "./voice-orb.js?v=69";
 import { drawPitchTrace, pct, ACCENT_SECONDS, deviceText } from "./shared.js?v=3";
 
 const SHOW_TOP = 6;
