@@ -12,8 +12,8 @@
 // fades out the next fades in on another portrait that's fully on screen and well clear of the text.
 import * as THREE from "three";
 import { listTakes, getTake } from "./store.js?v=2";
-import { buildOrb } from "./voice-orb.js?v=59";
-import { spreadOut } from "./spread.js?v=5"; // (voiceprints that look alike aren't placed next to each other)
+import { buildOrb, turnBelt } from "./voice-orb.js?v=60";
+import { spreadOut } from "./spread.js?v=6"; // (voiceprints that look alike aren't placed next to each other)
 
 const MAX_VOICES = 48;       // the newest ones; plenty to fill the field without a long download
 const DRIFT = [0.016, 0.01]; // pixels per millisecond: right-to-left and bottom-to-top, a slow diagonal
@@ -96,6 +96,7 @@ if (renderer) {
       const x = (k % PER_ROW) * CELL, y = (rows - 1 - Math.floor(k / PER_ROW)) * CELL;
       renderer.setViewport(x, y, CELL, CELL); renderer.setScissor(x, y, CELL, CELL); renderer.clearDepth();
       scenes[k].children[0].rotation.y = still ? phase[k] : phase[k] - t * 0.00025; // turning to the left (the core turns the other way)
+      turnBelt(scenes[k].children[0], still ? 0 : t / 1000); // (the speaking-rate band turns too)
       renderer.render(scenes[k], cam);
     }
   };
