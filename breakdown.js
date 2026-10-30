@@ -34,8 +34,6 @@ export function renderBreakdown(t) {
   renderAccent();
   renderRhythm();
   draw();
-  const sample = take.frames.find((f) => f.pitch) ?? take.frames[take.frames.length - 1];
-  $("lastFrame").textContent = sample ? JSON.stringify(sample, null, 2) : "No frames.";
 }
 
 function showSaveNotice() {
