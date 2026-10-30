@@ -1470,3 +1470,6 @@ p, li, dd, summary, .note, .hint, figcaption { text-wrap: pretty; }
 .portrait-data details.is-open > summary::before { transform: translateY(-2px) rotate(45deg); }
 .portrait-data details > summary + * { margin-top: 18px; }
 @media (prefers-reduced-motion: reduce) { .portrait-data details > summary::before { transition: none; } }
+
+/* Voiceprint boxes: the ↔ in "Bright ↔ Dark" etc. a touch thinner than the words */
+.feat-name .feat-arrow { font-weight: 400; }
