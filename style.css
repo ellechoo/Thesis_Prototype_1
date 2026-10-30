@@ -1038,6 +1038,7 @@ html:has(.archive-stage:not([hidden])) { scrollbar-gutter: auto; overflow: hidde
 .search-results .m-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .search-results .m-when { color: var(--muted); font-size: 13px; white-space: nowrap; }
 .search-results .search-none { color: var(--muted); cursor: default; }
+.search-results .search-head { padding: 6px 12px 4px; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; cursor: default; } /* "Most recent", above the five newest voices */
 @media (max-width: 640px) {
   .stage-search { top: 12px; left: 112px; width: auto; right: 12px; }
 }

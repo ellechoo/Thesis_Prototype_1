@@ -259,10 +259,15 @@ function gallery(people) {
   function showResults() {
     const q = norm(box.value);
     if (!q) { matches = []; closeResults(); return; }
-    matches = names.map((n, p) => ({ p, at: n.indexOf(q), n })).filter((m) => m.at >= 0)
-      .sort((a, b) => (a.at === 0) - (b.at === 0) ? (b.at === 0) - (a.at === 0) : a.n.localeCompare(b.n)).slice(0, 8);
+    // typing "recent" (or "newest", "latest") lists the five newest voices, newest first, with their dates
+    const recent = ["recent", "newest", "latest"].includes(q);
+    matches = recent
+      ? people.map((t, p) => ({ p, n: names[p], t: Date.parse(t.createdAt) || 0 })).sort((a, b) => b.t - a.t).slice(0, 5)
+      : names.map((n, p) => ({ p, at: n.indexOf(q), n })).filter((m) => m.at >= 0)
+        .sort((a, b) => (a.at === 0) - (b.at === 0) ? (b.at === 0) - (a.at === 0) : a.n.localeCompare(b.n)).slice(0, 8);
     active = matches.length ? 0 : -1;
     results.innerHTML = "";
+    if (recent && matches.length) { const li = document.createElement("li"); li.className = "search-head"; li.textContent = "Most recent"; results.appendChild(li); }
     if (!matches.length) { const li = document.createElement("li"); li.className = "search-none"; li.textContent = `No voice called “${box.value.trim()}”`; results.appendChild(li); }
     const twins = new Set(matches.map((m) => m.n).filter((n, k, a) => a.indexOf(n) !== k)); // same name twice: show dates to tell them apart
     matches.forEach((m, k) => {
@@ -270,7 +275,7 @@ function gallery(people) {
       li.id = `voiceMatch${k}`; li.setAttribute("role", "option"); li.setAttribute("aria-selected", String(k === active));
       li.innerHTML = `<span class="m-name"></span><span class="m-when"></span>`;
       li.querySelector(".m-name").textContent = people[m.p].name;
-      li.querySelector(".m-when").textContent = twins.has(m.n) ? when(people[m.p]) : "";
+      li.querySelector(".m-when").textContent = recent || twins.has(m.n) ? when(people[m.p]) : "";
       li.addEventListener("pointerdown", (e) => { e.preventDefault(); choose(k); });
       results.appendChild(li);
     });
