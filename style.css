@@ -1481,7 +1481,6 @@ p, li, dd, summary, .note, .hint, figcaption { text-wrap: pretty; }
 .stage-filter-btn { position: absolute; z-index: 4; top: 18px; left: calc(max(18px, env(safe-area-inset-left, 0px)) + 104px + 270px + 10px); height: 44px; display: inline-flex; align-items: center; gap: 8px; padding: 0 16px; border: 1px solid var(--line); border-radius: 999px; background: rgba(0, 0, 0, .9); color: var(--text); font: 500 15px Geist, system-ui, -apple-system, "Segoe UI", sans-serif; cursor: pointer; }
 .stage-filter-btn svg { width: 18px; height: 18px; }
 .stage-filter-btn:hover, .stage-filter-btn[aria-expanded="true"] { border-color: var(--text); }
-.stage-filter-btn.on { border-color: var(--accent); }
 .stage-filter-btn:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 .filter-count { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: var(--accent); color: var(--accent-text); font-size: 12px; font-weight: 600; display: inline-grid; place-items: center; }
 .filter-panel { position: absolute; z-index: 5; top: 72px; left: calc(max(18px, env(safe-area-inset-left, 0px)) + 104px); width: min(470px, calc(100vw - 2 * max(18px, env(safe-area-inset-left, 0px)))); max-height: calc(100% - 180px); overflow: auto; padding: 18px 18px 20px; border: 1px solid var(--line); border-radius: 18px; background: var(--panel); box-shadow: 0 14px 34px rgba(0, 0, 0, .55); display: grid; gap: 18px; }
@@ -1558,8 +1557,8 @@ p, li, dd, summary, .note, .hint, figcaption { text-wrap: pretty; }
 .archive-stage .view-switch, .archive-stage .stage-search input, .archive-stage .stage-filter-btn { border-color: var(--text); }
 .archive-stage .view-switch:hover, .archive-stage .view-switch:active, .archive-stage .view-switch:focus-within,
 .archive-stage .stage-search input:hover, .archive-stage .stage-search input:focus, .archive-stage .stage-search input:active,
-.archive-stage .stage-filter-btn:hover, .archive-stage .stage-filter-btn:active, .archive-stage .stage-filter-btn[aria-expanded="true"], .archive-stage .stage-filter-btn.on { border-color: var(--accent); }
-@media (hover: none) { .archive-stage .view-switch:hover, .archive-stage .stage-search input:hover, .archive-stage .stage-filter-btn:hover:not([aria-expanded="true"]):not(.on) { border-color: var(--text); } }
+.archive-stage .stage-filter-btn:hover, .archive-stage .stage-filter-btn:active, .archive-stage .stage-filter-btn[aria-expanded="true"] { border-color: var(--accent); }
+@media (hover: none) { .archive-stage .view-switch:hover, .archive-stage .stage-search input:hover, .archive-stage .stage-filter-btn:hover:not([aria-expanded="true"]) { border-color: var(--text); } }
 /* Archive: a voiceprint's name tag in very cloudy white glass, black text */
 .archive-stage .stage-tip { background: rgba(244, 243, 239, .88); -webkit-backdrop-filter: blur(18px) saturate(1.3); backdrop-filter: blur(18px) saturate(1.3); color: #0e0e0d; border: 1px solid rgba(255, 255, 255, .7); box-shadow: 0 6px 18px rgba(0, 0, 0, .4), inset 0 1px 0 rgba(255, 255, 255, .7); }
 .archive-stage .stage-tip::before { top: -9px; height: 9px; background: rgba(244, 243, 239, .88); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }
