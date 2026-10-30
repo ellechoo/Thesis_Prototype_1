@@ -5,7 +5,7 @@ import { computeRhythm } from "./rhythm.js";
 import { checkTake, roomIsNoisy, measureGaps } from "./quality.js?v=4";
 import { nameIsBlocked } from "./name-check.js?v=1";
 import { makePassageTracker, canFollowWords } from "./progress.js?v=9";
-import { saveTake, newId, archiveIsShared } from "./store.js?v=2";
+import { saveTake, newId, archiveIsShared } from "./store.js?v=3";
 import {
   RATE, MIN_ACCENT_SECONDS, summarize, drawPitchTrace, warmUpAccentModel, classifyAccent,
   noteName, clock, toDb, dbToPct, round2, describeDevice } from "./shared.js?v=3";

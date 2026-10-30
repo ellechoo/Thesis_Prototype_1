@@ -11,7 +11,7 @@
 // One portrait at a time wears a small speech-bubble name tag, so it's clear each one belongs to someone: as one tag
 // fades out the next fades in on another portrait that's fully on screen and well clear of the text.
 import * as THREE from "three";
-import { listTakes, getTake } from "./store.js?v=2";
+import { listTakes, getTake, countTakes } from "./store.js?v=3";
 import { buildOrb, turnBelt } from "./voice-orb.js?v=66";
 import { spreadOut } from "./spread.js?v=12"; // (voiceprints that look alike aren't placed next to each other)
 
@@ -41,8 +41,10 @@ const still = matchMedia("(prefers-reduced-motion: reduce)").matches; // then th
 let people = [];
 try { people = spreadOut((await listTakes()).slice(0, MAX_VOICES)); } catch (e) { console.warn("Couldn't load the archive:", e); }
 const N = people.length;
+// the count: every voice in the archive (the field only shows the newest MAX_VOICES of them)
+let total = N; try { total = Math.max(N, await countTakes()); } catch (e) { console.warn("Couldn't count the archive:", e); }
 document.querySelectorAll(".home-count").forEach((el) => {
-  el.textContent = N ? `${N === MAX_VOICES ? `${N}+` : N} voice${N === 1 ? "" : "s"} so far` : "Be the first voice";
+  el.textContent = total ? `${total.toLocaleString("en-US")} voice${total === 1 ? "" : "s"} so far` : "Be the first voice";
 });
 
 // ---- one shared 3D renderer

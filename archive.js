@@ -14,10 +14,10 @@
 // The list arrives without the detailed frames (to stay quick), so each voice's data loads a few at a time and its
 // portrait fades in when ready.
 import * as THREE from "three";
-import { listTakes, getTake } from "./store.js?v=2";
+import { listTakes, getTake } from "./store.js?v=3";
 import { buildOrb, turnBelt } from "./voice-orb.js?v=66";
 import { spreadOut } from "./spread.js?v=12"; // (voiceprints that look alike aren't placed next to each other)
-import { renderIdCard } from "./id-card.js?v=71";
+import { renderIdCard } from "./id-card.js?v=72";
 
 const $ = (id) => document.getElementById(id);
 const still = matchMedia("(prefers-reduced-motion: reduce)").matches; // then nothing turns or glides on its own

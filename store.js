@@ -79,6 +79,17 @@ export async function listTakes() {
   return all.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
 }
 
+/** How many voices are in the archive (all of them, not just the newest ones a page loads). */
+export async function countTakes() {
+  if (archiveIsShared) {
+    const sb = await client();
+    const { count, error } = await sb.from("takes").select("id", { count: "exact", head: true });
+    if (error) throw new Error(error.message);
+    return count ?? 0;
+  }
+  return ((await local("readonly", (s) => s.getAll())) || []).length;
+}
+
 /** The newest take made on this device. */
 export async function latestLocalTake() {
   const all = (await local("readonly", (s) => s.getAll())) || [];

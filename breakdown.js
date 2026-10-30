@@ -1,7 +1,7 @@
 // breakdown.js — everything measured from one recording, shown under the portrait on the Portrait page
 // (it used to be its own Breakdown page). portrait-3d.js loads the recording and calls renderBreakdown(take).
 // Downloads are off for now.
-import { forgetLocalAudio, archiveIsShared } from "./store.js?v=2";
+import { forgetLocalAudio, archiveIsShared } from "./store.js?v=3";
 import { drawVowelChart, pickReference, countVowelFrames } from "./vowel-chart.js?v=2";
 import { traits, timbreWords } from "./voice-orb.js?v=66";
 import { drawPitchTrace, pct, ACCENT_SECONDS, deviceText } from "./shared.js?v=3";
