@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..700,0..100,0..1;1,9..144,300..700,0..100,0..1&family=Geist:wght@300..700&display=swap" crossorigin="anonymous" /> <!-- crossorigin: lets the ID card download include this font -->
-  <link rel="stylesheet" href="style.css?v=122" />
+  <link rel="stylesheet" href="style.css?v=123" />
 </head>
 <body>
   <main class="wide">
@@ -140,7 +140,7 @@
           </div>
         </section>
 
-        <section class="block last-block">
+        <section class="block">
           <div class="chart-head">
             <h2 class="section-title">Vowel space</h2>
             <label class="inline">Reference
@@ -176,9 +176,12 @@
           <details>
             <summary>More about the vowel chart</summary>
             <p>Each faint dot is one moment of voiced speech (about 40 per second), placed by its first two formants. <strong>Up and down</strong> is F1, which follows how open your mouth is. <strong>Left and right</strong> is F2, which follows where your tongue is.</p>
-            <p>Reading a passage mixes every vowel together, plus the glides between them, so the cloud is blurry by nature. The reference is a 1950s General American average, not a “correct” target. Higher-pitched voices make formants harder to measure, so expect more scatter.</p>
+            <p>Reading a passage mixes every vowel together, plus the glides between them, so the cloud is blurry by nature. Higher-pitched voices make formants harder to measure, so expect more scatter.</p>
           </details>
-          <button type="button" class="jump-btn to-portrait foot-strip"><span class="jump-label">Back to the portrait</span> <span class="jump-arrow" aria-hidden="true">↑</span></button> <!-- the last box's bottom strip -->
+        </section>
+
+        <section class="block last-block strip-block"> <!-- "Back to the portrait", on its own at the end -->
+          <button type="button" class="jump-btn to-portrait foot-strip"><span class="jump-label">Back to the portrait</span> <span class="jump-arrow" aria-hidden="true">↑</span></button>
         </section>
       </div>
     </div>
@@ -199,8 +202,8 @@
       "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
   } }
   </script>
-  <script type="module" src="nav.js?v=8"></script>
+  <script type="module" src="nav.js?v=9"></script>
   <script type="module" src="headings.js?v=8"></script> <!-- headings: Fraunces, mixed letter by letter --> <!-- first, so the tabs start in the right state before the page script loads -->
-  <script type="module" src="portrait-3d.js?v=129"></script>
+  <script type="module" src="portrait-3d.js?v=130"></script>
 </body>
 </html>

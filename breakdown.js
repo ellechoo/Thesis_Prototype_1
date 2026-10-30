@@ -199,3 +199,15 @@ document.addEventListener("click", () => hideTip());
 document.querySelectorAll(".card[data-tip]").forEach(hookTip);
 window.addEventListener("scroll", () => hideTip(), { passive: true });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") hideTip(); });
+
+
+// ---------- the "How to read …" / "More about …" dropdowns ----------
+// Only one is open at a time (opening one closes the others), and one that's scrolled completely out of view closes itself.
+{
+  const drops = [...document.querySelectorAll(".portrait-data details")];
+  const away = new IntersectionObserver((entries) => { for (const e of entries) if (!e.isIntersecting && e.target.open) e.target.open = false; });
+  drops.forEach((d) => {
+    away.observe(d);
+    d.addEventListener("toggle", () => { if (d.open) drops.forEach((o) => { if (o !== d && o.open) o.open = false; }); });
+  });
+}
