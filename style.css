@@ -1461,3 +1461,12 @@ body:is([data-phase="review"], [data-phase="processing"]) .rec-page :is(.review,
 .portrait-data .strip-block .foot-strip { margin: 0; width: 100%; }
 /* small body text: no single word left alone on the last line (browsers that can't do this get a fallback in nav.js) */
 p, li, dd, summary, .note, .hint, figcaption { text-wrap: pretty; }
+
+/* Voiceprint breakdown dropdowns: our own arrow (a small chevron that turns when open), with room on its right, and a
+   little more space between the title and the text */
+.portrait-data details > summary { list-style: none; display: flex; align-items: center; gap: 14px; }
+.portrait-data details > summary::-webkit-details-marker { display: none; }
+.portrait-data details > summary::before { content: ""; flex: none; width: 7px; height: 7px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: translateX(-1px) rotate(-45deg); transition: transform .32s cubic-bezier(.22,.7,.2,1); }
+.portrait-data details.is-open > summary::before { transform: translateY(-2px) rotate(45deg); }
+.portrait-data details > summary + * { margin-top: 18px; }
+@media (prefers-reduced-motion: reduce) { .portrait-data details > summary::before { transition: none; } }
