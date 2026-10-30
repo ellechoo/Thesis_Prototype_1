@@ -241,7 +241,15 @@ function gallery(people) {
   let down = null, moved = 0, vx = 0, vy = 0, hover = null, placed = [];
   const X = new THREE.Vector3(1, 0, 0), Y = new THREE.Vector3(0, 1, 0), tq = new THREE.Quaternion();
   const turn = (ax, ay) => { tq.setFromAxisAngle(Y, ax); rot.premultiply(tq); tq.setFromAxisAngle(X, ay); rot.premultiply(tq); };
-  const move = (dx, dy) => { if (mode === "flat") { offX += dx / zoom; offY += dy / zoom; } else turn(dx / (R * zoom), dy / (R * zoom)); };
+  // while filtering (flat view), the field only goes so far: the middle of the screen stays within the matching voices
+  // (plus a portrait's width), so nobody drifts off into the empty black
+  const keepNear = () => {
+    if (mode !== "flat" || !filtering() || !fpos.length) return;
+    const ex = Math.max(...fpos.map((q) => Math.abs(q[0]))) + S * 0.6, ey = Math.max(...fpos.map((q) => Math.abs(q[1]))) + DY * 0.6;
+    const cx = Math.max(-ex, Math.min(ex, offX)), cy = Math.max(-ey, Math.min(ey, offY));
+    if (cx !== offX) { offX = cx; vx = 0; } if (cy !== offY) { offY = cy; vy = 0; }
+  };
+  const move = (dx, dy) => { if (mode === "flat") { offX += dx / zoom; offY += dy / zoom; keepNear(); } else turn(dx / (R * zoom), dy / (R * zoom)); };
   const onStage = (e) => !e.target.closest(".view-switch, .tabs");
   view.addEventListener("pointerdown", (e) => {
     if (!onStage(e)) return;
