@@ -1455,3 +1455,9 @@ body:is([data-phase="review"], [data-phase="processing"]) .rec-page :is(.review,
   /* the one-line summaries ("Closest match: …", "Very breathy, dark, raspy") a little smaller on phones */
   .portrait-data .top-line { font-size: 23px; }
 }
+
+/* Voiceprint breakdown: "Back to the portrait" in a box of its own at the end (the strip fills it) */
+.portrait-data .strip-block, .portrait-data .block + .strip-block { padding: 0; }
+.portrait-data .strip-block .foot-strip { margin: 0; width: 100%; }
+/* small body text: no single word left alone on the last line (browsers that can't do this get a fallback in nav.js) */
+p, li, dd, summary, .note, .hint, figcaption { text-wrap: pretty; }

@@ -58,3 +58,15 @@ if (nav) {
   const rec = nav.querySelector(".nav-record");
   if (rec && states["no-record"]) { rec.tabIndex = -1; rec.setAttribute("aria-hidden", "true"); }
 }
+
+
+// Small body text: no word left alone on a paragraph's last line. Browsers that understand text-wrap: pretty (style.css)
+// do it themselves; for the rest, the last two words of each paragraph are joined with a non-breaking space.
+if (!CSS.supports?.("text-wrap", "pretty")) {
+  const glue = (root = document) => root.querySelectorAll?.("p, li, dd, .note, .hint").forEach((el) => {
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); let last = null, n;
+    while ((n = walker.nextNode())) if (n.nodeValue.trim()) last = n;
+    if (last && /\S \S+\s*$/.test(last.nodeValue)) last.nodeValue = last.nodeValue.replace(/ (\S+\s*)$/, "\u00a0$1");
+  });
+  glue(); addEventListener("load", () => glue()); setTimeout(() => glue(), 2000); // (and once more after the page fills in its text)
+}
