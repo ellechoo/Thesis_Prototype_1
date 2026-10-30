@@ -16,6 +16,9 @@ const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
 function rng(seed) { let h = 2166136261; for (const c of seed) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return () => { h = Math.imul(h ^ (h >>> 15), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909); return ((h ^= h >>> 16) >>> 0) / 4294967296; }; }
 // one letter's look
 const letterStyle = (r) => `font-weight:${Math.round(320 + r() * 380)};font-style:${r() < 0.25 ? "italic" : "normal"};font-variation-settings:'SOFT' ${Math.round(r() * 100)},'WONK' ${r() < 0.5 ? 1 : 0},'opsz' ${Math.round(24 + r() * 120)}`;
+// A heading with data-mix-colors="#a,#b,…" also gives each letter one of those colours, picked again whenever the
+// letter's look changes (the Join page's headline).
+const look = (el, r) => { const p = el._palette; return letterStyle(r) + (p ? `;color:${p[Math.floor(r() * p.length)]}` : ""); };
 const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 const mixed = new Set(), visible = new Set();
@@ -26,9 +29,10 @@ function mix(el) {
   const text = (el.textContent || "").replace(/\s+/g, " ").trim();
   if (!text) return;
   const r = rng(text);
+  el._palette = el.dataset.mixColors ? el.dataset.mixColors.split(",").map((c) => c.trim()).filter(Boolean) : null;
   // the plain words for screen readers, then the letters (hidden from them), each word kept together on its line
   el.innerHTML = `<span class="mx-sr">${esc(text)}</span><span class="mx" aria-hidden="true">${text.split(" ").map((w) =>
-    `<span class="mx-w">${[...w].map((ch) => `<span class="mx-l" style="${letterStyle(r)}">${esc(ch)}</span>`).join("")}</span>`).join(" ")}</span>`;
+    `<span class="mx-w">${[...w].map((ch) => `<span class="mx-l" style="${look(el, r)}">${esc(ch)}</span>`).join("")}</span>`).join(" ")}</span>`;
   el.dataset.mixFull = el.textContent; // (if anything else changes the text later, it no longer matches, and it's mixed again)
   el._letters = [...el.querySelectorAll(".mx-l")];
   if (!mixed.has(el)) { mixed.add(el); seen.observe(el); }
@@ -125,6 +129,6 @@ if (!still) setInterval(() => {
   if (document.hidden) return;
   for (const el of visible) {
     const ls = el._letters; if (!ls?.length || el._settle) continue; // (ID card headings settle once and stay)
-    ls[Math.floor(Math.random() * ls.length)].style.cssText = letterStyle(Math.random);
+    ls[Math.floor(Math.random() * ls.length)].style.cssText = look(el, Math.random);
   }
 }, STEP_MS);

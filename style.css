@@ -977,9 +977,9 @@ body:is([data-phase="countdown"], [data-phase="recording"]) .record-page #status
   .home-block.bubbled { background: transparent; }
   .home-block .bub-shape { display: block; position: absolute; left: 0; top: 0; z-index: -1; overflow: visible; pointer-events: none; }
   .home-block .bub-shape path { fill: var(--text); pointer-events: auto; }
-  .home-block .home-count { color: #6b675f; }
+  .home-block .home-count { color: #0e0e0d; }
   .home-block h1 { color: #0e0e0d; }
-  .home-block .home-lede { color: #3b3935; text-wrap: pretty; }
+  .home-block .home-lede { color: #0e0e0d; text-wrap: pretty; }
   .home-block .home-small { color: #6b675f; }
 }
 /* landing page: "Get Started" sends out a soft ring every few seconds, like a sound wave, to draw the eye;
@@ -1473,3 +1473,6 @@ p, li, dd, summary, .note, .hint, figcaption { text-wrap: pretty; }
 
 /* Voiceprint boxes: the ↔ in "Bright ↔ Dark" etc. a touch thinner than the words */
 .feat-name .feat-arrow { font-weight: 400; }
+
+/* Join page, phones: the count and the lede in white; only "Only takes about a minute!" stays grey */
+.home-below .home-count, .home-below .home-lede { color: #fff; }
