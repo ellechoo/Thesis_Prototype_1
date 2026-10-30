@@ -97,9 +97,9 @@ export const MAP = {
     },
   },
   lineColor: 0xf4f1ea,
-  // the structure's color: a very light tint of the core's own hue (its note), at this saturation and lightness for
+  // the structure's color: a light tint of the core's own hue (its note), at this saturation and lightness for
   // every voice, so it reads as nearly white with a hint of the core's color, whatever the core's depth
-  shell: { sat: 0.85, light: 0.84 },
+  shell: { sat: 0.85, light: 0.76 },
   // TALKING & PAUSES → beads on the strongest accent's structure. The reading's timeline (first word to last) wraps once
   // around the vertical axis; at every pause longer than minSeconds, one flat, soft-edged bead in the voice's colour sits on
   // a line of that structure at that angle (like a bead threaded on string). Where several lines pass that angle (a coil
