@@ -1441,3 +1441,13 @@ body:is([data-phase="review"], [data-phase="processing"]) .rec-page :is(.review,
   .rec-page .review.gaps .controls { display: grid; grid-template-columns: minmax(0, 1fr); }
   .rec-page .review.gaps .controls button { width: 100%; justify-content: center; text-align: center; }
 }
+
+/* Voiceprint breakdown: the Measurements values, each in its own box */
+.portrait-data .stats.boxed { gap: 12px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.portrait-data .stats.boxed .card { padding: 14px 16px 16px; border: 1px solid #3d3a35; border-radius: 14px; background: #0b0b0a; }
+@media (max-width: 640px) {
+  .portrait-data .stats.boxed { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .portrait-data .stats.boxed .card { padding: 12px 12px 14px; border-radius: 12px; }
+  /* the one-line summaries ("Closest match: …", "Very breathy, dark, raspy") a little smaller on phones */
+  .portrait-data .top-line { font-size: 23px; }
+}

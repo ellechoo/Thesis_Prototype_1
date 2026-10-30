@@ -64,6 +64,10 @@ function useVoiceAccent(take) {
   const hex = "#" + col.getHexString(), onIt = lum(col) > 0.3 ? "#111111" : "#ffffff";
   document.documentElement.style.setProperty("--accent", hex);
   document.documentElement.style.setProperty("--accent-text", onIt);
+  // a third, quieter colour for everything that's grey on this page (labels, notes, units): the same hue, greyed and
+  // dimmed the way grey sits under white
+  const third = new THREE.Color().setHSL(hsl.h, 0.28, 0.63, THREE.SRGBColorSpace); // (about as light as the old grey)
+  document.documentElement.style.setProperty("--muted", "#" + third.getHexString());
   // a few things draw the red directly (the nav tabs' hover fill is an SVG picture): copy those rules with this colour
   const reds = [/%23e5352d/gi, /#e5352d/gi, /rgb\(229, 53, 45\)/g], to = [`%23${hex.slice(1)}`, hex, hex];
   const swap = (t) => reds.reduce((s, re, i) => s.replace(re, to[i]), t), has = (t) => reds.some((re) => (re.lastIndex = 0, re.test(t)));
