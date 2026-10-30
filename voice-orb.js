@@ -43,7 +43,7 @@ export const MAP = {
     from: 0.15,        // a voice this close to the middle (on the −1…1 dials) gets no sun or swirl
     // sun: flat, straight-sided triangles in the core's colour, a gap away from the core (core units); spin: radians per second,
     //   clockwise on screen (never stops; off for reduced motion)
-    sun: { rays: 12, gap: 0.07, len: [0.05, 0.15], width: [0.022, 0.04], spin: 0.1 },
+    sun: { rays: 12, gap: 0.07, len: [0.07, 0.2], width: [0.032, 0.058], spin: 0.1 }, // (sized to stay visible on small portraits too)
     // swirl: arms of the core's colour curling in towards it, like water down a drain; they reach further out and thicken the darker
     //   the voice. spin: radians per second, anticlockwise on screen (the sun's opposite; never stops; off for reduced motion)
     swirl: { arms: 5, twist: 2.6, reach: [0.55, 0.9], spin: 0.15 },
