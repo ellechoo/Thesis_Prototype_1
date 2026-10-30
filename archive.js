@@ -54,7 +54,7 @@ function gallery(people) {
       <ul class="search-results" id="searchResults" role="listbox" aria-label="Matching voices" hidden></ul>
     </div>
     <button type="button" class="stage-filter-btn" aria-expanded="false" aria-controls="filterPanel" aria-label="Filter voices"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span class="filter-label">Filter</span><span class="filter-count" hidden></span></button>
-    <span class="filter-tail" aria-hidden="true" hidden></span>
+    <div class="filter-bg" aria-hidden="true" hidden><svg><path /></svg></div>
     <div class="filter-panel" id="filterPanel" role="dialog" aria-label="Filter voices" hidden></div>
     <p class="stage-none" hidden>No voices match these filters.</p>
     <p class="stage-hint" aria-hidden="true"></p>
@@ -373,8 +373,24 @@ function gallery(people) {
     if (c) { const g = c.dataset.g, v = c.dataset.v; sel[g].has(v) ? sel[g].delete(v) : sel[g].add(v); c.setAttribute("aria-pressed", String(sel[g].has(v))); applyFilters(); return; }
     if (e.target.closest(".f-clear")) { GROUPS.forEach((g) => sel[g].clear()); panel.querySelectorAll(".f-chip").forEach((b) => b.setAttribute("aria-pressed", "false")); applyFilters(); }
   });
-  const tail = grid.querySelector(".filter-tail");
-  const openPanel = (on) => { if (on) { buildPanel(); paintNotes(); } panel.hidden = !on; tail.hidden = !on; filterBtn.setAttribute("aria-expanded", String(on)); if (on) { closeResults(); refilter(); } };
+  // the bubble behind the panel: body and tail as ONE shape (like the Join page's speech bubble), the tail curving up to
+  // the Filter button. Frosted glass clipped to that shape, with a thin light edge drawn along it.
+  const bg = grid.querySelector(".filter-bg"), bgPath = bg.querySelector("path"), TAIL = 22;
+  function shapeBubble() {
+    if (panel.hidden) return;
+    const g = grid.getBoundingClientRect(), pr = panel.getBoundingClientRect(), br = filterBtn.getBoundingClientRect();
+    const w = pr.width, h = pr.height, r = parseFloat(getComputedStyle(panel).borderTopLeftRadius) || 22, H = TAIL;
+    Object.assign(bg.style, { left: `${pr.left - g.left}px`, top: `${pr.top - g.top - H}px`, width: `${w}px`, height: `${h + H}px` });
+    const px = Math.min(w - 8, Math.max(8, br.left + br.width / 2 - pr.left)); // the tip: under the middle of the button
+    let b1 = Math.min(w - r, px + 24), b0 = b1 - 56; if (b0 < r) { b0 = r; b1 = r + 56; }       // the base, on the straight part of the top edge
+    const y = H, tipY = 1;
+    const d = `M${r} ${y}H${b0}C${b0 + (px - b0) * 0.45} ${y - 4} ${px - 4} ${y - H * 0.55} ${px} ${tipY}C${px + 3} ${y - H * 0.45} ${b1 - 8} ${y - 3} ${b1} ${y}` +
+      `H${w - r}A${r} ${r} 0 0 1 ${w} ${y + r}V${y + h - r}A${r} ${r} 0 0 1 ${w - r} ${y + h}H${r}A${r} ${r} 0 0 1 0 ${y + h - r}V${y + r}A${r} ${r} 0 0 1 ${r} ${y}Z`;
+    bg.style.clipPath = `path("${d}")`; bgPath.setAttribute("d", d);
+    bg.querySelector("svg").setAttribute("viewBox", `0 0 ${w} ${h + H}`);
+  }
+  addEventListener("resize", shapeBubble);
+  const openPanel = (on) => { if (on) { buildPanel(); paintNotes(); } panel.hidden = !on; bg.hidden = !on; if (on) shapeBubble(); filterBtn.setAttribute("aria-expanded", String(on)); if (on) { closeResults(); refilter(); } };
   filterBtn.addEventListener("click", (e) => { e.stopPropagation(); openPanel(panel.hidden); });
   document.addEventListener("pointerdown", (e) => { if (!panel.hidden && !e.target.closest(".filter-panel, .stage-filter-btn")) openPanel(false); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !panel.hidden) { openPanel(false); filterBtn.focus(); } });

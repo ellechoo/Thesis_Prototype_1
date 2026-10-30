@@ -1512,14 +1512,14 @@ p, li, dd, summary, .note, .hint, figcaption { text-wrap: pretty; }
 .f-chip[data-g="note"] .f-n { color: inherit; opacity: .7; }
 .f-chip[data-g="note"][aria-pressed="true"] { background: var(--note); border-color: var(--note); color: var(--note-text); }
 
-/* Archive filter panel: a cloudy white glass speech bubble, its tail pointing up at the Filter button (the buttons inside
-   stay black). The tail is its own element so the panel can scroll. */
-.filter-panel { top: 84px; border: 1px solid rgba(255, 255, 255, .55); border-radius: 26px; background: rgba(240, 239, 235, .8); -webkit-backdrop-filter: blur(24px) saturate(1.4); backdrop-filter: blur(24px) saturate(1.4); box-shadow: 0 16px 40px rgba(0, 0, 0, .45), inset 0 1px 0 rgba(255, 255, 255, .6); }
-.filter-tail { position: absolute; z-index: 5; top: 63px; left: calc(max(18px, env(safe-area-inset-left, 0px)) + 104px + 270px + 10px + 30px); width: 44px; height: 22px; background: rgba(240, 239, 235, .8); -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px); clip-path: polygon(52% 0, 100% 100%, 0 100%); pointer-events: none; }
+/* Archive filter panel: a cloudy white glass speech bubble. Its glass (body + tail as one shape, curving up to the
+   Filter button, like the Join page's bubble) is drawn behind the panel by archive.js; the panel itself is clear, so it
+   can still scroll. The buttons inside stay black. */
+.filter-panel { top: 84px; border: 0; border-radius: 26px; background: transparent; box-shadow: none; }
+.filter-bg { position: absolute; z-index: 4; pointer-events: none; background: rgba(240, 239, 235, .8); -webkit-backdrop-filter: blur(24px) saturate(1.4); backdrop-filter: blur(24px) saturate(1.4); }
+.filter-bg svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.filter-bg path { fill: none; stroke: rgba(255, 255, 255, .7); stroke-width: 2; }
 .filter-panel .f-title { color: #1d1c19; }
 .filter-panel .f-clear { color: #111; }
 .filter-panel .f-shown { color: #c4161c; font-weight: 500; } /* (a deeper red, to read on the light glass) */
-@media (max-width: 640px) {
-  .filter-panel { top: 74px; border-radius: 22px; }
-  .filter-tail { top: 56px; left: auto; right: 17px; width: 34px; height: 19px; }
-}
+@media (max-width: 640px) { .filter-panel { top: 76px; border-radius: 22px; } }
