@@ -88,6 +88,7 @@ function renderAccent() {
     row.querySelector(".name").textContent = item.name;
     row.querySelector(".name").title = item.name;
     row.querySelector(".bar-fill").style.width = `${Math.max(item.score * 100, 0.5)}%`;
+    row.querySelector(".bar-track").style.height = `${(6 + 14 * Math.max(0, Math.min(1, item.score))).toFixed(1)}px`; // thicker the bigger the share: 6 px under 1%, 20 px at 100%
     row.querySelector(".pct").textContent = pct(item.score);
     bars.appendChild(row);
   });
