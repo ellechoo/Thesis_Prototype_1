@@ -1506,3 +1506,9 @@ p, li, dd, summary, .note, .hint, figcaption { text-wrap: pretty; }
   .stage-filter-btn .filter-count { position: absolute; top: -4px; right: -4px; }
   .filter-panel { top: 64px; left: 12px; right: 12px; width: auto; max-height: calc(100% - 150px); }
 }
+
+/* Archive filter: each note chip in its note's colour; picked ones get a white ring */
+.f-chip[data-g="note"] { background: var(--note); border-color: var(--note); color: var(--note-text); min-width: 52px; justify-content: center; }
+.f-chip[data-g="note"] .f-n { color: inherit; opacity: .7; }
+.f-chip[data-g="note"]:hover:not(:disabled) { border-color: var(--note); box-shadow: 0 0 0 2px #000, 0 0 0 3.5px var(--note); }
+.f-chip[data-g="note"][aria-pressed="true"] { background: var(--note); border-color: var(--note); color: var(--note-text); box-shadow: 0 0 0 2px #000, 0 0 0 4px #fff; font-weight: 600; }
