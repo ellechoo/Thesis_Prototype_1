@@ -432,8 +432,8 @@ canvas.chart { margin-top: 18px; }
 .top-line { margin: 0 0 4px; font-family: var(--serif); font-weight: 400; font-size: 28px; letter-spacing: -0.01em; }
 .bars { gap: 11px; margin-top: 22px; max-width: 640px; }
 .bar-row .name { font-size: 14.5px; }
-.bar-track { height: 6px; border: 0; border-radius: 3px; background: var(--panel); }
-.bar-fill { background: var(--muted); border-radius: 3px; }
+.bar-track { height: 6px; border: 0; border-radius: 999px; background: var(--panel); } /* (thicker the bigger the share: set per row in breakdown.js) */
+.bar-fill { background: var(--muted); border-radius: 999px; }
 .bar-row.top .bar-fill { background: var(--accent); }
 .more-row { margin-top: 16px; }
 
@@ -818,10 +818,12 @@ body.showing-id .archive-head { display: none; }
 .scale-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
 .scale-word { font-family: var(--serif); font-size: 22px; }
 .scale-detail { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; }
-.scale-track { position: relative; height: 6px; border-radius: 3px; background: var(--panel); }
+.scale-track { position: relative; height: 10px; margin-top: 16px; border-radius: 999px; background: var(--panel); } /* (room above for the pointer) */
 .scale-mid { position: absolute; left: 50%; top: -5px; bottom: -5px; width: 1px; background: var(--muted); opacity: 0.6; }
-.scale-fill { position: absolute; top: 0; bottom: 0; background: var(--accent); border-radius: 3px; }
-.scale-dot { position: absolute; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: var(--text); box-shadow: 0 0 0 3px var(--bg); }
+.scale-fill { position: absolute; top: 0; bottom: 0; background: var(--accent); border-radius: 999px; }
+/* the voice's spot: a small white pointer above the bar with a line down through it, like the needle on a printed scale (not a knob) */
+.scale-dot { position: absolute; top: -16px; width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 9px solid var(--text); transform: translateX(-50%); }
+.scale-dot::after { content: ""; position: absolute; left: -1px; top: 1px; width: 2px; height: 16px; background: var(--text); }
 .scale-ends { display: flex; justify-content: space-between; margin-top: 8px; font-size: 13px; color: var(--muted); }
 
 /* ---- "Voiceprint" home tab: the first folder tab in the nav, in front of Record ---- */
