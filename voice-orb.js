@@ -116,7 +116,7 @@ export const MAP = {
   // (streak) and the quicker the band turns on the Voiceprint page (spin, radians a second). The band rises and falls in
   // one wave per syllable a second (rounded, at least 2). r0 … r1: how far out the band sits; thick: its height.
   rate: { slow: 2.4, fast: 5.6, r0: 0.68, r1: 0.84, thick: 0.11, wave: 0.13, tilt: [0.62, -0.25], // (mirrored to lean the other way when a British Isles ring is there)
-    count: [115, 375], size: [0.025, 0.0137], streak: 0.75, spin: [0.15, 1.05] },
+    count: [115, 375], size: [0.025, 0.0137], streak: 0.75, opacity: 0.55, spin: [0.15, 1.05] },
   pauses: { free: { r: 1.0, y: 0.45, grow: 1.9 }, shellGrow: 0.45, minSeconds: 0.2, size: 0.017, perSecond: 0.04, maxSize: 0.042, spark: 2.1, fewFor: 2, manyFor: 12, tie: 0.005 },
 };
 
@@ -847,7 +847,7 @@ function rateBelt(T, group, coreColor, coreR) {
     per[i % 3].push({ a, rad: R.r0 + (R.r1 - R.r0) * (0.5 + v * 0.2), y: Math.sin(a * waves) * R.wave + u * R.thick / 2, s: size * (0.55 + r() * 0.9), spin: r() * 6 });
   }
   const spinner = new THREE.Group(), m4 = new THREE.Matrix4(), up = new THREE.Vector3(0, 1, 0), trail = [], cols = [];
-  const mat = fadeBehindCore(new THREE.MeshBasicMaterial({ color: col, toneMapped: false, transparent: true })); mat.userData.coreR = coreR;
+  const mat = fadeBehindCore(new THREE.MeshBasicMaterial({ color: col, toneMapped: false, transparent: true, opacity: R.opacity, depthWrite: false })); // (see-through) mat.userData.coreR = coreR;
   per.forEach((list, k) => {
     const inst = new THREE.InstancedMesh(rockGeos()[k], mat, list.length); inst.userData.part = "rate";
     list.forEach((q, i) => {
@@ -860,7 +860,7 @@ function rateBelt(T, group, coreColor, coreR) {
       if (streak > 0.05) { // a streak back along the path, fading out
         const arc = streak * 0.55 / q.rad, steps = 8;
         for (let s2 = 0; s2 < steps; s2++) {
-          const t0 = s2 / steps, t1 = (s2 + 1) / steps, a0 = q.a - arc * t0, a1 = q.a - arc * t1, c0 = (1 - t0) * 0.7, c1 = (1 - t1) * 0.7;
+          const t0 = s2 / steps, t1 = (s2 + 1) / steps, a0 = q.a - arc * t0, a1 = q.a - arc * t1, c0 = (1 - t0) * 0.7 * R.opacity, c1 = (1 - t1) * 0.7 * R.opacity;
           trail.push(Math.cos(a0) * q.rad, q.y, Math.sin(a0) * q.rad, Math.cos(a1) * q.rad, q.y, Math.sin(a1) * q.rad);
           cols.push(col.r * c0, col.g * c0, col.b * c0, col.r * c1, col.g * c1, col.b * c1);
         }
