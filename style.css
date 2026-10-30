@@ -97,7 +97,7 @@ canvas.chart { height: auto; aspect-ratio: 4 / 3; max-height: 520px; }
 .key { display: inline-block; width: 18px; height: 0; border-top: 2px solid; vertical-align: middle; flex: none; }
 .key.you { border-color: var(--accent); }
 .key.ref { border-color: var(--ref); border-top-style: dashed; }
-.portrait-data .key.ref { border-color: #8a857c; } /* (the vowel chart's average-speaker outline) */
+.portrait-data .key.ref { border-color: var(--muted); } /* (the vowel chart's average-speaker outline) */
 .key.live { width: 8px; height: 8px; border: 0; border-radius: 50%; background: var(--live); }
 
 table.results { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; font-variant-numeric: tabular-nums; }
