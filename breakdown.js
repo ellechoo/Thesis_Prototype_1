@@ -202,12 +202,33 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape") hideTip();
 
 
 // ---------- the "How to read …" / "More about …" dropdowns ----------
-// Only one is open at a time (opening one closes the others), and one that's scrolled completely out of view closes itself.
+// They open and close with a smooth slide. Only one is open at a time (opening one closes the others), and one that's
+// scrolled completely out of view closes itself.
 {
   const drops = [...document.querySelectorAll(".portrait-data details")];
-  const away = new IntersectionObserver((entries) => { for (const e of entries) if (!e.isIntersecting && e.target.open) e.target.open = false; });
+  const still = matchMedia("(prefers-reduced-motion: reduce)").matches, EASE = "cubic-bezier(.22,.7,.2,1)", MS = 320;
+  const slide = (d, open) => {
+    if (d._anim) { d._anim.cancel(); d._anim = null; }
+    d.classList.toggle("is-open", open); // (the arrow turns straight away)
+    if (still) { d.open = open; return; }
+    const from = d.offsetHeight;
+    d.open = true; const full = d.offsetHeight;
+    d.open = open; const to = open ? full : d.offsetHeight; d.open = true; // (measure the closed height, then keep it open while it slides)
+    d.style.overflow = "hidden";
+    const body = [...d.children].filter((c) => c.tagName !== "SUMMARY");
+    body.forEach((c) => c.animate({ opacity: open ? [0, 1] : [1, 0] }, { duration: MS * 0.8, easing: EASE, fill: "both" }));
+    d._anim = d.animate({ height: [`${from}px`, `${to}px`] }, { duration: MS, easing: EASE });
+    d._anim.onfinish = () => { d.open = open; d.style.overflow = ""; d._anim = null; body.forEach((c) => c.getAnimations().forEach((a) => a.cancel())); };
+  };
+  const away = new IntersectionObserver((entries) => { for (const e of entries) if (!e.isIntersecting && e.target.open) { e.target._anim?.cancel(); e.target._anim = null; e.target.style.overflow = ""; e.target.open = false; e.target.classList.remove("is-open"); } });
   drops.forEach((d) => {
     away.observe(d);
-    d.addEventListener("toggle", () => { if (d.open) drops.forEach((o) => { if (o !== d && o.open) o.open = false; }); });
+    d.querySelector("summary").addEventListener("click", (e) => {
+      e.preventDefault();
+      const opening = !d.open || !!(d._anim && d._anim.playState === "running" && d._closing);
+      d._closing = !opening;
+      slide(d, opening);
+      if (opening) drops.forEach((o) => { if (o !== d && o.open) { o._closing = true; slide(o, false); } });
+    });
   });
 }
