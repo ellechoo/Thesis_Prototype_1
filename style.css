@@ -1523,3 +1523,26 @@ p, li, dd, summary, .note, .hint, figcaption { text-wrap: pretty; }
 .filter-panel .f-clear { color: #111; }
 .filter-panel .f-shown { color: #c4161c; font-weight: 500; } /* (a deeper red, to read on the light glass) */
 @media (max-width: 640px) { .filter-panel { top: 76px; border-radius: 22px; } }
+
+/* Archive: "drag to explore" as a white hand swiping across the middle of the screen (no words); it fades away as soon
+   as someone drags, swipes, scrolls or searches. Reduced motion: the hand stays still. */
+.archive-stage .stage-hint { top: 50%; left: 50%; width: 150px; height: 90px; margin: -45px 0 0 -75px; padding: 0; border-radius: 0; background: none; white-space: normal; pointer-events: none; transition: opacity .5s ease; }
+.archive-stage .stage-hint .hand { position: absolute; left: 50px; top: 14px; width: 54px; height: 54px; filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .6)); animation: hand-swipe 2.6s cubic-bezier(.45, 0, .25, 1) infinite; }
+.archive-stage .stage-hint .hand-trail { position: absolute; top: 21px; height: 6px; left: 40px; width: 70px; border-radius: 999px; background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.55)); opacity: 0; animation: hand-trail 2.6s cubic-bezier(.45, 0, .25, 1) infinite; }
+@keyframes hand-swipe {
+  0% { transform: translateX(40px) scale(1); opacity: 0; }
+  12% { transform: translateX(40px) scale(.92); opacity: 1; }
+  55% { transform: translateX(-40px) scale(.92); opacity: 1; }
+  70%, 100% { transform: translateX(-40px) scale(1); opacity: 0; }
+}
+@keyframes hand-trail {
+  0%, 14% { transform: translateX(30px) scaleX(.2); opacity: 0; transform-origin: right; }
+  30% { opacity: .9; }
+  55% { transform: translateX(-30px) scaleX(1); opacity: .6; }
+  68%, 100% { transform: translateX(-30px) scaleX(1); opacity: 0; }
+}
+.archive-stage .stage-hint.gone { opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .archive-stage .stage-hint .hand, .archive-stage .stage-hint .hand-trail { animation: none; } .archive-stage .stage-hint .hand-trail { opacity: 0; } }
+/* the filter bubble sits a little lower, leaving a gap under the button */
+.filter-panel { top: 94px; }
+@media (max-width: 640px) { .filter-panel { top: 86px; } }

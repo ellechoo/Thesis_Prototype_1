@@ -57,7 +57,7 @@ function gallery(people) {
     <div class="filter-bg" aria-hidden="true" hidden><svg><path /></svg></div>
     <div class="filter-panel" id="filterPanel" role="dialog" aria-label="Filter voices" hidden></div>
     <p class="stage-none" hidden>No voices match these filters.</p>
-    <p class="stage-hint" aria-hidden="true"></p>
+    <div class="stage-hint" role="img"><span class="hand-trail"></span><svg class="hand" viewBox="0 0 64 64" aria-hidden="true"><path d="M26 34V12a5 5 0 0 1 10 0v16l2-.4a5 5 0 0 1 5.6 3.4l.1.3 2-.3a5 5 0 0 1 5.4 4l.1.6a5 5 0 0 1 5 5v6c0 8.8-6.5 16-15 16h-6.4c-4.6 0-8.8-2.4-11.2-6.3L14.6 44a4.6 4.6 0 0 1 7.7-5L26 44Z" fill="#fff" stroke="#111" stroke-width="2.4" stroke-linejoin="round"/></svg></div> <!-- a hand swiping across: drag to explore (fades out at the first touch, drag, scroll or search) -->
     <span class="stage-tip" aria-hidden="true" hidden></span>
     <ul class="visually-hidden" aria-label="Voices in the archive"></ul>`;
   const view = grid.querySelector(".stage-canvas"), ctx = view.getContext("2d");
@@ -86,8 +86,8 @@ function gallery(people) {
   function setMode(m) {
     mode = m; store.set(VIEW_KEY, m);
     buttons.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.view === m)));
-    hint.textContent = coarse ? (m === "globe" ? "Drag to spin the globe · tap a voice to open it" : "Drag to explore · tap a voice to open it")
-                              : (m === "globe" ? "Drag to spin the globe · click a voice to open it" : "Drag or swipe to explore · click a voice to open it");
+    hint.setAttribute("aria-label", coarse ? (m === "globe" ? "Drag to spin the globe, tap a voice to open it" : "Drag to explore, tap a voice to open it")
+                              : (m === "globe" ? "Drag to spin the globe, click a voice to open it" : "Drag or swipe to explore, click a voice to open it"));
     hover = null; tip.hidden = true; vx = vy = 0; focus = null; fading = null; tween = null; zoom = 1; layout();
   }
   buttons.forEach((b) => b.addEventListener("click", () => setMode(b.dataset.view)));
