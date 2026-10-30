@@ -111,7 +111,7 @@ export const MAP = {
   // dial as the core).
   // An exact tie for the strongest accent puts beads on every tied structure.
   // SPEAKING RATE → a thick, wavy band of small flat rocks circling the core, inside the accent structure, in the colour
-  // opposite the core's on the colour wheel. Tipped by `tilt` (radians round x and z). The faster the reading (syllables a
+  // of the highest note the voice reaches (the top of its pitch range; often a different note from its average). Tipped by `tilt` (radians round x and z). The faster the reading (syllables a
   // second, from `slow` to `fast`), the more rocks (count), the smaller they are (size), the longer the streak behind each
   // (streak) and the quicker the band turns on the Voiceprint page (spin, radians a second). The band rises and falls in
   // one wave per syllable a second (rounded, at least 2). r0 … r1: how far out the band sits; thick: its height.
@@ -849,7 +849,7 @@ function rateBelt(T, group, coreColor, coreR) {
   if (T.rate == null) return;
   const R = MAP.rate, t = Math.max(0, Math.min(1, (T.rate - R.slow) / (R.fast - R.slow))), lerp = ([a, b]) => a + (b - a) * t;
   const count = Math.round(lerp(R.count)), size = lerp(R.size), streak = Math.max(0, (t - 0.15) / 0.85) * R.streak, waves = Math.max(2, Math.round(T.rate));
-  const r = rng((T.seed || "") + "/rate" + T.rate.toFixed(2)), col = rateColor(coreColor), per = [[], [], []];
+  const r = rng((T.seed || "") + "/rate" + T.rate.toFixed(2)), col = voiceColor(T.hi), per = [[], [], []]; // the colour of the highest note the voice reaches
   const jag = T.timbre?.enough ? (Math.max(-1, Math.min(1, T.timbre.raspy)) + 1) / 2 : 0.35; // raspy → jagged rocks, smooth → round ones
   for (let i = 0; i < count; i++) {
     const a = r() * Math.PI * 2, v = r() * 2 - 1, u = r() * 2 - 1;
@@ -1007,7 +1007,7 @@ export function legendFor(T) {
       visual: T.vowels.pts.length ? "The soft glowing spots in the core's surface. Every vowel this voice made is one spot, placed where it sits on the vowel chart and wrapped all the way round the core: front vowels like “ee” one way, back vowels like “oo” the other (they meet at the back), closed vowels toward the top and open ones like “ah” toward the bottom. Each voice is stretched to fill the whole core, so the pattern shows the shape of its own vowel space. The spots come in the core's two neighbouring colors on the color wheel: front vowels like “ee” in one and back vowels like “oo” in the other. Where vowels crowd together they overlap into solid patches."
         : "Too few vowel moments were measured in this recording to map them." },
     { key: "rate", tier: 1, data: "Speaking rate", value: T.rate == null ? "Not measured" : `${T.rate.toFixed(1)} syllables a second`,
-      visual: T.rate == null ? "No speaking rate, so there is no band of rocks." : "The band of small rocks circling the core, in the colour opposite the core's. The faster the reading, the more rocks, the smaller they are, the longer their streaks, and the more waves in the band (one per syllable a second)." },
+      visual: T.rate == null ? "No speaking rate, so there is no band of rocks." : "The band of small rocks circling the core, in the colour of the highest note the voice reaches (the top of its pitch range). The faster the reading, the more rocks, the smaller they are, the longer their streaks, and the more waves in the band (one per syllable a second)." },
     { key: "range", tier: 2, data: "Pitch range", value: `${Math.round(T.lo)}–${Math.round(T.hi)} Hz`, visual: "The top and bottom of the core. The top is lighter the higher this voice climbs above its average; the bottom is darker the lower it drops. (The very highest and lowest moments are ignored, so one squeak or croak doesn't count.)" },
   ];
 }

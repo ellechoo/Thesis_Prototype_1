@@ -12,9 +12,9 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { getTake, archiveIsShared } from "./store.js?v=3";
 import { currentTakeId } from "./nav.js?v=8";
 import { formatDate, slug, download } from "./shared.js?v=3";
-import { buildOrb, MAP, traits, voiceColor } from "./voice-orb.js?v=66";
-import { renderIdCard } from "./id-card.js?v=72";
-import { renderBreakdown } from "./breakdown.js?v=62";
+import { buildOrb, MAP, traits, voiceColor } from "./voice-orb.js?v=67";
+import { renderIdCard } from "./id-card.js?v=73";
+import { renderBreakdown } from "./breakdown.js?v=63";
 const esc = (x) => String(x ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 const $ = (id) => document.getElementById(id);
@@ -286,7 +286,7 @@ function buildFeatures() {
       text: !ok ? none : has.spikes ? "Raspy voices grow small spikes all over the core." : has.gloss ? "Smooth voices look like polished glass." : "Near the middle, so the surface is plain.",
       visual: ok ? scale(tb.raspy, "Raspy", "Smooth") : "" },
     { key: "rate", name: "Speaking rate", value: T.rate == null ? "Not measured" : `${T.rate.toFixed(1)} syllables a second`, lines: rateRocks.length > 0, spot: rateRocks.length > 0,
-      text: T.rate == null ? "The speaking rate couldn't be measured, so there's no ring of rocks." : "The ring of rocks around the core. The faster the reading, the more rocks, the more waves in the ring, and the longer their streaks." },
+      text: T.rate == null ? "The speaking rate couldn't be measured, so there's no ring of rocks." : "The ring of rocks around the core, in the color of the highest note in the reading. The faster the reading, the more rocks, the more waves in the ring, and the longer their streaks." },
     { key: "pauses", name: "Talking & pauses", value: pauseSparks.length ? `${pauseSparks.length} pause${pauseSparks.length === 1 ? "" : "s"}` : "No long pauses", lines: pauseSparks.length > 0, spot: pauseSparks.length > 0,
       text: pauseSparks.length ? "Each star is a pause in the reading. The fewer the pauses, the more the stars glow." : "No pause was longer than 0.2 seconds, so there are no stars.",
       visual: rhythmBar() },
