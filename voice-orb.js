@@ -840,6 +840,7 @@ function rockGeos(jag) {
       if (!bump.has(id)) bump.set(id, Math.max(0.35, 1 + (r() - 0.5) * (0.22 + 1.1 * key) + (r() < 0.45 * key ? 1.4 * key : 0))); // corners pushed in and out; jagged rocks get a few long points
       const f = bump.get(id); p.setXYZ(k, p.getX(k) * f, p.getY(k) * f * 0.8, p.getZ(k) * f);
     }
+    const shrink = 1 / (1 + 0.6 * key); g.scale(shrink, shrink, shrink); // (the points make jagged rocks bigger; bring them back to about a pebble's size)
     return g;
   }));
 }

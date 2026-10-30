@@ -2,7 +2,7 @@
 // The voice portrait is the ID photo; the fields summarize the voice in words and numbers;
 // the "signature" is the voice's own pitch line; the bottom has a passport-style code line.
 // Every value comes from the stored measurements, so cards always match the data.
-import { snapshot } from "./orb-snapshot.js?v=62";
+import { snapshot } from "./orb-snapshot.js?v=63";
 import { formatDate, pct, deviceText } from "./shared.js?v=3";
 import { makePreview } from "./store.js?v=2";
 
