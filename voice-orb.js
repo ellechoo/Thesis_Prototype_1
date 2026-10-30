@@ -115,6 +115,7 @@ export const MAP = {
   // second, from `slow` to `fast`), the more rocks (count), the smaller they are (size), the longer the streak behind each
   // (streak) and the quicker the band turns on the Voiceprint page (spin, radians a second). The band rises and falls in
   // one wave per syllable a second (rounded, at least 2). r0 … r1: how far out the band sits; thick: its height.
+  // The rocks' shape follows the raspy ↔ smooth dial: round pebbles for smooth voices, jagged shards for raspy ones.
   rate: { slow: 2.4, fast: 5.6, r0: 0.68, r1: 0.84, thick: 0.11, wave: 0.13, tilt: [0.62, -0.25], // (mirrored to lean the other way when a British Isles ring is there)
     count: [115, 375], size: [0.025, 0.0137], streak: 0.75, opacity: 0.55, spin: [0.07, 1.6] },
   pauses: { free: { r: 1.0, y: 0.45, grow: 1.9 }, shellGrow: 0.45, minSeconds: 0.2, size: 0.017, perSecond: 0.04, maxSize: 0.042, spark: 2.1, fewFor: 2, manyFor: 12, tie: 0.005 },
@@ -827,12 +828,18 @@ export function buildOrb(take) {
 }
 
 // ---- speaking rate: a band of flat rocks round the core (see MAP.rate)
-let ROCK_GEOS = null;
-function rockGeos() { // three rough little rocks: icosahedra with their corners pushed in and out
-  if (ROCK_GEOS) return ROCK_GEOS;
-  return (ROCK_GEOS = [0, 1, 2].map((i) => {
-    const g = new THREE.IcosahedronGeometry(1, 0), p = g.attributes.position, r = rng("rock" + i), bump = new Map();
-    for (let k = 0; k < p.count; k++) { const key = `${p.getX(k).toFixed(3)},${p.getY(k).toFixed(3)},${p.getZ(k).toFixed(3)}`; if (!bump.has(key)) bump.set(key, 0.7 + r() * 0.55); const f = bump.get(key); p.setXYZ(k, p.getX(k) * f, p.getY(k) * f * 0.8, p.getZ(k) * f); }
+// three rough little rocks for a given jaggedness (0 = round pebbles … 1 = sharp, spiky shards), from the raspy ↔ smooth
+// dial: the raspier the voice, the more jagged its rocks. (The rocks are flat, so it's their outline that shows.)
+const ROCK_GEOS = {};
+function rockGeos(jag) {
+  const key = Math.round(jag * 6) / 6; if (ROCK_GEOS[key]) return ROCK_GEOS[key];
+  return (ROCK_GEOS[key] = [0, 1, 2].map((i) => {
+    const g = new THREE.IcosahedronGeometry(1, key < 0.35 ? 1 : 0), p = g.attributes.position, r = rng("rock" + i + "/" + key), bump = new Map();
+    for (let k = 0; k < p.count; k++) {
+      const id = `${p.getX(k).toFixed(3)},${p.getY(k).toFixed(3)},${p.getZ(k).toFixed(3)}`;
+      if (!bump.has(id)) bump.set(id, Math.max(0.35, 1 + (r() - 0.5) * (0.22 + 1.1 * key) + (r() < 0.45 * key ? 1.4 * key : 0))); // corners pushed in and out; jagged rocks get a few long points
+      const f = bump.get(id); p.setXYZ(k, p.getX(k) * f, p.getY(k) * f * 0.8, p.getZ(k) * f);
+    }
     return g;
   }));
 }
@@ -842,6 +849,7 @@ function rateBelt(T, group, coreColor, coreR) {
   const R = MAP.rate, t = Math.max(0, Math.min(1, (T.rate - R.slow) / (R.fast - R.slow))), lerp = ([a, b]) => a + (b - a) * t;
   const count = Math.round(lerp(R.count)), size = lerp(R.size), streak = Math.max(0, (t - 0.15) / 0.85) * R.streak, waves = Math.max(2, Math.round(T.rate));
   const r = rng((T.seed || "") + "/rate" + T.rate.toFixed(2)), col = rateColor(coreColor), per = [[], [], []];
+  const jag = T.timbre?.enough ? (Math.max(-1, Math.min(1, T.timbre.raspy)) + 1) / 2 : 0.35; // raspy → jagged rocks, smooth → round ones
   for (let i = 0; i < count; i++) {
     const a = r() * Math.PI * 2, v = r() * 2 - 1, u = r() * 2 - 1;
     per[i % 3].push({ a, rad: R.r0 + (R.r1 - R.r0) * (0.5 + v * 0.2), y: Math.sin(a * waves) * R.wave + u * R.thick / 2, s: size * (0.55 + r() * 0.9), spin: r() * 6 });
@@ -849,7 +857,7 @@ function rateBelt(T, group, coreColor, coreR) {
   const spinner = new THREE.Group(), m4 = new THREE.Matrix4(), up = new THREE.Vector3(0, 1, 0), trail = [], cols = [];
   const mat = fadeBehindCore(new THREE.MeshBasicMaterial({ color: col, toneMapped: false, transparent: true, opacity: R.opacity, depthWrite: false })); // (see-through) mat.userData.coreR = coreR;
   per.forEach((list, k) => {
-    const inst = new THREE.InstancedMesh(rockGeos()[k], mat, list.length); inst.userData.part = "rate";
+    const inst = new THREE.InstancedMesh(rockGeos(jag)[k], mat, list.length); inst.userData.part = "rate";
     list.forEach((q, i) => {
       const x = Math.cos(q.a) * q.rad, z = Math.sin(q.a) * q.rad;
       // each rock turned its own way, and stretched along its path when fast (the path's direction: −sin a, 0, cos a)
