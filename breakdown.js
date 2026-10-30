@@ -2,8 +2,8 @@
 // (it used to be its own Breakdown page). portrait-3d.js loads the recording and calls renderBreakdown(take).
 // Downloads are off for now.
 import { forgetLocalAudio, archiveIsShared } from "./store.js?v=3";
-import { drawVowelChart, pickReference, countVowelFrames } from "./vowel-chart.js?v=2";
-import { traits, timbreWords } from "./voice-orb.js?v=68";
+import { drawVowelChart, pickReference, countVowelFrames } from "./vowel-chart.js?v=4";
+import { traits, timbreWords, voiceColor, MAP } from "./voice-orb.js?v=68";
 import { drawPitchTrace, pct, ACCENT_SECONDS, deviceText } from "./shared.js?v=3";
 
 const SHOW_TOP = 6;
@@ -62,9 +62,17 @@ function setUpAudio() {
   }
 }
 
+// the two vowel colours the 3D core uses (its note colour's neighbours on the colour wheel), for the vowel chart
+function vowelColors(t) {
+  try { const T = traits(t), c = voiceColor(T.pitch, T.note), h = {}; c.getHSL(h);
+    const nb = (dh) => "#" + c.clone().setHSL((h.h + dh + 1) % 1, Math.max(0.8, h.s), 0.5).getHexString();
+    return { front: nb(MAP.vowels.hue), back: nb(-MAP.vowels.hue) }; } catch { return {}; }
+}
 function draw() {
   drawPitchTrace($("trace"), take.frames, { pauses: take.rhythm?.pauses ?? [] });
-  drawVowelChart($("vowelChart"), { cloud: take.frames, ref: pickReference(take.frames, $("refSelect").value) });
+  const vc = vowelColors(take);
+  drawVowelChart($("vowelChart"), { cloud: take.frames, ref: pickReference(take.frames, $("refSelect").value), ...vc });
+  if (vc.front) { $("keyFront").style.background = vc.front; $("keyBack").style.background = vc.back; $("keyFront").style.opacity = $("keyBack").style.opacity = 1; }
   $("vowelCount").textContent = countVowelFrames(take.frames).toLocaleString();
 }
 $("refSelect").addEventListener("change", () => take && draw());

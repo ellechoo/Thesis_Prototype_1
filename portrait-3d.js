@@ -14,7 +14,7 @@ import { currentTakeId } from "./nav.js?v=8";
 import { formatDate, slug, download } from "./shared.js?v=3";
 import { buildOrb, MAP, traits, voiceColor } from "./voice-orb.js?v=68";
 import { renderIdCard } from "./id-card.js?v=74";
-import { renderBreakdown } from "./breakdown.js?v=66";
+import { renderBreakdown } from "./breakdown.js?v=68";
 const esc = (x) => String(x ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 const $ = (id) => document.getElementById(id);
