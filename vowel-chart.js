@@ -93,22 +93,23 @@ export function drawVowelChart(canvas, { cloud = [], trail = [], ref = null, fro
     const cv = document.createElement("canvas"); cv.width = 2; cv.height = 1; const cg = cv.getContext("2d"); cg.fillStyle = fc; cg.fillRect(0, 0, 1, 1); cg.fillStyle = bc; cg.fillRect(1, 0, 1, 1);
     const d = cg.getImageData(0, 0, 2, 1).data; return (t) => `${Math.round(d[0] + (d[4] - d[0]) * t)},${Math.round(d[1] + (d[5] - d[1]) * t)},${Math.round(d[2] + (d[6] - d[2]) * t)}`;
   })();
-  const halo = pts.length > 600 ? 0.1 : pts.length > 200 ? 0.16 : 0.24, dotA = pts.length > 600 ? 0.6 : 0.85, x0 = x(2200), x1 = x(1000);
+  const halo = (pts.length > 600 ? 0.1 : pts.length > 200 ? 0.16 : 0.24) * (narrow ? 1 : 1.5), dotA = pts.length > 600 ? 0.6 : 0.85, x0 = x(2200), x1 = x(1000);
+  const dotR = narrow ? 1.7 : 2.3, haloR = narrow ? 6 : 8; // (computers: a little bigger and brighter)
   for (const f of pts) {
     const px = x(f.f2), py = y(f.f1), rgb = mix(Math.max(0, Math.min(1, (px - x0) / (x1 - x0))));
-    const gr = g.createRadialGradient(px, py, 0, px, py, 6); gr.addColorStop(0, `rgba(${rgb},${halo})`); gr.addColorStop(1, `rgba(${rgb},0)`);
-    g.fillStyle = gr; g.fillRect(px - 6, py - 6, 12, 12);
-    g.fillStyle = `rgba(${rgb},${dotA})`; g.beginPath(); g.arc(px, py, 1.7, 0, Math.PI * 2); g.fill();
+    const gr = g.createRadialGradient(px, py, 0, px, py, haloR); gr.addColorStop(0, `rgba(${rgb},${halo})`); gr.addColorStop(1, `rgba(${rgb},0)`);
+    g.fillStyle = gr; g.fillRect(px - haloR, py - haloR, haloR * 2, haloR * 2);
+    g.fillStyle = `rgba(${rgb},${dotA})`; g.beginPath(); g.arc(px, py, dotR, 0, Math.PI * 2); g.fill();
   }
 
   // EE / OO / AH, big in the body font, with the example words small underneath
   const label = (t, sub, p, align, dy) => {
     g.textAlign = align; g.textBaseline = "alphabetic";
     g.fillStyle = "#ecebe7"; g.font = `500 ${narrow ? 20 : 28}px Geist, system-ui, sans-serif`; g.fillText(t, p[0], p[1] + dy);
-    g.fillStyle = muted; g.font = `500 ${narrow ? 10.5 : 12}px Geist, system-ui, sans-serif`; g.fillText(sub, p[0], p[1] + dy + 15);
+    g.fillStyle = muted; g.font = `500 ${narrow ? 10.5 : 12}px Geist, system-ui, sans-serif`; g.fillText(sub, p[0], p[1] + dy + (narrow ? 18 : 21)); // (a little room under the big letters)
   };
-  label("EE", "as in she", out[0], "left", -22);
-  label("OO", "as in poodle", out[1], "right", -22);
+  label("EE", "as in she", out[0], "left", narrow ? -25 : -28);
+  label("OO", "as in poodle", out[1], "right", narrow ? -25 : -28);
   label("AH", "as in chocolate", [(out[2][0] + out[3][0]) / 2, Math.max(out[2][1], out[3][1])], "center", narrow ? 26 : 32);
 
   // live highlight
