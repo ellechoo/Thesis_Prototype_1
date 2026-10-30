@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..700,0..100,0..1;1,9..144,300..700,0..100,0..1&family=Geist:wght@300..700&display=swap" crossorigin="anonymous" /> <!-- crossorigin: lets the ID card download include this font -->
-  <link rel="stylesheet" href="style.css?v=116" />
+  <link rel="stylesheet" href="style.css?v=118" />
 </head>
 <body>
   <main class="wide">
@@ -67,7 +67,7 @@
             <audio id="player" controls preload="metadata"></audio>
             <p class="note" id="audioNote"></p>
           </section>
-          <div class="readouts stats">
+          <div class="readouts stats boxed">
             <div class="card" tabindex="0" data-tip="How high or low your voice is: how many times per second your vocal folds vibrate (hertz, Hz). This is your typical value across the reading."><span class="label">Pitch</span><span id="rPitch" class="value">–</span><span class="unit">Hz</span></div>
             <div class="card" tabindex="0" data-tip="The musical note closest to your typical pitch, as if your voice were a key on a piano."><span class="label">Note</span><span id="rNote" class="value">–</span><span class="unit">&nbsp;</span></div>
             <div class="card" tabindex="0" data-tip="How loud your voice reached the microphone, in decibels below the most it can take (dBFS). Closer to 0 is louder. Distance from the mic matters too."><span class="label">Loudness</span><span id="rDb" class="value">–</span><span class="unit">dBFS</span></div>
@@ -206,6 +206,6 @@
   </script>
   <script type="module" src="nav.js?v=8"></script>
   <script type="module" src="headings.js?v=8"></script> <!-- headings: Fraunces, mixed letter by letter --> <!-- first, so the tabs start in the right state before the page script loads -->
-  <script type="module" src="portrait-3d.js?v=119"></script>
+  <script type="module" src="portrait-3d.js?v=121"></script>
 </body>
 </html>
