@@ -260,9 +260,10 @@ function dial(v, pos, neg, from = MAP.timbre.from) { const a = Math.abs(v); if (
 // voice's place on it, or the accent shares). The full detail is in the breakdown below the portrait.
 const hex = (c) => "#" + c.getHexString().toUpperCase();
 const swatch = (c, label) => `<span class="fv-sw"><i style="background:${hex(c)}"></i><span><b>${esc(label)}</b><code>${hex(c)}</code></span></span>`;
-// (the scale reads in the same order as the item's name: "Bright ↔ dark" has bright on the left)
+// (the scale reads in the same order as the item's name: "Bright ↔ Dark" has bright on the left)
 const scale = (v, pos, neg) => `<div class="fv-scale" role="img" aria-label="${esc(dial(v, pos.toLowerCase(), neg.toLowerCase()))}, on a scale from ${esc(pos)} to ${esc(neg)}">
     <span>${esc(pos)}</span><span class="fv-track" style="--v:${((1 - Math.max(-1, Math.min(1, v))) / 2).toFixed(3)}"><i></i></span><span>${esc(neg)}</span></div>`;
+const nameHTML = (n) => esc(n).replace("↔", '<span class="feat-arrow">↔</span>'); // (the arrow drawn a touch thinner, style.css)
 function buildFeatures() {
   pauseSparks = (orbInfo.group.children.find((o) => o.userData.pauses)?.children || []).filter((o) => o.isSprite); // (not the line joining floating stars)
   rateRocks = (orbInfo.group.children.find((o) => o.userData.rate)?.userData.spinner.children || []).filter((o) => o.isInstancedMesh);
@@ -274,19 +275,19 @@ function buildFeatures() {
     { key: "accent", name: "Accent", value: byKey.accent?.value || "", spot: T.hasAccent, lines: T.hasAccent,
       text: T.hasAccent ? "The accent group the voice sounds closest to. Each group has its own structure; a mix of accents layers them." : "No accent result, so there is no structure around the core.",
       visual: shares },
-    { key: "color", name: "Note, pitch & range", value: `${T.note} · ${Math.round(T.pitch)} Hz`, spot: true,
+    { key: "color", name: "Note & Pitch", value: `${T.note} · ${Math.round(T.pitch)} Hz`, spot: true,
       text: "The note picks the color and the pitch how deep it is. The top and bottom shade to the highest and lowest notes.",
       visual: u.cMain ? `<div class="fv-sws">${swatch(u.cBot.value, `Low · ${Math.round(T.lo)} Hz`)}${swatch(u.cMain.value, `${T.note} · ${Math.round(T.pitch)} Hz`)}${swatch(u.cTop.value, `High · ${Math.round(T.hi)} Hz`)}</div>` : "" },
-    { key: "vowels", name: "Vowel space", value: has.vowels ? `${T.vowels.n} vowel moments` : "Not enough to map", lines: has.vowels, spot: has.vowels,
+    { key: "vowels", name: "Vowels", value: has.vowels ? `${T.vowels.n} vowel moments` : "Not enough to map", lines: has.vowels, spot: has.vowels,
       text: has.vowels ? "Each glowing spot is a vowel sound. Vowels like “ee” glow in one color, vowels like “oo” in the other." : "Too few vowels were measured to map them.",
       visual: has.vowels && u.vFront ? `<div class="fv-sws">${swatch(u.vFront.value, "“ee” vowels")}${swatch(u.vBack.value, "“oo” vowels")}</div>` : "" },
-    { key: "bright", name: "Bright ↔ dark", value: ok ? dial(tb.bright, "bright", "dark") : "Not measured", lines: has.sun || has.swirl, spot: has.sun || has.swirl,
+    { key: "bright", name: "Bright ↔ Dark", value: ok ? dial(tb.bright, "bright", "dark") : "Not measured", lines: has.sun || has.swirl, spot: has.sun || has.swirl,
       text: !ok ? none : has.sun ? "Bright voices shine with sun rays around the core." : has.swirl ? "Dark voices pull in a swirl of color, like water down a drain." : "Near the middle, so neither sun rays nor a swirl.",
       visual: ok ? scale(tb.bright, "Bright", "Dark") : "" },
-    { key: "breathy", name: "Breathy ↔ clean", value: ok ? dial(tb.breathy, "breathy", "clean") : "Not measured", lines: ok, spot: ok,
+    { key: "breathy", name: "Breathy ↔ Clean", value: ok ? dial(tb.breathy, "breathy", "clean") : "Not measured", lines: ok, spot: ok,
       text: !ok ? none : Math.abs(tb.breathy) < F ? "Near the middle, so the core's edge fades softly." : tb.breathy > 0 ? "Breathy voices get a soft, cloudy edge." : "Clean voices get a crisp, sharp edge.",
       visual: ok ? scale(tb.breathy, "Breathy", "Clean") : "" },
-    { key: "raspy", name: "Raspy ↔ smooth", value: ok ? dial(tb.raspy, "raspy", "smooth", MAP.timbre.spikes.from) : "Not measured", lines: ok, spot: has.spikes || has.gloss,
+    { key: "raspy", name: "Raspy ↔ Smooth", value: ok ? dial(tb.raspy, "raspy", "smooth", MAP.timbre.spikes.from) : "Not measured", lines: ok, spot: has.spikes || has.gloss,
       text: !ok ? none : has.spikes ? "Raspy voices grow small spikes all over the core." : has.gloss ? "Smooth voices look like polished glass." : "Near the middle, so the surface is plain.",
       visual: ok ? scale(tb.raspy, "Raspy", "Smooth") : "" },
     { key: "rate", name: "Speaking rate", value: T.rate == null ? "Not measured" : `${T.rate.toFixed(1)} syllables a second`, lines: rateRocks.length > 0, spot: rateRocks.length > 0,
@@ -401,9 +402,9 @@ function placeList() {
 // item; on narrower screens the box at the bottom of the portrait holds the open one, with a × to put it away.
 function featBox(f, where, open = false) {
   const id = `feat-${where}-${f.key}`, head = `<button type="button" class="feat-head" aria-expanded="${open}" aria-controls="${id}">
-        <span class="feat-name">${esc(f.name)}</span><span class="feat-val">${esc(f.value)}</span><span class="feat-chev" aria-hidden="true"></span>
+        <span class="feat-name">${nameHTML(f.name)}</span><span class="feat-val">${esc(f.value)}</span><span class="feat-chev" aria-hidden="true"></span>
       </button>`;
-  const plain = `<div class="feat-head"><span class="feat-name">${esc(f.name)}</span><span class="feat-val">${esc(f.value)}</span></div>`; // (the box at the bottom doesn't fold)
+  const plain = `<div class="feat-head"><span class="feat-name">${nameHTML(f.name)}</span><span class="feat-val">${esc(f.value)}</span></div>`; // (the box at the bottom doesn't fold)
   return `<div class="feat${open ? " open" : ""}" data-key="${f.key}">
       ${where === "sheet" ? `<div class="sheet-row">${plain}<button type="button" class="sheet-close" aria-label="Close">×</button></div>` : head}
       <div class="feat-body" id="${id}" role="region"><div><p>${esc(f.text)}</p>${f.visual || ""}</div></div>
