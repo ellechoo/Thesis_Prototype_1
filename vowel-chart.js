@@ -74,8 +74,8 @@ export function drawVowelChart(canvas, { cloud = [], trail = [], ref = null, fro
   const out = corners();
   g.save();
   g.beginPath(); out.forEach((p, i) => (i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]))); g.closePath();
-  g.fillStyle = "rgba(255,255,255,0.02)"; g.fill(); g.strokeStyle = "#3d3a35"; g.lineWidth = 1.2; g.stroke();
-  g.strokeStyle = "#2a2926"; g.lineWidth = 1; g.setLineDash([2, 5]);
+  g.fillStyle = "rgba(255,255,255,0.02)"; g.fill(); g.strokeStyle = muted; g.globalAlpha = 0.7; g.lineWidth = 1.2; g.stroke(); // (the chart's lines: the voice's quieter third colour)
+  g.globalAlpha = 0.35; g.lineWidth = 1; g.setLineDash([2, 5]);
   const along = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
   for (const t of [1 / 3, 2 / 3]) { const L = along(out[0], out[3], t), R = along(out[1], out[2], t); g.beginPath(); g.moveTo(L[0], L[1]); g.lineTo(R[0], R[1]); g.stroke(); }
   { const T = along(out[0], out[1], 0.5), B = along(out[3], out[2], 0.5); g.beginPath(); g.moveTo(T[0], T[1]); g.lineTo(B[0], B[1]); g.stroke(); }
@@ -83,7 +83,7 @@ export function drawVowelChart(canvas, { cloud = [], trail = [], ref = null, fro
 
   // the average speaker: a soft dashed outline
   if (ref) {
-    g.save(); g.strokeStyle = "#8a857c"; g.lineWidth = 1.2; g.lineJoin = "round"; g.setLineDash([3, 5]); g.beginPath();
+    g.save(); g.strokeStyle = muted; g.lineWidth = 1.2; g.lineJoin = "round"; g.setLineDash([3, 5]); g.beginPath();
     OUTLINE.map(at).forEach((p, i) => (i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]))); g.closePath(); g.stroke(); g.restore();
   }
 
@@ -106,7 +106,7 @@ export function drawVowelChart(canvas, { cloud = [], trail = [], ref = null, fro
   const label = (t, sub, p, align, dy) => {
     g.textAlign = align; g.textBaseline = "alphabetic";
     g.fillStyle = "#ecebe7"; g.font = `500 ${narrow ? 20 : 28}px Geist, system-ui, sans-serif`; g.fillText(t, p[0], p[1] + dy);
-    g.fillStyle = muted; g.font = `500 ${narrow ? 10.5 : 12}px Geist, system-ui, sans-serif`; g.fillText(sub, p[0], p[1] + dy + (narrow ? 18 : 21)); // (a little room under the big letters)
+    g.fillStyle = "#ecebe7"; g.font = `500 ${narrow ? 10.5 : 12}px Geist, system-ui, sans-serif`; g.fillText(sub, p[0], p[1] + dy + (narrow ? 18 : 21)); // (a little room under the big letters)
   };
   label("EE", "as in she", out[0], "left", narrow ? -25 : -28);
   label("OO", "as in poodle", out[1], "right", narrow ? -25 : -28);
