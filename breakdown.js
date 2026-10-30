@@ -162,8 +162,9 @@ function renderRhythm() {
 }
 
 
-// ---------- hover explanations for each measurement ----------
-// Every stat card has a data-tip. Hover, tab to it, or tap it on a phone (tap elsewhere to close) to show a small popup.
+// ---------- explanations for each measurement ----------
+// Every stat card has a data-tip. Clicking (or tapping, or pressing Enter on) its underlined label shows a small popup;
+// clicking it again, clicking elsewhere, scrolling or Esc closes it. (No popup on hover.)
 const tip = $("tip");
 let tipFor = null;
 function showTip(card) {
@@ -179,11 +180,15 @@ function showTip(card) {
 function hideTip(card) { if (!card || card === tipFor) { tip.hidden = true; tipFor = null; } }
 function hookTip(card) {
   if (card._tip) return; card._tip = true;
-  card.addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse") showTip(card); });
-  card.addEventListener("pointerleave", (e) => { if (e.pointerType === "mouse") hideTip(card); });
-  card.addEventListener("focus", () => showTip(card));
-  card.addEventListener("blur", () => hideTip(card));
+  const lab = card.querySelector(".label") || card; // the underlined label (cards without one: the whole card)
+  if (lab !== card) { card.removeAttribute("tabindex"); lab.tabIndex = 0; }
+  lab.setAttribute("role", "button"); lab.setAttribute("aria-expanded", "false"); lab.classList.add("tip-trigger");
+  const toggle = () => { if (tipFor === card) hideTip(card); else showTip(card); lab.setAttribute("aria-expanded", String(tipFor === card)); };
+  lab.addEventListener("click", (e) => { e.stopPropagation(); toggle(); });
+  lab.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); } });
+  lab.addEventListener("blur", () => { hideTip(card); lab.setAttribute("aria-expanded", "false"); });
 }
+document.addEventListener("click", () => hideTip());
 document.querySelectorAll(".card[data-tip]").forEach(hookTip);
 window.addEventListener("scroll", () => hideTip(), { passive: true });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") hideTip(); });

@@ -504,7 +504,8 @@ main.wide > .status, .archive-grid { max-width: 1280px; margin-left: auto; margi
 .empty-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 
 /* measurement cards explain themselves on hover */
-.card[data-tip] { cursor: help; }
+.card[data-tip] .tip-trigger, .card.tip-trigger { cursor: pointer; } /* the underlined label opens the explanation (click or tap; not on hover) */
+.card[data-tip] .tip-trigger:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; border-radius: 3px; }
 .card[data-tip] .label { text-decoration: underline dotted var(--muted); text-underline-offset: 3px; }
 .card[data-tip]:focus { outline: none; }
 .card[data-tip]:focus-visible { outline: 2px solid var(--text); outline-offset: 4px; }
