@@ -3,7 +3,7 @@
 // Downloads are off for now.
 import { forgetLocalAudio, archiveIsShared } from "./store.js?v=2";
 import { drawVowelChart, pickReference, countVowelFrames } from "./vowel-chart.js?v=2";
-import { traits, timbreWords } from "./voice-orb.js?v=59";
+import { traits, timbreWords } from "./voice-orb.js?v=60";
 import { drawPitchTrace, pct, ACCENT_SECONDS, deviceText } from "./shared.js?v=3";
 
 const SHOW_TOP = 6;

@@ -15,9 +15,9 @@
 // portrait fades in when ready.
 import * as THREE from "three";
 import { listTakes, getTake } from "./store.js?v=2";
-import { buildOrb } from "./voice-orb.js?v=59";
-import { spreadOut } from "./spread.js?v=5"; // (voiceprints that look alike aren't placed next to each other)
-import { renderIdCard } from "./id-card.js?v=64";
+import { buildOrb, turnBelt } from "./voice-orb.js?v=60";
+import { spreadOut } from "./spread.js?v=6"; // (voiceprints that look alike aren't placed next to each other)
+import { renderIdCard } from "./id-card.js?v=65";
 
 const $ = (id) => document.getElementById(id);
 const still = matchMedia("(prefers-reduced-motion: reduce)").matches; // then nothing turns or glides on its own
@@ -161,7 +161,7 @@ function gallery(people) {
     need.forEach((p, k) => {
       const x = (k % perRow) * CELL, y = (rows - 1 - Math.floor(k / perRow)) * CELL;
       renderer.setViewport(x, y, CELL, CELL); renderer.setScissor(x, y, CELL, CELL); renderer.clearDepth();
-      scenes[p].children[0].rotation.y = spin[p]; renderer.render(scenes[p], cam);
+      scenes[p].children[0].rotation.y = spin[p]; turnBelt(scenes[p].children[0], still ? 0 : performance.now() / 1000); renderer.render(scenes[p], cam); // (the speaking-rate band turns too)
       slots.set(p, k);
     });
   }

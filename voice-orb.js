@@ -115,7 +115,8 @@ export const MAP = {
   // second, from `slow` to `fast`), the more rocks (count), the smaller they are (size), the longer the streak behind each
   // (streak) and the quicker the band turns on the Voiceprint page (spin, radians a second). The band rises and falls in
   // one wave per syllable a second (rounded, at least 2). r0 … r1: how far out the band sits; thick: its height.
-  rate: { slow: 2.4, fast: 5.6, r0: 0.74, r1: 0.9, thick: 0.11, wave: 0.13, tilt: [0.62, -0.25], count: [115, 375], size: [0.025, 0.0137], streak: 0.75, spin: [0.15, 1.05] },
+  rate: { slow: 2.4, fast: 5.6, r0: 0.74, r1: 0.9, thick: 0.11, wave: 0.13, tilt: [0.62, -0.25], // (mirrored to lean the other way when a British Isles ring is there)
+    count: [115, 375], size: [0.025, 0.0137], streak: 0.75, spin: [0.15, 1.05] },
   pauses: { free: { r: 1.0, y: 0.45, grow: 1.9 }, shellGrow: 0.45, minSeconds: 0.2, size: 0.017, perSecond: 0.04, maxSize: 0.042, spark: 2.1, fewFor: 2, manyFor: 12, tie: 0.005 },
 };
 
@@ -873,10 +874,14 @@ function rateBelt(T, group, coreColor, coreR) {
     spinner.add(new THREE.LineSegments(geo, lm));
   }
   spinner.userData.spin = lerp(R.spin); // (the Voiceprint page turns it; still pictures show it as it is)
-  const belt = new THREE.Group(); belt.add(spinner); belt.quaternion.setFromEuler(new THREE.Euler(R.tilt[0], 0, R.tilt[1]));
+  // tipped the other way when a British Isles accent's ring is there (those rings lean the same way as the band would)
+  const flip = T.accents.some((a) => a.family === "british") ? -1 : 1;
+  const belt = new THREE.Group(); belt.add(spinner); belt.quaternion.setFromEuler(new THREE.Euler(R.tilt[0] * flip, 0, R.tilt[1] * flip));
   belt.userData.screenOnly = true; belt.userData.rate = true; belt.userData.spinner = spinner; // (the Voiceprint page finds it by this)
-  group.add(belt);
+  group.add(belt); group.userData.belt = spinner;
 }
+// turns a portrait's speaking-rate band to where it is after `seconds` (pages that draw many portraits call this each frame)
+export function turnBelt(group, seconds) { const sp = group?.userData.belt; if (sp) sp.rotation.y = -sp.userData.spin * seconds; }
 
 // ---- talking & pauses: beads threaded on the strongest accent's lines (see MAP.pauses)
 const SPARKS = {};
